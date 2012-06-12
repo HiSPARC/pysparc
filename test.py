@@ -20,11 +20,13 @@ def burn():
     global f
     f = Ftdi()
     try:
-        f.open_mpsse(0x0403, 0x6010, 1, initial=1, direction=0b11)
+        f.open_mpsse(0x0403, 0x6010, description="HiSPARC III Master",
+                     interface=1, initial=1, direction=0b11)
     except (FtdiError, usb.USBError):
         print "RESET"
         usb.util.dispose_resources(f.usb_dev)
-        f.open_mpsse(0x0403, 0x6010, 1, initial=1, direction=0b11)
+        f.open_mpsse(0x0403, 0x6010, description="HiSPARC III Master",
+                     interface=1, initial=1, direction=0b11)
 
     f.write_data([Ftdi.TCK_DIVISOR, 0, 0])
     f.write_data([Ftdi.DISABLE_CLK_DIV5])
