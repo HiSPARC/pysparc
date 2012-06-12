@@ -2,7 +2,6 @@ import os.path
 import time
 
 from pyftdi.pyftdi.ftdi import Ftdi, FtdiError
-from pyftdi.pyftdi.spi import SpiController
 import usb
 
 from array import array as Array
@@ -38,7 +37,7 @@ def burn():
     f.write_data([Ftdi.SET_BITS_HIGH, 1, 1])
     print_high_bits(f)
 
-    BUFSIZE = 32 * 1024
+    BUFSIZE = 64 * 1024
 
     time.sleep(1)
 
