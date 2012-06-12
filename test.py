@@ -1,8 +1,9 @@
 import os.path
 import time
 
-from pyftdi.pyftdi.ftdi import Ftdi
+from pyftdi.pyftdi.ftdi import Ftdi, FtdiError
 from pyftdi.pyftdi.spi import SpiController
+import usb
 
 from array import array as Array
 
@@ -19,7 +20,12 @@ def print_high_bits(f):
 def burn():
     global f
     f = Ftdi()
-    f.open_mpsse(0x0403, 0x6010, 1, initial=1, direction=0b11)
+    try:
+        f.open_mpsse(0x0403, 0x6010, 1, initial=1, direction=0b11)
+    except (FtdiError, usb.USBError):
+        print "RESET"
+        usb.util.dispose_resources(f.usb_dev)
+        f.open_mpsse(0x0403, 0x6010, 1, initial=1, direction=0b11)
 
     f.write_data([Ftdi.TCK_DIVISOR, 0, 0])
     f.write_data([Ftdi.DISABLE_CLK_DIV5])
@@ -56,5 +62,6 @@ def burn():
     time.sleep(1)
     print_high_bits(f)
     print_low_bits(f)
+
 
 burn()
