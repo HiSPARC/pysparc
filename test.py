@@ -48,6 +48,7 @@ def burn():
             LENGTH_L = LENGTH & 0xff
             LENGTH_H = LENGTH >> 8 & 0xff
             send_buf = [Ftdi.WRITE_BYTES_PVE_LSB] + [LENGTH_L, LENGTH_H] + [ord(u) for u in xbuf]
+            f.write_data(send_buf)
 
     for i in range(10):
         print_high_bits(f)
