@@ -23,8 +23,6 @@ def burn():
 
     f.write_data([Ftdi.TCK_DIVISOR, 0, 0])
     f.write_data([Ftdi.DISABLE_CLK_DIV5])
-    f.write_data([0x8d])
-    f.write_data([0x97])
 
     print_low_bits(f)
 
@@ -50,9 +48,9 @@ def burn():
             send_buf = [Ftdi.WRITE_BYTES_PVE_LSB] + [LENGTH_L, LENGTH_H] + [ord(u) for u in xbuf]
             f.write_data(send_buf)
 
-    for i in range(10):
-        print_high_bits(f)
-        f.write_data([0x8e, 0])
+    #for i in range(10):
+    #    print_high_bits(f)
+    #    f.write_data([0x8e, 0])
 
     print_high_bits(f)
     time.sleep(1)
