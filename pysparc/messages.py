@@ -59,7 +59,8 @@ class HisparcMessage(object):
     def validate_codons_and_id(self, header, identifier, end):
         if (header != codons['start'] or end != codons['stop'] or
             identifier != self.identifier):
-            raise MessageError("Corrupt message detected")
+            raise MessageError("Corrupt message detected: %x %x %x" %
+                (header, identifier, end))
 
     def encode(self):
         if None is self.identifier:
@@ -76,7 +77,7 @@ class HisparcMessage(object):
 
 class OneSecondMessage(HisparcMessage):
     identifier = msg_ids['one_second']
-    msg_format = '>4BH3B2I4H61s1B'
+    msg_format = '>2B2BH3B2I4H61s1B'
 
     def __init__(self, buff):
         self.parse_message(buff)
@@ -95,6 +96,11 @@ class OneSecondMessage(HisparcMessage):
         self.validate_codons_and_id(header, identifier, end)
         del buff[:msg_length]
 
+        self.timestamp = datetime.datetime(self.gps_year, self.gps_month,
+                                           self.gps_day, self.gps_hours,
+                                           self.gps_minutes,
+                                           self.gps_seconds)
+
     @classmethod
     def is_message_for(cls, buff):
         super(OneSecondMessage, cls).is_message_for(buff)
@@ -104,10 +110,57 @@ class OneSecondMessage(HisparcMessage):
             return False
 
     def __str__(self):
-        return 'One second message: %s' % \
-            datetime.datetime(self.gps_year, self.gps_month, self.gps_day,
-                              self.gps_hours, self.gps_minutes,
-                              self.gps_seconds)
+        return 'One second message: %s' % self.timestamp
+
+
+class MeasuredDataMessage(HisparcMessage):
+    identifier = msg_ids['measured_data']
+    msg_format = '>2BB4H2BH3BI'
+    msg_tail_format = '>%dsB'
+
+    def __init__(self, buff):
+        self.parse_message(buff)
+
+    def parse_message(self, buff):
+        msg_length = struct.calcsize(self.msg_format)
+        str_buff = str(buff[:msg_length])
+
+        (header, identifier, self.trigger_condition, self.trigger_pattern,
+         self.pre_coincidence_time, self.coincidence_time,
+         self.post_coincidence_time, self.gps_day, self.gps_month,
+         self.gps_year, self.gps_hours, self.gps_minutes,
+         self.gps_seconds, self.count_ticks_PPS) = \
+            struct.unpack_from(self.msg_format, str_buff)
+
+        event_length = self.pre_coincidence_time + self.coincidence_time + \
+                       self.post_coincidence_time
+        # 12 bits * 2 adcs * 2 channels / (8 bits / byte)
+        trace_length = 6 * event_length
+        msg_tail_format = self.msg_tail_format % trace_length
+        msg_tail_length = struct.calcsize(msg_tail_format)
+        total_length = msg_length + msg_tail_length
+        str_buff = str(buff[msg_length:total_length])
+
+        self.traces, end = struct.unpack_from(msg_tail_format, str_buff)
+
+        self.validate_codons_and_id(header, identifier, end)
+        del buff[:total_length]
+
+        self.timestamp = datetime.datetime(self.gps_year, self.gps_month,
+                                           self.gps_day, self.gps_hours,
+                                           self.gps_minutes,
+                                           self.gps_seconds)
+
+    @classmethod
+    def is_message_for(cls, buff):
+        super(MeasuredDataMessage, cls).is_message_for(buff)
+        if buff[1] == msg_ids['measured_data']:
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        return 'Event message: %s' % self.timestamp
 
 
 class ChannelOffsetAdjustMessage(HisparcMessage):

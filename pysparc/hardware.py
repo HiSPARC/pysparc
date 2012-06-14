@@ -51,3 +51,6 @@ class Hardware:
     def read_data_into_buffer(self):
         input_buff = self.master.read(READSIZE)
         self.master_buffer.extend(input_buff)
+
+    def send_message(self, msg):
+        self.master.write(msg.encode())
