@@ -16,7 +16,7 @@ def print_high_bits(f):
     time.sleep(.01)
     print 'high:', [bin(ord(u)) for u in f.read_data(1)]
 
-def burn():
+def burn(firmware_file):
     global f
     f = Ftdi()
     try:
@@ -43,7 +43,7 @@ def burn():
 
     time.sleep(1)
 
-    with open(os.path.expanduser('/Users/david/Downloads/FPGAConfig_v19.rbf'), 'rb') as file:
+    with open(os.path.expanduser(firmware_file), 'rb') as file:
         while True:
             xbuf = file.read(BUFSIZE)
             if not xbuf:
