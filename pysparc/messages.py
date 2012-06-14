@@ -5,7 +5,9 @@ Parse and operate on messages from and to the HiSPARC II / III hardware.
 :class:`HisparcMessage`: factory class for HiSPARC messages
 
 """
+import struct
 from struct import Struct
+import datetime
 
 
 codons = {'start': 0x99, 'stop': 0x66}
@@ -44,15 +46,20 @@ class HisparcMessage(object):
 
     @classmethod
     def is_message_for(cls, buff):
-        cls.validate_message(buff)
+        cls.validate_message_start(buff)
         return False
 
     @classmethod
-    def validate_message(cls, buff):
+    def validate_message_start(cls, buff):
         if type(buff) != bytearray:
             raise MessageError("Buffer must be of type bytearray")
         if buff[0] != codons['start']:
             raise MessageError("First byte of buffer is not start codon")
+
+    def validate_codons_and_id(self, header, identifier, end):
+        if (header != codons['start'] or end != codons['stop'] or
+            identifier != self.identifier):
+            raise MessageError("Corrupt message detected")
 
     def encode(self):
         if None is self.identifier:
@@ -68,8 +75,25 @@ class HisparcMessage(object):
 
 
 class OneSecondMessage(HisparcMessage):
+    identifier = msg_ids['one_second']
+    msg_format = '>4BH3B2I4H61s1B'
+
     def __init__(self, buff):
-        pass
+        self.parse_message(buff)
+
+    def parse_message(self, buff):
+        msg_length = struct.calcsize(self.msg_format)
+        str_buff = str(buff[:msg_length])
+
+        (header, identifier, self.gps_day, self.gps_month, self.gps_year,
+         self.gps_hours, self.gps_minutes, self.gps_seconds,
+         self.count_ticks_PPS, self.quantization_error,
+         self.count_ch2_high, self.count_ch2_low, self.count_ch1_high,
+         self.count_ch1_low, self.satellite_info, end) = \
+            struct.unpack_from(self.msg_format, str_buff)
+
+        self.validate_codons_and_id(header, identifier, end)
+        del buff[:msg_length]
 
     @classmethod
     def is_message_for(cls, buff):
@@ -78,6 +102,12 @@ class OneSecondMessage(HisparcMessage):
             return True
         else:
             return False
+
+    def __str__(self):
+        return 'One second message: %s' % \
+            datetime.datetime(self.gps_year, self.gps_month, self.gps_day,
+                              self.gps_hours, self.gps_minutes,
+                              self.gps_seconds)
 
 
 class ChannelOffsetAdjustMessage(HisparcMessage):
@@ -224,6 +254,9 @@ def HisparcMessageFactory(buff):
     :return: instance of a HisparcMessage subclass
 
     """
+    if len(buff) == 0:
+        return None
+
     for cls in HisparcMessage.__subclasses__():
         if cls.is_message_for(buff):
             return cls(buff)
