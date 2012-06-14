@@ -22,21 +22,8 @@ command_ids = {'soft_reset': 0xff,
               }
 
 
-def HisparcMessageFactory(buff):
-    """Return a message, extracted from the buffer
-
-    Inspect the buffer and extract the first full message. A
-    HisparcMessage subclass instance will be returned, according to
-    the type of the message.
-
-    :param buff: the contents of the usb buffer
-    :return: instance of a HisparcMessage subclass
-
-    """
-    for cls in HisparcMessage.__subclasses__():
-        if cls.is_message_for(buff):
-            return cls(buff)
-    raise NotImplementedError("Message type not implemented")
+class MessageError(Exception):
+    pass
 
 
 class HisparcMessage(object):
@@ -53,7 +40,15 @@ class HisparcMessage(object):
 
     @classmethod
     def is_message_for(cls, buff):
+        cls.validate_message(buff)
         return False
+
+    @classmethod
+    def validate_message(cls, buff):
+        if type(buff) != bytearray:
+            raise MessageError("Buffer must be of type bytearray")
+        if buff[0] != codons['start']:
+            raise MessageError("First byte of buffer is not start codon")
 
 
 class OneSecondMessage(HisparcMessage):
@@ -62,7 +57,25 @@ class OneSecondMessage(HisparcMessage):
 
     @classmethod
     def is_message_for(cls, buff):
-        if ord(buff[1]) == msg_ids['one_second']:
+        super(OneSecondMessage, cls).is_message_for(buff)
+        if buff[1] == msg_ids['one_second']:
             return True
         else:
             return False
+
+
+def HisparcMessageFactory(buff):
+    """Return a message, extracted from the buffer
+
+    Inspect the buffer and extract the first full message. A
+    HisparcMessage subclass instance will be returned, according to
+    the type of the message.
+
+    :param buff: the contents of the usb buffer
+    :return: instance of a HisparcMessage subclass
+
+    """
+    for cls in HisparcMessage.__subclasses__():
+        if cls.is_message_for(buff):
+            return cls(buff)
+    raise NotImplementedError("Message type not implemented")
