@@ -1,5 +1,6 @@
 import os.path
 import time
+import sys
 
 from pyftdi.pyftdi.ftdi import Ftdi, FtdiError
 import usb
@@ -65,4 +66,7 @@ def burn(firmware_file):
     print_low_bits(f)
 
 
-burn()
+if len(sys.argv) < 2:
+    print 'Usage: python burn.py [firmware file]'
+else:
+    burn(sys.argv[1])
