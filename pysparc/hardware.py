@@ -3,6 +3,8 @@ import logging
 from ftdi import FtdiChip
 
 
+from messages import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,5 +35,7 @@ class Hardware:
         return None
 
     def init_hardware(self, device):
-        device.write('\x99\xff\x66')
-        device.write('\x99\x35\x00\x00\x00\x01\x66')
+        messages = [ResetMessage(True), InitializeMessage(True)]
+
+        for message in messages:
+            device.write(message.encode())
