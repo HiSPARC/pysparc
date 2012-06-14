@@ -5,9 +5,9 @@ from hardware import Hardware
 
 def main():
     hardware = Hardware()
-    #while True:
-    #    msg = s.read(10000)
-    #    print repr(msg)
+    while True:
+        msg = hardware.read_message()
+        print msg
 
 
 if __name__ == '__main__':

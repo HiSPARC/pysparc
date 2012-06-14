@@ -22,3 +22,6 @@ class FtdiChip:
 
     def write(self, data):
         return self.device.write(data)
+
+    def read(self, length):
+        return self.device.read(length)
