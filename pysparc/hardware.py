@@ -1,7 +1,7 @@
 import logging
 
-from pyftdi.pyftdi.ftdi import Ftdi
-from pyftdi.serialext.ftdiext import SerialFtdi
+from ftdi import FtdiChip
+
 
 logger = logging.getLogger(__name__)
 
@@ -9,21 +9,27 @@ logger = logging.getLogger(__name__)
 class Hardware:
     def __init__(self):
         logger.debug("Searching for HiSPARC III Master...")
-        master_url = self.get_master_url()
-        if not master_url:
+        master = self.get_master()
+        if not master:
             raise RuntimeError("HiSPARC III Master not found")
-        logger.debug("Master found at %s" % master_url)
-        self.master = SerialFtdi(master_url, timeout=3)
-        self.init_hardware(self.master)
+        logger.debug("Master found: %s" % master.serial)
+        self.init_hardware(master)
+        self.master = master
         logger.info("HiSPARC III Master initialized")
 
-    def get_master_url(self):
-        devices = Ftdi.find_all([(0x403, 0x6010)])
+    def get_master(self):
+        serial = self.get_master_serial()
+        if serial:
+            return FtdiChip(serial)
+        else:
+            return None
+
+    def get_master_serial(self):
+        devices = FtdiChip.find_all()
         for device in devices:
-            vendor_id, product_id, serial_str, num_interfaces, \
-                description = device
+            serial_str, description = device
             if description == "HiSPARC III Master":
-                return "ftdi://ftdi:2232:%s/2" % serial_str
+                return serial_str
         return None
 
     def init_hardware(self, device):
