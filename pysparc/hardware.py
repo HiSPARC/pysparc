@@ -54,3 +54,6 @@ class Hardware:
 
     def send_message(self, msg):
         self.master.write(msg.encode())
+
+    def __del__(self):
+        self.master.write(ResetMessage(True).encode())
