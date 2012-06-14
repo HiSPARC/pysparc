@@ -12,7 +12,7 @@ class Hardware:
         master = self.get_master()
         if not master:
             raise RuntimeError("HiSPARC III Master not found")
-        logger.debug("Master found at %s" % master.serial)
+        logger.debug("Master found: %s" % master.serial)
         self.init_hardware(master)
         self.master = master
         logger.info("HiSPARC III Master initialized")
