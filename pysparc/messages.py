@@ -112,7 +112,7 @@ class CommonOffsetAdjustMessage(HisparcMessage):
         self.data = [offset]
 
 
-class FullScaleAdjustHisparcMessage(Message):
+class FullScaleAdjustHisparcMessage(HisparcMessage):
     def __init__(self, scale = 0x00):
         HisparcMessage.__init__(self)
 
