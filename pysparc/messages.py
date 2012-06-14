@@ -47,7 +47,10 @@ class HisparcMessage(object):
     @classmethod
     def is_message_for(cls, buff):
         cls.validate_message_start(buff)
-        return False
+        if buff[1] == cls.identifier:
+            return True
+        else:
+            return False
 
     @classmethod
     def validate_message_start(cls, buff):
@@ -101,14 +104,6 @@ class OneSecondMessage(HisparcMessage):
                                            self.gps_minutes,
                                            self.gps_seconds)
 
-    @classmethod
-    def is_message_for(cls, buff):
-        super(OneSecondMessage, cls).is_message_for(buff)
-        if buff[1] == msg_ids['one_second']:
-            return True
-        else:
-            return False
-
     def __str__(self):
         return 'One second message: %s' % self.timestamp
 
@@ -150,14 +145,6 @@ class MeasuredDataMessage(HisparcMessage):
                                            self.gps_day, self.gps_hours,
                                            self.gps_minutes,
                                            self.gps_seconds)
-
-    @classmethod
-    def is_message_for(cls, buff):
-        super(MeasuredDataMessage, cls).is_message_for(buff)
-        if buff[1] == msg_ids['measured_data']:
-            return True
-        else:
-            return False
 
     def __str__(self):
         return 'Event message: %s' % self.timestamp
