@@ -129,18 +129,21 @@ class MeasuredDataMessage(HisparcMessage):
 
         event_length = self.pre_coincidence_time + self.coincidence_time + \
                        self.post_coincidence_time
-        # 12 bits * 2 adcs * 2 channels / (8 bits / byte)
-        trace_length = 6 * event_length
-        msg_tail_format = self.msg_tail_format % trace_length
+        # 12 bits * 2 adcs / (8 bits / byte)
+        trace_length = 3 * event_length
+        # message contains data from two channels
+        msg_tail_format = self.msg_tail_format % (2 * trace_length)
         msg_tail_length = struct.calcsize(msg_tail_format)
         total_length = msg_length + msg_tail_length
         str_buff = str(buff[msg_length:total_length])
 
-        self.traces, end = struct.unpack_from(msg_tail_format, str_buff)
+        self.raw_traces, end = struct.unpack_from(msg_tail_format,
+                                                  str_buff)
 
         self.validate_codons_and_id(header, identifier, end)
         del buff[:total_length]
 
+        self.trace_length = trace_length
         self.timestamp = datetime.datetime(self.gps_year, self.gps_month,
                                            self.gps_day, self.gps_hours,
                                            self.gps_minutes,
@@ -148,6 +151,46 @@ class MeasuredDataMessage(HisparcMessage):
 
     def __str__(self):
         return 'Event message: %s' % self.timestamp
+
+    def __getattr__(self, name):
+        """Create missing attributes on demand"""
+
+        if name == 'trace_ch1':
+            self.trace_ch1 = self._get_trace(ch=1)
+            return self.trace_ch1
+        elif name == 'trace_ch2':
+            self.trace_ch2 = self._get_trace(ch=2)
+            return self.trace_ch2
+        else:
+            raise AttributeError(
+                "MeasuredDataMessage instance has no attribute '%s'" % name)
+
+    def _get_trace(self, ch):
+        """Get a trace for a given channel"""
+
+        if ch not in [1, 2]:
+            raise ValueError("Undefined signal channel: %d" % ch)
+        else:
+            idx_start = (ch - 1) * self.trace_length
+            idx_stop = idx_start + self.trace_length
+            raw_trace = self.raw_traces[idx_start:idx_stop]
+            return self._unpack_raw_trace(raw_trace)
+
+    def _unpack_raw_trace(self, raw_trace):
+        """Unpack a raw trace from 2x12-bit sequences"""
+
+        trace = []
+        for samples in self._split_raw_trace(raw_trace):
+            first = struct.unpack('>H', samples[:2])[0] >> 4
+            second = struct.unpack('>H', samples[1:])[0] & 0xfff
+            trace.extend([first, second])
+        return trace
+
+    def _split_raw_trace(self, raw_trace):
+        """Split a raw trace in groups of two 12-bit samples"""
+
+        for i in xrange(0, len(raw_trace), 3):
+            yield raw_trace[i:i + 3]
 
 
 class ChannelOffsetAdjustMessage(HisparcMessage):
