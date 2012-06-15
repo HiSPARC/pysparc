@@ -57,3 +57,6 @@ class FtdiChip:
     def flush_input(self):
         while self.read(64 * 1024):
             logger.info("Flushed input buffer")
+
+    def close(self):
+        self.device.close()

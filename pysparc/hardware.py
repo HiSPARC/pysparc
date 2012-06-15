@@ -60,6 +60,9 @@ class Hardware:
         self.master.write(ResetMessage(True).encode())
         time.sleep(1)
         self.master.flush_input()
+        self.master.close()
+        self._closed = True
 
     def __del__(self):
-        self.close()
+        if not self.__dict__.get('_closed'):
+            self.close()

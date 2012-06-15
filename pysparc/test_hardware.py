@@ -28,9 +28,4 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    while True:
-        try:
-            main()
-        except KeyboardInterrupt:
-            pass
-        time.sleep(3)
+    main()
