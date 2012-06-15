@@ -1,8 +1,13 @@
+from __future__ import division
+
 import logging
 
 from hardware import Hardware
 import messages
 
+
+def average(values):
+    return sum(values) / len(values)
 
 def main():
     hardware = Hardware()
@@ -12,8 +17,8 @@ def main():
         msg = hardware.read_message()
         print msg
         if type(msg) == messages.MeasuredDataMessage:
-            print msg.trace_ch1[:10]
-            print msg.trace_ch2[:10]
+            print average(msg.trace_ch1), msg.trace_ch1[:10]
+            print average(msg.trace_ch2), msg.trace_ch2[:10]
             print len(msg.trace_ch1), len(msg.trace_ch2)
 
 
