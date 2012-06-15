@@ -13,6 +13,8 @@ READSIZE = 64 * 1024
 
 
 class Hardware:
+    master = None
+
     def __init__(self):
         logger.debug("Searching for HiSPARC III Master...")
         master = self.get_master()
@@ -57,10 +59,11 @@ class Hardware:
         self.master.write(msg.encode())
 
     def close(self):
-        self.master.write(ResetMessage(True).encode())
-        time.sleep(1)
-        self.master.flush_input()
-        self.master.close()
+        if self.master:
+            self.master.write(ResetMessage(True).encode())
+            time.sleep(1)
+            self.master.flush_input()
+            self.master.close()
         self._closed = True
 
     def __del__(self):
