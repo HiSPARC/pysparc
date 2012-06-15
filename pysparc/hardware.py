@@ -1,4 +1,5 @@
 import logging
+import time
 
 from ftdi import FtdiChip
 
@@ -55,5 +56,10 @@ class Hardware:
     def send_message(self, msg):
         self.master.write(msg.encode())
 
-    def __del__(self):
+    def close(self):
         self.master.write(ResetMessage(True).encode())
+        time.sleep(1)
+        self.master.flush_input()
+
+    def __del__(self):
+        self.close()
