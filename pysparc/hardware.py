@@ -56,12 +56,17 @@ class Hardware:
 
     def _align_full_scale(self):
         logger.info("Aligning full scale")
-        initial_guess = 0x80
+        opt_value = self._align_offset(self._set_full_scale, 0x80)
+
+    def _set_full_scale(self, value):
+        self.config.full_scale = value
+
+    def _align_offset(self, set_offset_func, initial_guess):
         target_value = 2048
         is_done = False
 
         logger.debug("Initial guess: %d" % (initial_guess))
-        self.config.full_scale = initial_guess
+        set_offset_func(initial_guess)
         mean_adc_value = self._get_mean_adc_value()
         logger.debug("Initial mean ADC value: %d" % mean_adc_value)
 
@@ -73,7 +78,7 @@ class Hardware:
                                                    (fa, fb, fc))
         guess = optimization.first_step()
         while not is_done:
-            self.config.full_scale = guess
+            set_offset_func(guess)
             mean_adc_value = self._get_mean_adc_value()
             logger.debug("Alignment step (guess, mean): %d, %d" %
                          (guess, mean_adc_value))
@@ -81,7 +86,7 @@ class Hardware:
             guess, is_done = optimization.next_step(f_guess)
         logger.info("Full scale aligned (guess, mean): %d, %d" %
                     (guess, mean_adc_value))
-        self.config.full_scale = guess
+        set_offset_func(guess)
 
     def _get_mean_adc_value(self):
         msg = self.get_measured_data_message()
