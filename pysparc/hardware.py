@@ -58,7 +58,7 @@ class Hardware:
         self.config.trigger_condition = 0x80
         self._align_full_scale()
         self._align_common_offset()
-        self._align_individual_offsets()
+        #self._align_individual_offsets()
 
     def _reset_config_for_alignment(self):
         self.config.full_scale = 0x80
@@ -67,6 +67,7 @@ class Hardware:
     def _align_full_scale(self):
         logger.info("Aligning full scale")
         opt_value = self._align_offset(self._set_full_scale, 0x80)
+        logger.info("Full scale aligned (value): %d" % opt_value)
 
     def _set_full_scale(self, value):
         self.config.full_scale = value
@@ -74,6 +75,7 @@ class Hardware:
     def _align_common_offset(self):
         logger.info("Aligning common offset")
         opt_value = self._align_offset(self._set_common_offset, 0x80)
+        logger.info("Common offset aligned (value): %d" % opt_value)
 
     def _set_common_offset(self, value):
         self.config.common_offset = value
@@ -93,8 +95,8 @@ class Hardware:
             f_guess = self._measure_opt_value_at_offset(
                         set_offset_func, guess, target_value)
             guess, is_done = optimization.next_step(f_guess)
-        logger.info("Offset aligned (value): %d" % guess)
         set_offset_func(guess)
+        return guess
 
     def _measure_opt_value_at_offset(self, set_offset_func, guess,
                                      target):
