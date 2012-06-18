@@ -58,27 +58,22 @@ class Hardware:
         self.config.trigger_condition = 0x80
         self._align_full_scale()
         self._align_common_offset()
-        #self._align_individual_offsets()
+        self._align_individual_offsets()
 
     def _reset_config_for_alignment(self):
-        self.config.full_scale = 0x80
-        self.config.common_offset = 0x80
+        self._set_full_scale(0x80)
+        self._set_common_offset(0x80)
+        self._set_individual_offsets([0x80] * 4)
 
     def _align_full_scale(self):
         logger.info("Aligning full scale")
         opt_value = self._align_offset(self._set_full_scale, 0x80)
         logger.info("Full scale aligned (value): %d" % opt_value)
 
-    def _set_full_scale(self, value):
-        self.config.full_scale = value
-
     def _align_common_offset(self):
         logger.info("Aligning common offset")
         opt_value = self._align_offset(self._set_common_offset, 0x80)
         logger.info("Common offset aligned (value): %d" % opt_value)
-
-    def _set_common_offset(self, value):
-        self.config.common_offset = value
 
     def _align_offset(self, set_offset_func, initial_guess):
         target_value = 2048
@@ -97,14 +92,6 @@ class Hardware:
             guess, is_done = optimization.next_step(f_guess)
         set_offset_func(guess)
         return guess
-
-    def _measure_opt_value_at_offset(self, set_offset_func, guess,
-                                     target):
-        set_offset_func(guess)
-        mean_adc_value = self._get_mean_adc_value()
-        logger.debug("Alignment step (guess, mean): %d, %d" %
-                     (guess, mean_adc_value))
-        return abs(target - mean_adc_value)
 
     def _align_individual_offsets(self):
         logger.info("Aligning individual offsets")
@@ -125,6 +112,14 @@ class Hardware:
         logger.info("Offset aligned (value): %d %d %d %d" % guesses)
         self._set_individual_offsets(guesses)
 
+    def _measure_opt_value_at_offset(self, set_offset_func, guess,
+                                     target):
+        set_offset_func(guess)
+        mean_adc_value = self._get_mean_adc_value()
+        logger.debug("Alignment step (guess, mean): %d, %d" %
+                     (guess, mean_adc_value))
+        return abs(target - mean_adc_value)
+
     def _measure_opt_value_at_individual_offsets(self, guesses, target):
         self._set_individual_offsets(guesses)
         msg = self.get_measured_data_message()
@@ -134,11 +129,17 @@ class Hardware:
                      (guesses, [int(round(u)) for u in mean_adc_values]))
         return [abs(target - u) for u in mean_adc_values]
 
-    def _set_individual_offsets(self, offsets):
+    def _set_full_scale(self, value):
+        self.config.full_scale = value
+
+    def _set_common_offset(self, value):
+        self.config.common_offset = value
+
+    def _set_individual_offsets(self, values):
         (self.config.channel1_offset_positive,
          self.config.channel1_offset_negative,
          self.config.channel2_offset_positive,
-         self.config.channel2_offset_negative) = offsets
+         self.config.channel2_offset_negative) = values
 
     def _get_mean_adc_value(self):
         msg = self.get_measured_data_message()
