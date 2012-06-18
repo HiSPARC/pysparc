@@ -64,3 +64,22 @@ class InvertedIntegerOptimization(object):
             return True
         else:
             return False
+
+class ParallelInvertedIntegerOptimization(object):
+    def __init__(self, grouped_xvalues, grouped_fvalues):
+        self.optimizations = []
+        individual_optimization_xvalues = zip(*grouped_xvalues)
+        individual_optimization_fvalues = zip(*grouped_fvalues)
+        for xvalues, fvalues in zip(individual_optimization_xvalues,
+                                    individual_optimization_fvalues):
+            self.optimizations.append(InvertedIntegerOptimization(xvalues,
+                                                                  fvalues))
+
+    def first_step(self):
+        return [opt.first_step() for opt in self.optimizations]
+
+    def next_step(self, fvalues):
+        results = [opt.next_step(fvalue) for opt, fvalue in
+                   zip(self.optimizations, fvalues)]
+        guesses, is_all_done = zip(*results)
+        return guesses, is_all_done
