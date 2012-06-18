@@ -51,8 +51,16 @@ class Hardware:
             device.write(message.encode())
 
     def align_adcs(self):
+        # FIXME: sometimes alignment steps and messages are not
+        # synchronized
+        self._reset_config_for_alignment()
         self.config.trigger_condition = 0x80
         self._align_full_scale()
+        self._align_common_offset()
+
+    def _reset_config_for_alignment(self):
+        self.config.full_scale = 0x80
+        self.config.common_offset = 0x80
 
     def _align_full_scale(self):
         logger.info("Aligning full scale")
@@ -60,6 +68,13 @@ class Hardware:
 
     def _set_full_scale(self, value):
         self.config.full_scale = value
+
+    def _align_common_offset(self):
+        logger.info("Aligning common offset")
+        opt_value = self._align_offset(self._set_common_offset, 0x80)
+
+    def _set_common_offset(self, value):
+        self.config.common_offset = value
 
     def _align_offset(self, set_offset_func, initial_guess):
         target_value = 2048
@@ -84,7 +99,7 @@ class Hardware:
                          (guess, mean_adc_value))
             f_guess = abs(mean_adc_value - target_value)
             guess, is_done = optimization.next_step(f_guess)
-        logger.info("Full scale aligned (guess, mean): %d, %d" %
+        logger.info("Offset aligned (guess, mean): %d, %d" %
                     (guess, mean_adc_value))
         set_offset_func(guess)
 
