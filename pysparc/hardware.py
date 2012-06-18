@@ -77,6 +77,13 @@ class Hardware:
         opt_value = self._align_offset(self._set_common_offset, 0x80)
         logger.info("Common offset aligned (value): %d" % opt_value)
 
+    def _align_individual_offsets(self):
+        logger.info("Aligning individual offsets")
+        opt_values = self._align_individual_settings(
+                        self._set_individual_offsets, [0x80] * 4)
+        logger.info("Individual offsets aligned (values): %d %d %d %d" %
+                    opt_values)
+
     def _align_offset(self, set_offset_func, initial_guess):
         target_value = 2048
         is_done = False
@@ -95,24 +102,23 @@ class Hardware:
         set_offset_func(guess)
         return guess
 
-    def _align_individual_offsets(self):
-        logger.info("Aligning individual offsets")
-        initial_guesses = [0x80] * 4
+    def _align_individual_settings(self, settings_func, initial_guesses):
         target_value = 2048
         is_all_done = [False] * 4
 
         a, b, c = [0] * 4, initial_guesses, [0xff] * 4
-        fa, fb, fc = [self._measure_opt_value_at_individual_offsets(
-                        u, target_value) for u in a, b, c]
+        fa, fb, fc = [self._measure_opt_value_at_individual_settings(
+                        settings_func, u, target_value) for
+                      u in a, b, c]
         optimization = ParallelInvertedIntegerOptimization((a, b, c),
                                                            (fa, fb, fc))
         guesses = optimization.first_step()
         while not sum(is_all_done) == 4:
-            f_guesses = self._measure_opt_value_at_individual_offsets(
-                            guesses, target_value)
+            f_guesses = self._measure_opt_value_at_individual_settings(
+                            settings_func, guesses, target_value)
             guesses, is_all_done = optimization.next_step(f_guesses)
-        logger.info("Offset aligned (value): %d %d %d %d" % guesses)
-        self._set_individual_offsets(guesses)
+        settings_func(guesses)
+        return guesses
 
     def _measure_opt_value_at_offset(self, set_offset_func, guess,
                                      target):
@@ -122,8 +128,9 @@ class Hardware:
                      (guess, mean_adc_value))
         return abs(target - mean_adc_value)
 
-    def _measure_opt_value_at_individual_offsets(self, guesses, target):
-        self._set_individual_offsets(guesses)
+    def _measure_opt_value_at_individual_settings(self, settings_func,
+                                                  guesses, target):
+        settings_func(guesses)
         msg = self.flush_and_get_measured_data_message()
         mean_adc_values = (msg.adc_ch1_pos.mean(), msg.adc_ch1_neg.mean(),
                            msg.adc_ch2_pos.mean(), msg.adc_ch2_neg.mean())
