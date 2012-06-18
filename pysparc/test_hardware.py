@@ -12,11 +12,15 @@ def average(values):
 
 def main():
     hardware = Hardware()
-    hardware.align_adcs()
-    hardware.send_message(messages.TriggerConditionMessage(0x80))
-    while True:
-        print hardware._get_mean_adc_value()
-    hardware.close()
+    try:
+        hardware.align_adcs()
+        hardware.send_message(messages.TriggerConditionMessage(0x80))
+        while True:
+            print hardware._get_mean_adc_value()
+    except KeyboardInterrupt:
+        print "Interrupted by user."
+    finally:
+        hardware.close()
 
 
 if __name__ == '__main__':

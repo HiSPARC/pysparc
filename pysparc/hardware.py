@@ -57,6 +57,7 @@ class Hardware:
         self.config.trigger_condition = 0x80
         self._align_full_scale()
         self._align_common_offset()
+        self._align_individual_offsets()
 
     def _reset_config_for_alignment(self):
         self.config.full_scale = 0x80
@@ -102,6 +103,36 @@ class Hardware:
         logger.info("Offset aligned (guess, mean): %d, %d" %
                     (guess, mean_adc_value))
         set_offset_func(guess)
+
+    def _align_individual_offsets(self):
+        logger.info("Aligning individual offsets")
+        initial_guess = 0x80
+        target_value = 2048
+        is_done = False
+
+        a, b, c = 0, initial_guess, 0xff
+        fa, fb, fc = [self._measure_opt_value_at_offsets(u, target_value)
+                      for u in a, b, c]
+        optimization = InvertedIntegerOptimization((a, b, c),
+                                                   (fa, fb, fc))
+        guess = optimization.first_step()
+        while not is_done:
+            f_guess = self._measure_opt_value_at_offsets(guess,
+                                                         target_value)
+            guess, is_done = optimization.next_step(f_guess)
+        logger.info("Offset aligned (value): %d" % guess)
+        self._set_individual_offsets(guess)
+
+    def _measure_opt_value_at_offsets(self, guess, target):
+        self._set_individual_offsets(guess)
+        msg = self.get_measured_data_message()
+        mean_adc_value = msg.adc_ch1_pos.mean()
+        logger.debug("Alignment step (guess, mean): %d, %d" %
+                     (guess, mean_adc_value))
+        return abs(target - mean_adc_value)
+
+    def _set_individual_offsets(self, offset):
+        self.config.channel1_offset_positive = offset
 
     def _get_mean_adc_value(self):
         msg = self.get_measured_data_message()

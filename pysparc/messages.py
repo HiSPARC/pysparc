@@ -162,6 +162,14 @@ class MeasuredDataMessage(HisparcMessage):
         elif name == 'trace_ch2':
             self.trace_ch2 = self._get_trace(ch=2)
             return self.trace_ch2
+        elif name == 'adc_ch1_pos':
+            return self.trace_ch1[::2]
+        elif name == 'adc_ch1_neg':
+            return self.trace_ch1[1::2]
+        elif name == 'adc_ch2_pos':
+            return self.trace_ch2[::2]
+        elif name == 'adc_ch2_neg':
+            return self.trace_ch2[1::2]
         else:
             raise AttributeError(
                 "MeasuredDataMessage instance has no attribute '%s'" % name)
