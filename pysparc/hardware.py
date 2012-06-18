@@ -81,28 +81,27 @@ class Hardware:
         target_value = 2048
         is_done = False
 
-        logger.debug("Initial guess: %d" % (initial_guess))
-        set_offset_func(initial_guess)
-        mean_adc_value = self._get_mean_adc_value()
-        logger.debug("Initial mean ADC value: %d" % mean_adc_value)
-
         a, b, c = 0, initial_guess, 0xff
-        fa = target_value - 0
-        fb = abs(mean_adc_value - target_value)
-        fc = 4095 - target_value
+        fa, fb, fc = [self._measure_opt_value_at_offset(set_offset_func,
+                                                        u, target_value)
+                      for u in a, b, c]
         optimization = InvertedIntegerOptimization((a, b, c),
                                                    (fa, fb, fc))
         guess = optimization.first_step()
         while not is_done:
-            set_offset_func(guess)
-            mean_adc_value = self._get_mean_adc_value()
-            logger.debug("Alignment step (guess, mean): %d, %d" %
-                         (guess, mean_adc_value))
-            f_guess = abs(mean_adc_value - target_value)
+            f_guess = self._measure_opt_value_at_offset(
+                        set_offset_func, guess, target_value)
             guess, is_done = optimization.next_step(f_guess)
-        logger.info("Offset aligned (guess, mean): %d, %d" %
-                    (guess, mean_adc_value))
+        logger.info("Offset aligned (value): %d" % guess)
         set_offset_func(guess)
+
+    def _measure_opt_value_at_offset(self, set_offset_func, guess,
+                                     target):
+        set_offset_func(guess)
+        mean_adc_value = self._get_mean_adc_value()
+        logger.debug("Alignment step (guess, mean): %d, %d" %
+                     (guess, mean_adc_value))
+        return abs(target - mean_adc_value)
 
     def _align_individual_offsets(self):
         logger.info("Aligning individual offsets")
@@ -111,19 +110,19 @@ class Hardware:
         is_done = False
 
         a, b, c = 0, initial_guess, 0xff
-        fa, fb, fc = [self._measure_opt_value_at_offsets(u, target_value)
-                      for u in a, b, c]
+        fa, fb, fc = [self._measure_opt_value_at_individual_offsets(
+                        u, target_value) for u in a, b, c]
         optimization = InvertedIntegerOptimization((a, b, c),
                                                    (fa, fb, fc))
         guess = optimization.first_step()
         while not is_done:
-            f_guess = self._measure_opt_value_at_offsets(guess,
-                                                         target_value)
+            f_guess = self._measure_opt_value_at_individual_offsets(guess,
+                        target_value)
             guess, is_done = optimization.next_step(f_guess)
         logger.info("Offset aligned (value): %d" % guess)
         self._set_individual_offsets(guess)
 
-    def _measure_opt_value_at_offsets(self, guess, target):
+    def _measure_opt_value_at_individual_offsets(self, guess, target):
         self._set_individual_offsets(guess)
         msg = self.get_measured_data_message()
         mean_adc_value = msg.adc_ch1_pos.mean()
