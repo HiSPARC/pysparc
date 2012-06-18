@@ -16,7 +16,11 @@ def main():
         hardware.align_adcs()
         hardware.send_message(messages.TriggerConditionMessage(0x80))
         while True:
-            print hardware._get_mean_adc_value()
+            msg = hardware.flush_and_get_measured_data_message()
+            print '%d %d %d %d' % (msg.adc_ch1_pos.mean(),
+                                   msg.adc_ch1_neg.mean(),
+                                   msg.adc_ch2_pos.mean(),
+                                   msg.adc_ch2_neg.mean())
     except KeyboardInterrupt:
         print "Interrupted by user."
     finally:

@@ -19,11 +19,11 @@ class Hardware:
     master = None
 
     def __init__(self):
-        logger.debug("Searching for HiSPARC III Master...")
+        logger.info("Searching for HiSPARC III Master...")
         master = self.get_master()
         if not master:
             raise RuntimeError("HiSPARC III Master not found")
-        logger.debug("Master found: %s" % master.serial)
+        logger.info("Master found: %s" % master.serial)
         self.init_hardware(master)
         self.master = master
         self.master_buffer = bytearray()
@@ -58,6 +58,8 @@ class Hardware:
         self.config.trigger_condition = 0x80
         self._align_full_scale()
         self._align_common_offset()
+        #self.config.full_scale = 167
+        #self.config.common_offset = 127
         self._align_individual_offsets()
 
     def _reset_config_for_alignment(self):
@@ -116,16 +118,16 @@ class Hardware:
                                      target):
         set_offset_func(guess)
         mean_adc_value = self._get_mean_adc_value()
-        logger.debug("Alignment step (guess, mean): %d, %d" %
+        logger.info("Alignment step (guess, mean): %d, %d" %
                      (guess, mean_adc_value))
         return abs(target - mean_adc_value)
 
     def _measure_opt_value_at_individual_offsets(self, guesses, target):
         self._set_individual_offsets(guesses)
-        msg = self.get_measured_data_message()
+        msg = self.flush_and_get_measured_data_message()
         mean_adc_values = (msg.adc_ch1_pos.mean(), msg.adc_ch1_neg.mean(),
                            msg.adc_ch2_pos.mean(), msg.adc_ch2_neg.mean())
-        logger.debug("Alignment step (guesses, means):\n\t%s, %s" %
+        logger.info("Alignment step (guesses, means):\n\t%s, %s" %
                      (guesses, [int(round(u)) for u in mean_adc_values]))
         return [abs(target - u) for u in mean_adc_values]
 
@@ -142,11 +144,12 @@ class Hardware:
          self.config.channel2_offset_negative) = values
 
     def _get_mean_adc_value(self):
-        msg = self.get_measured_data_message()
+        msg = self.flush_and_get_measured_data_message()
         mean_value = (msg.trace_ch1.mean() + msg.trace_ch2.mean()) / 2
         return mean_value
 
-    def get_measured_data_message(self):
+    def flush_and_get_measured_data_message(self):
+        self.master.device.flushInput()
         while True:
             msg = self.read_message()
             if type(msg) == messages.MeasuredDataMessage:
