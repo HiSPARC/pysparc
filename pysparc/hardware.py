@@ -6,6 +6,9 @@ from ftdi import FtdiChip
 
 from messages import *
 
+
+from config import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,6 +27,7 @@ class Hardware:
         self.init_hardware(master)
         self.master = master
         self.master_buffer = bytearray()
+        self.config = Config(self)
         logger.info("HiSPARC III Master initialized")
 
     def get_master(self):
