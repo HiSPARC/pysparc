@@ -34,7 +34,7 @@ def main():
         print
         print "All configuration settings:"
         print
-        for key, value in hardware.config.__dict__.iteritems():
+        for key, value in sorted(hardware.config.__dict__.iteritems()):
             print key, value['value']
         print
 
