@@ -42,8 +42,6 @@ def burn(firmware_file):
 
     BUFSIZE = 64 * 1024
 
-    time.sleep(1)
-
     with open(os.path.expanduser(firmware_file), 'rb') as file:
         while True:
             xbuf = file.read(BUFSIZE)
@@ -60,8 +58,6 @@ def burn(firmware_file):
     #    print_high_bits(f)
     #    f.write_data([0x8e, 0])
 
-    print_high_bits(f)
-    time.sleep(1)
     print_high_bits(f)
     print_low_bits(f)
 
