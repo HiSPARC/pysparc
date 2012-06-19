@@ -55,8 +55,12 @@ class FtdiChip:
             if '[Errno None]' in exc.message:
                 self.get_device()
                 data = self.device.read(length)
-        finally:
+                return data
+            else:
+                raise
+        else:
             return data
+        raise Exception("Programming error.  I should not be here.")
 
     def flush_input(self):
         while self.read(64 * 1024):
