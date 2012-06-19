@@ -16,7 +16,7 @@ class Config(object):
         self.__dict__['_channel1_gain_negative'] = {'id': 0x15, 'value': 0x80, 'length': 1}
         self.__dict__['_channel1_integrator_time'] = {'id': 0x1a, 'value': 0xff, 'length': 1}
         self.__dict__['_channel1_pmt_high_voltage'] = {'id': 0x1e, 'value': 0x00, 'length': 1}
-        self.__dict__['_chanell1_threshold_low'] = {'id': 0x20, 'value': 0x0100, 'length': 2}
+        self.__dict__['_channel1_threshold_low'] = {'id': 0x20, 'value': 0x0100, 'length': 2}
         self.__dict__['_channel1_threshold_high'] = {'id': 0x21, 'value': 0x0800, 'length': 2}
 
         self.__dict__['_channel2_offset_positive'] = {'id': 0x12, 'value': 0x80, 'length': 1}
