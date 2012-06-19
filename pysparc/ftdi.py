@@ -55,7 +55,7 @@ class FtdiChip:
             if '[Errno None]' in exc.message:
                 self.get_device()
                 data = self.device.read(length)
-        else:
+        finally:
             return data
 
     def flush_input(self):
