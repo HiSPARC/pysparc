@@ -8,6 +8,7 @@ Parse and operate on messages from and to the HiSPARC II / III hardware.
 import struct
 from struct import Struct
 import datetime
+import numpy as np
 
 
 codons = {'start': 0x99, 'stop': 0x66}
@@ -161,6 +162,14 @@ class MeasuredDataMessage(HisparcMessage):
         elif name == 'trace_ch2':
             self.trace_ch2 = self._get_trace(ch=2)
             return self.trace_ch2
+        elif name == 'adc_ch1_pos':
+            return self.trace_ch1[::2]
+        elif name == 'adc_ch1_neg':
+            return self.trace_ch1[1::2]
+        elif name == 'adc_ch2_pos':
+            return self.trace_ch2[::2]
+        elif name == 'adc_ch2_neg':
+            return self.trace_ch2[1::2]
         else:
             raise AttributeError(
                 "MeasuredDataMessage instance has no attribute '%s'" % name)
@@ -184,7 +193,7 @@ class MeasuredDataMessage(HisparcMessage):
             first = struct.unpack('>H', samples[:2])[0] >> 4
             second = struct.unpack('>H', samples[1:])[0] & 0xfff
             trace.extend([first, second])
-        return trace
+        return np.array(trace)
 
     def _split_raw_trace(self, raw_trace):
         """Split a raw trace in groups of two 12-bit samples"""
