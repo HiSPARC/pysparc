@@ -31,6 +31,12 @@ def main():
         print "Interrupted by user."
     finally:
         hardware.close()
+        print
+        print "All configuration settings:"
+        print
+        for key, value in hardware.config.__dict__.iteritems():
+            print key, value['value']
+        print
 
 
 if __name__ == '__main__':
