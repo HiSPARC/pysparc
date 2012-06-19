@@ -33,7 +33,7 @@ class FtdiChip:
         url = "ftdi://ftdi:%s:%s/2" % (PRODUCT_DESCRIPTION, self.serial)
         if self.device is not None:
             self.device.close()
-        self.device = SerialFtdi(url, timeout=2)
+        self.device = SerialFtdi(url, timeout=.1)
 
     def write(self, data):
         return self.device.write(data)
