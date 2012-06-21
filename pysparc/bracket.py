@@ -6,74 +6,67 @@
 from __future__ import division
 
 
-class InvertedIntegerOptimization(object):
-    def __init__(self, (a, b, c), (fa, fb, fc)):
-        if type(a) is not int or type(b) is not int or type(c) is not int:
+class InvertedIntegerRootFinder(object):
+    def __init__(self, (a, b), (fa, fb)):
+        if type(a) is not int or type(b) is not int:
             raise TypeError("x-values should be integer")
-        if not fb < fa or not fb < fc:
-            raise TypeError("Minimum is not correctly bracketed")
+        self._set_interval((a, b), (fa, fb))
 
-        self._set_interval((a, b, c), (fa, fb, fc))
-
-    def _set_interval(self, (a, b, c), (fa, fb, fc)):
-        self.a = a
-        self.b = b
-        self.c = c
-        self.fa = fa
-        self.fb = fb
-        self.fc = fc
+    def _set_interval(self, (a, b), (fa, fb)):
+        # root must be between a and b
+        if not ((fa >= 0 and fb <= 0) or (fa <= 0 and fb >= 0)):
+            raise TypeError("Root is not in (a, b)")
+        else:
+            self.a = a
+            self.b = b
+            self.fa = fa
+            self.fb = fb
 
     def first_step(self):
         return self._guess_next_x()
 
     def _guess_next_x(self):
-        if self.b - self.a > self.c - self.b:
-            x = (self.a + self.b) / 2
-        else:
-            x = (self.b + self.c) / 2
-        x = int(round(x))
+        x = int(round((self.a + self.b) / 2))
         self.x = x
         return x
 
     def next_step(self, fx):
-        if self.x < self.b:
-            if fx < self.fb:
-                self._set_interval((self.a, self.x, self.b),
-                                   (self.fa, fx, self.fb))
-            else:
-                self._set_interval((self.x, self.b, self.c),
-                                   (fx, self.fb, self.fc))
+        if self._sign(fx) == self._sign(self.fa):
+            self._set_interval((self.x, self.b), (fx, self.fb))
         else:
-            if fx < self.fb:
-                self._set_interval((self.b, self.x, self.c),
-                                   (self.fb, fx, self.fc))
-            else:
-                self._set_interval((self.a, self.b, self.x),
-                                   (self.fa, self.fb, fx))
+            self._set_interval((self.a, self.x), (self.fa, fx))
 
-        is_optimum = self._is_optimum()
+        is_optimum = self._is_optimum(fx)
         if is_optimum:
-            return self.b, True
+            return self.x, True
         else:
             x = self._guess_next_x()
             return x, False
 
-    def _is_optimum(self):
-        if self.a == self.b or self.b == self.c or \
-           self.c - self.b == self.b - self.a == 1:
+    def _is_optimum(self, fx):
+        if fx == 0:
+            return True
+        elif self.a == self.b or self.b - self.a == 1:
             return True
         else:
             return False
 
-class ParallelInvertedIntegerOptimization(object):
+    def _sign(self, value):
+        if value < 0:
+            return -1
+        else:
+            return 1
+
+
+class ParallelInvertedIntegerRootFinder(object):
     def __init__(self, grouped_xvalues, grouped_fvalues):
         self.optimizations = []
         individual_optimization_xvalues = zip(*grouped_xvalues)
         individual_optimization_fvalues = zip(*grouped_fvalues)
         for xvalues, fvalues in zip(individual_optimization_xvalues,
                                     individual_optimization_fvalues):
-            self.optimizations.append(InvertedIntegerOptimization(xvalues,
-                                                                  fvalues))
+            self.optimizations.append(InvertedIntegerRootFinder(xvalues,
+                                                                fvalues))
 
     def first_step(self):
         return [opt.first_step() for opt in self.optimizations]
