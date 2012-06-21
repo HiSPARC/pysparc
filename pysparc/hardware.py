@@ -51,7 +51,6 @@ class Hardware:
             device.write(message.encode())
 
     def align_adcs(self):
-        # FIXME: Initial guess 0x30 for 2nd full scale. Hmm.
         self._reset_config_for_alignment()
         self.config.trigger_condition = 0x80
         self._align_full_scale(2048)
