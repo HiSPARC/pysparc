@@ -4,6 +4,7 @@ import logging
 import time
 
 from hardware import Hardware
+from align_adcs import AlignADCs
 import messages
 
 
@@ -12,8 +13,9 @@ def average(values):
 
 def main():
     hardware = Hardware()
+    align_adcs = AlignADCs(hardware)
     try:
-        hardware.align_adcs()
+        align_adcs.align()
         hardware.send_message(messages.TriggerConditionMessage(0x80))
         while True:
             msg = hardware.flush_and_get_measured_data_message()
