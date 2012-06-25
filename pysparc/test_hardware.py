@@ -21,12 +21,20 @@ def main():
                                    msg.adc_ch1_neg.mean(),
                                    msg.adc_ch2_pos.mean(),
                                    msg.adc_ch2_neg.mean())
-            bl1 = int(round(msg.trace_ch1[:100].mean()))
+
+            bl1 = msg.trace_ch1[:100].mean()
+            bl1_pos = msg.adc_ch1_pos[:50].mean()
+            bl1_neg = msg.adc_ch1_neg[:50].mean()
             ph1 = msg.trace_ch1.max()
-            bl2 = int(round(msg.trace_ch2[:100].mean()))
+
+            bl2 = msg.trace_ch2[:100].mean()
+            bl2_pos = msg.adc_ch2_pos[:50].mean()
+            bl2_neg = msg.adc_ch2_neg[:50].mean()
             ph2 = msg.trace_ch2.max()
-            print "baselines:", bl1, bl2
-            print "pulseheights:", ph1 - bl1, ph2 - bl2
+
+            print "baselines: %d (%d, %d), %d (%d, %d)" % \
+                (bl1, bl1_pos, bl1_neg, bl2, bl2_pos, bl2_neg)
+            print "pulseheights: %d %d" % (ph1 - bl1, ph2 - bl2)
     except KeyboardInterrupt:
         print "Interrupted by user."
     finally:
