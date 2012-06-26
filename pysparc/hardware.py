@@ -53,12 +53,14 @@ class Hardware:
     def align_adcs(self):
         self._reset_config_for_alignment()
         self.config.trigger_condition = 0x80
-        self._align_full_scale(2048)
-        self._align_common_offset(2048)
-        self._align_individual_offsets(2048)
-        self._align_full_scale(200)
-        self._align_common_offset(200)
-        self._align_individual_gains(200)
+        target = 2048
+        self._align_full_scale(target)
+        self._align_common_offset(target)
+        self._align_individual_offsets(target)
+        target = 200
+        self._align_full_scale(target)
+        self._align_common_offset(target)
+        self._align_individual_gains(target)
 
     def _reset_config_for_alignment(self):
         self._set_full_scale(0x80)
