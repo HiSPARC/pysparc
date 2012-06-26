@@ -60,7 +60,8 @@ class AlignADCs(object):
         fa, fb = [self._measure_opt_value_at_offset(set_offset_func,
                                                     u, target_value)
                   for u in a, b]
-        optimization = bracket.InvertedIntegerRootFinder((a, b), (fa, fb))
+        optimization = bracket.LinearInvertedIntegerRootFinder((a, b),
+                                                               (fa, fb))
         guess = optimization.first_step()
         while not is_done:
             f_guess = self._measure_opt_value_at_offset(
@@ -75,8 +76,8 @@ class AlignADCs(object):
         a, b = [0] * 4, [0xff] * 4
         fa, fb = [self._measure_opt_value_at_individual_settings(
                         settings_func, u, target_value) for u in a, b]
-        optimization = bracket.ParallelInvertedIntegerRootFinder((a, b),
-                                                                 (fa, fb))
+        optimization = bracket.LinearParallelInvertedIntegerRootFinder(
+                            (a, b), (fa, fb))
         guesses = optimization.first_step()
         while not sum(is_all_done) == 4:
             f_guesses = self._measure_opt_value_at_individual_settings(

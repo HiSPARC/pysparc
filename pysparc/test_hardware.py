@@ -15,7 +15,11 @@ def main():
     hardware = Hardware()
     align_adcs = AlignADCs(hardware)
     try:
+        t0 = time.time()
         align_adcs.align()
+        t1 = time.time()
+        logging.info("Alignment took %.1f s", t1 - t0)
+
         hardware.send_message(messages.TriggerConditionMessage(0x80))
         while True:
             msg = hardware.flush_and_get_measured_data_message()
