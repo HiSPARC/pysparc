@@ -1,5 +1,6 @@
 import logging
 import time
+import random
 
 from ftdi import FtdiChip
 import messages
@@ -59,6 +60,8 @@ class Hardware:
 
     def read_message(self):
         self.read_data_into_buffer()
+        if not len(self.master_buffer):
+            time.sleep(.1)
         return HisparcMessageFactory(self.master_buffer)
 
     def read_data_into_buffer(self):

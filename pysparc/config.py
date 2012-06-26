@@ -1,5 +1,4 @@
 import struct
-import time
 import logging
 
 
@@ -50,10 +49,7 @@ class Config(object):
             message = None
 
         if self.device != None and message != None:
-            t0 = time.time()
             self.device.master.write(message)
-            t1 = time.time()
-            logger.debug("Write config %s in %.1f s" % (name, t1 - t0))
 
     def __getattr__(self, name):
         return self.__dict__['_' + name]['value']

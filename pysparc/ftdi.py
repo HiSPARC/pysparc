@@ -1,5 +1,4 @@
 import logging
-import time
 
 from pyftdi.pyftdi import ftdi
 from pyftdi.pyftdi.ftdi import Ftdi
@@ -33,7 +32,7 @@ class FtdiChip:
         url = "ftdi://ftdi:%s:%s/2" % (PRODUCT_DESCRIPTION, self.serial)
         if self.device is not None:
             self.device.close()
-        self.device = SerialFtdi(url, timeout=.1)
+        self.device = SerialFtdi(url, timeout=.001)
 
     def write(self, data):
         return self.device.write(data)
@@ -46,10 +45,7 @@ class FtdiChip:
 
         """
         try:
-            t0 = time.time()
             data = self.device.read(length)
-            t1 = time.time()
-            logger.debug("Read data in %.1f s" % (t1 - t0))
         except ftdi.FtdiError as exc:
             logger.warning("Spurious PyFTDI 'None' error, recovering...")
             if '[Errno None]' in exc.message:
