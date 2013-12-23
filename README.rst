@@ -12,9 +12,9 @@ if it shapes up, in a few commits or so.
 Prerequisites
 -------------
 
-* [libusb](http://www.libusb.org/)
-* [PyUSB](https://github.com/walac/pyusb)
-* [PyFTDI](https://github.com/eblot/pyftdi)
+* `libusb <http://www.libusb.org/>`_
+* `PyUSB <https://github.com/walac/pyusb>`_
+* `PyFTDI <https://github.com/eblot/pyftdi>`_
 
 I like the fact that we do not depend on FTDI drivers or libraries.
 
