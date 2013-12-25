@@ -39,9 +39,60 @@ class MuonlabIITest(unittest.TestCase):
             chr(0b10101010) + chr(0b00100101))
 
     @patch.object(muonlab_ii.MuonlabII, 'write_setting')
-    def test_set_pmt1_voltage(self, mock_write):
+    def test_set_pmt1_voltage_calls_write_setting(self, mock_write):
         self.muonlab._set_pmt1_voltage(900)
         mock_write.assert_called_once_with('HV_1', 0x7f)
+        self.muonlab._set_pmt1_voltage(600)
+        mock_write.assert_called_with('HV_1', 0x3f)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    @patch.object(muonlab_ii, 'map_setting')
+    def test_set_pmt1_voltage_calls_map_setting(self, mock_map,
+                                                mock_write):
+        self.muonlab._set_pmt1_voltage(900)
+        mock_map.assert_called_once_with(900, 300, 1500, 0x00, 0xff)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    def test_set_pmt2_voltage_calls_write_setting(self, mock_write):
+        self.muonlab._set_pmt2_voltage(900)
+        mock_write.assert_called_once_with('HV_2', 0x7f)
+        self.muonlab._set_pmt2_voltage(600)
+        mock_write.assert_called_with('HV_2', 0x3f)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    @patch.object(muonlab_ii, 'map_setting')
+    def test_set_pmt2_voltage_calls_map_setting(self, mock_map,
+                                                mock_write):
+        self.muonlab._set_pmt2_voltage(900)
+        mock_map.assert_called_once_with(900, 300, 1500, 0x00, 0xff)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    def test_set_pmt1_threshold_calls_write_setting(self, mock_write):
+        self.muonlab._set_pmt1_threshold(600)
+        mock_write.assert_called_with('THR_1', 0x7f)
+        self.muonlab._set_pmt1_threshold(300)
+        mock_write.assert_called_with('THR_1', 0x3f)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    @patch.object(muonlab_ii, 'map_setting')
+    def test_set_pmt1_threshold_calls_map_setting(self, mock_map,
+                                                  mock_write):
+        self.muonlab._set_pmt1_threshold(600)
+        mock_map.assert_called_once_with(600, 0, 1200, 0x00, 0xff)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    def test_set_pmt2_threshold_calls_write_setting(self, mock_write):
+        self.muonlab._set_pmt2_threshold(600)
+        mock_write.assert_called_with('THR_2', 0x7f)
+        self.muonlab._set_pmt2_threshold(300)
+        mock_write.assert_called_with('THR_2', 0x3f)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    @patch.object(muonlab_ii, 'map_setting')
+    def test_set_pmt2_threshold_calls_map_setting(self, mock_map,
+                                                  mock_write):
+        self.muonlab._set_pmt2_threshold(600)
+        mock_map.assert_called_once_with(600, 0, 1200, 0x00, 0xff)
 
 
 if __name__ == '__main__':

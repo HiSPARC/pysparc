@@ -1,4 +1,8 @@
+from array import array
+
 import pylibftdi
+
+from pysparc.util import map_setting
 
 
 DESCRIPTION = "USB <-> Serial"
@@ -44,7 +48,7 @@ class MuonlabII:
 
         high_byte = (1 << 7) + (address_bits << 4) + ((data & 0xf0) >> 4)
         low_byte = (0 << 7) + (address_bits << 4) + (data & 0x0f)
-        command = chr(high_byte) + chr(low_byte)
+        command = array('B', [high_byte, low_byte]).tostring()
         self._device.write(command)
 
     def _set_pmt1_voltage(self, voltage):
@@ -54,5 +58,41 @@ class MuonlabII:
             range.
 
         """
-        voltage_byte = int((voltage - 300) / 1200. * 0xff)
+        voltage_byte = map_setting(voltage, 300, 1500, 0x00, 0xff)
         self.write_setting('HV_1', voltage_byte)
+
+    def _set_pmt2_voltage(self, voltage):
+        """set high voltage for PMT 2.
+
+        :param voltage: integer.  Values are clipped to a 300 - 1500 V
+            range.
+
+        """
+        voltage_byte = map_setting(voltage, 300, 1500, 0x00, 0xff)
+        self.write_setting('HV_2', voltage_byte)
+
+    def _set_pmt1_threshold(self, threshold):
+        """set threshold for PMT 1.
+
+        Events with a signal strength below the specified threshold will
+        be ignored as noise.
+
+        :param threshold: integer.  Values are clipped to a 0 - 1200 mV
+            range.
+
+        """
+        threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
+        self.write_setting('THR_1', threshold_byte)
+
+    def _set_pmt2_threshold(self, threshold):
+        """set threshold for PMT 2.
+
+        Events with a signal strength below the specified threshold will
+        be ignored as noise.
+
+        :param threshold: integer.  Values are clipped to a 0 - 1200 mV
+            range.
+
+        """
+        threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
+        self.write_setting('THR_2', threshold_byte)
