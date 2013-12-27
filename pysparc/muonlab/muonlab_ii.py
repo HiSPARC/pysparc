@@ -48,7 +48,12 @@ class MuonlabII:
 
         high_byte = (1 << 7) + (address_bits << 4) + ((data & 0xf0) >> 4)
         low_byte = (0 << 7) + (address_bits << 4) + (data & 0x0f)
-        command = array('B', [high_byte, low_byte]).tostring()
+
+        if setting == 'MEAS':
+            # Measurement type can be selected using only 1 byte
+            command = chr(low_byte)
+        else:
+            command = array('B', [high_byte, low_byte]).tostring()
         self._device.write(command)
 
     def _set_pmt1_voltage(self, voltage):
@@ -96,3 +101,13 @@ class MuonlabII:
         """
         threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
         self.write_setting('THR_2', threshold_byte)
+
+    def _set_lifetime_measurement(self):
+        """select lifetime measurement mode"""
+
+        self.write_setting('MEAS', 0xff)
+
+    def _set_coincidence_measurement(self):
+        """select coincidence time difference measurement mode"""
+
+        self.write_setting('MEAS', 0x00)

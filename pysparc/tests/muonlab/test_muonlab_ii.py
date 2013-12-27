@@ -38,6 +38,10 @@ class MuonlabIITest(unittest.TestCase):
         self.muonlab._device.write.assert_called_with(
             chr(0b10101010) + chr(0b00100101))
 
+    def test_write_setting_writes_only_one_byte_for_measurement(self):
+        self.muonlab.write_setting('MEAS', 0b10100101)
+        self.muonlab._device.write.assert_called_with(chr(0b01010101))
+
     @patch.object(muonlab_ii.MuonlabII, 'write_setting')
     def test_set_pmt1_voltage_calls_write_setting(self, mock_write):
         self.muonlab._set_pmt1_voltage(900)
@@ -93,6 +97,16 @@ class MuonlabIITest(unittest.TestCase):
                                                   mock_write):
         self.muonlab._set_pmt2_threshold(600)
         mock_map.assert_called_once_with(600, 0, 1200, 0x00, 0xff)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    def test_set_lifetime_measurement(self, mock_write):
+        self.muonlab._set_lifetime_measurement()
+        mock_write.assert_called_with('MEAS', 0xff)
+
+    @patch.object(muonlab_ii.MuonlabII, 'write_setting')
+    def test_set_coincidence_measurement(self, mock_write):
+        self.muonlab._set_coincidence_measurement()
+        mock_write.assert_called_with('MEAS', 0x00)
 
 
 if __name__ == '__main__':
