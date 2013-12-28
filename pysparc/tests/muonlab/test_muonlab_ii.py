@@ -108,6 +108,44 @@ class MuonlabIITest(unittest.TestCase):
         self.muonlab._set_coincidence_measurement()
         mock_write.assert_called_with('MEAS', 0x00)
 
+    def test_read_lifetime_data_returns_list(self):
+        self.muonlab._device.read.return_value = ''
+        data = self.muonlab.read_lifetime_data()
+        self.assertIsInstance(data, list)
+
+        self.muonlab._device.read.return_value = '\x85\x20'
+        data = self.muonlab.read_lifetime_data()
+        self.assertIsInstance(data, list)
+
+    @patch.object(muonlab_ii, 'READ_SIZE')
+    def test_read_lifetime_data_calls_device_read(self, mock_size):
+        self.muonlab._device.read.return_value = ''
+        self.muonlab.read_lifetime_data()
+        self.muonlab._device.read.assert_called_once_with(mock_size)
+
+    def test_READ_SIZE_is_multiple_of_62(self):
+        self.assertTrue(muonlab_ii.READ_SIZE % 62 == 0)
+
+    def test_read_lifetime_data_acceptance(self):
+        self.muonlab._device.read.return_value = ''
+        data = self.muonlab.read_lifetime_data()
+        self.assertEqual(data, [])
+
+        self.muonlab._device.read.return_value = '\x85\x20'
+        data = self.muonlab.read_lifetime_data()
+        self.assertEqual(data, [2200.])
+
+        self.muonlab._device.read.return_value = '\x85\x20\x80\x13'
+        data = self.muonlab.read_lifetime_data()
+        self.assertEqual(data, [2200., 118.75])
+
+    def test_read_lifetime_data_raises_ValueError(self):
+        self.muonlab._device.read.return_value = '\x00\x00'
+        self.assertRaises(ValueError, self.muonlab.read_lifetime_data)
+
+        self.muonlab._device.read.return_value = '\x80\x80'
+        self.assertRaises(ValueError, self.muonlab.read_lifetime_data)
+
 
 if __name__ == '__main__':
     unittest.main()

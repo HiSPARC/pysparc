@@ -7,6 +7,10 @@ from pysparc.util import map_setting
 
 DESCRIPTION = "USB <-> Serial"
 
+# FTDI documentation: must be multiple of block size, which is 64 bytes
+# with 2 bytes overhead.  So, must be multiple of 62 bytes.
+READ_SIZE = 62
+
 
 class MuonlabII:
 
@@ -111,3 +115,32 @@ class MuonlabII:
         """select coincidence time difference measurement mode"""
 
         self.write_setting('MEAS', 0x00)
+
+    def read_lifetime_data(self):
+        """Read lifetime data from detector
+
+        :returns: list of lifetime measurements
+
+        """
+        data = self._device.read(READ_SIZE)
+
+        if data:
+            lifetimes = []
+            #for word_value in data[::2]:
+            for i in range(0, len(data), 2):
+                high_byte, low_byte = ord(data[i]), ord(data[i + 1])
+
+                # sanity checks
+                if not (high_byte & 0x80):
+                    raise ValueError(
+                        "Corrupt lifetime data (high byte bit flag not set)")
+                if (low_byte & 0x80):
+                    raise ValueError(
+                        "Corrupt lifetime data (low byte bit flag set)")
+
+                adc_value = ((high_byte & 0x3f) << 6) | (low_byte & 0x3f)
+                lifetime = 6.25 * adc_value
+                lifetimes.append(lifetime)
+            return lifetimes
+        else:
+            return []
