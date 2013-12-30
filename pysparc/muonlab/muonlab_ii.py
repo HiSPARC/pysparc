@@ -32,7 +32,7 @@ class MuonlabII:
         self._set_pmt2_voltage(0)
         self._device.close()
 
-    def write_setting(self, setting, data):
+    def _write_setting(self, setting, data):
         """write setting to device.
 
         :param setting: string specifying the setting to write.  Must be
@@ -75,7 +75,7 @@ class MuonlabII:
 
         """
         voltage_byte = map_setting(voltage, 300, 1500, 0x00, 0xff)
-        self.write_setting('HV_1', voltage_byte)
+        self._write_setting('HV_1', voltage_byte)
 
     def _set_pmt2_voltage(self, voltage):
         """set high voltage for PMT 2.
@@ -85,7 +85,7 @@ class MuonlabII:
 
         """
         voltage_byte = map_setting(voltage, 300, 1500, 0x00, 0xff)
-        self.write_setting('HV_2', voltage_byte)
+        self._write_setting('HV_2', voltage_byte)
 
     def _set_pmt1_threshold(self, threshold):
         """set threshold for PMT 1.
@@ -98,7 +98,7 @@ class MuonlabII:
 
         """
         threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
-        self.write_setting('THR_1', threshold_byte)
+        self._write_setting('THR_1', threshold_byte)
 
     def _set_pmt2_threshold(self, threshold):
         """set threshold for PMT 2.
@@ -111,17 +111,17 @@ class MuonlabII:
 
         """
         threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
-        self.write_setting('THR_2', threshold_byte)
+        self._write_setting('THR_2', threshold_byte)
 
     def _set_lifetime_measurement(self):
         """select lifetime measurement mode"""
 
-        self.write_setting('MEAS', 0xff)
+        self._write_setting('MEAS', 0xff)
 
     def _set_coincidence_measurement(self):
         """select coincidence time difference measurement mode"""
 
-        self.write_setting('MEAS', 0x00)
+        self._write_setting('MEAS', 0x00)
 
     def read_lifetime_data(self):
         """Read lifetime data from detector
