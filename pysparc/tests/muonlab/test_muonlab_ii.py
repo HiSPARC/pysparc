@@ -10,6 +10,7 @@ class MuonlabIITest(unittest.TestCase):
     @patch('pysparc.muonlab.muonlab_ii.pylibftdi.Device')
     def setUp(self, mock_Device):
         self.mock_Device = mock_Device
+        self.mock_device = mock_Device.return_value
         self.muonlab = muonlab_ii.MuonlabII()
 
     def test_address_is_dictionary(self):
@@ -27,7 +28,7 @@ class MuonlabIITest(unittest.TestCase):
         self.mock_Device.assert_called_once_with('USB <-> Serial')
 
     def test_init_saves_device_as_attribute(self):
-        self.assertIs(self.muonlab._device, self.mock_Device.return_value)
+        self.assertIs(self.muonlab._device, self.mock_device)
 
     def test_write_setting_raises_unknown_setting(self):
         self.assertRaises(TypeError, self.muonlab.write_setting,
@@ -145,6 +146,17 @@ class MuonlabIITest(unittest.TestCase):
 
         self.muonlab._device.read.return_value = '\x80\x80'
         self.assertRaises(ValueError, self.muonlab.read_lifetime_data)
+
+    @patch.object(muonlab_ii.MuonlabII, '_set_pmt1_voltage')
+    @patch.object(muonlab_ii.MuonlabII, '_set_pmt2_voltage')
+    def test_destructor_resets_voltages(self, mock_pmt2_hv, mock_pmt1_hv):
+        del self.muonlab
+        mock_pmt1_hv.assert_called_once_with(0)
+        mock_pmt2_hv.assert_called_once_with(0)
+
+    def test_destructor_closes_device(self):
+        del self.muonlab
+        self.mock_device.close.assert_called_once_with()
 
 
 if __name__ == '__main__':

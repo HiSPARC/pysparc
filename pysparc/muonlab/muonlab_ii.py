@@ -25,6 +25,13 @@ class MuonlabII:
     def __init__(self):
         self._device = pylibftdi.Device(DESCRIPTION)
 
+    def __del__(self):
+        """Cleanly shut down muonlab hardware."""
+
+        self._set_pmt1_voltage(0)
+        self._set_pmt2_voltage(0)
+        self._device.close()
+
     def write_setting(self, setting, data):
         """write setting to device.
 
