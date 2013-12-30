@@ -14,6 +14,9 @@ READ_SIZE = 62
 # Default buffer size is 4K (64 * 64 bytes), but mind the overhead
 BUFFER_SIZE = 64 * 62
 
+LIFETIME_SCALE = 6.25
+COINCIDENCE_TIMEDELTA_SCALE = 6.25 / 12
+
 
 class MuonlabII:
 
@@ -60,8 +63,8 @@ class MuonlabII:
         else:
             address_bits = self._address[setting]
 
-        high_byte = (1 << 7) + (address_bits << 4) + ((data & 0xf0) >> 4)
-        low_byte = (0 << 7) + (address_bits << 4) + (data & 0x0f)
+        high_byte = (1 << 7) | (address_bits << 4) | ((data & 0xf0) >> 4)
+        low_byte = (address_bits << 4) | (data & 0x0f)
 
         if setting == 'MEAS':
             # Measurement type can be selected using only 1 byte
@@ -160,7 +163,7 @@ class MuonlabII:
                         "Corrupt lifetime data (low byte bit flag set)")
 
                 adc_value = ((high_byte & 0x3f) << 6) | (low_byte & 0x3f)
-                lifetime = 6.25 * adc_value
+                lifetime = LIFETIME_SCALE * adc_value
                 lifetimes.append(lifetime)
             return lifetimes
         else:
@@ -194,7 +197,7 @@ class MuonlabII:
                         "Corrupt coincidence data (no hit first flag set)")
 
                 adc_value = ((high_byte & 0x3f) << 6) | (low_byte & 0x3f)
-                deltatime = (6.25 / 12) * adc_value
+                deltatime = COINCIDENCE_TIMEDELTA_SCALE * adc_value
                 if det2_firsthit:
                     deltatime *= -1
                 deltatimes.append(deltatime)
