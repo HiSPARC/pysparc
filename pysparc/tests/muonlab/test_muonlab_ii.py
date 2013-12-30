@@ -141,11 +141,63 @@ class MuonlabIITest(unittest.TestCase):
         self.assertEqual(data, [2200., 118.75])
 
     def test_read_lifetime_data_raises_ValueError(self):
+        # first received byte is not high byte
         self.muonlab._device.read.return_value = '\x00\x00'
         self.assertRaises(ValueError, self.muonlab.read_lifetime_data)
 
+        # second received byte is not low byte
         self.muonlab._device.read.return_value = '\x80\x80'
         self.assertRaises(ValueError, self.muonlab.read_lifetime_data)
+
+    def test_read_coincidence_data_returns_list(self):
+        self.muonlab._device.read.return_value = ''
+        data = self.muonlab.read_coincidence_data()
+        self.assertIsInstance(data, list)
+
+        self.muonlab._device.read.return_value = '\xc5\x20'
+        data = self.muonlab.read_coincidence_data()
+        self.assertIsInstance(data, list)
+
+    @patch.object(muonlab_ii, 'READ_SIZE')
+    def test_read_coincidence_data_calls_device_read(self, mock_size):
+        self.muonlab._device.read.return_value = ''
+        self.muonlab.read_coincidence_data()
+        self.muonlab._device.read.assert_called_once_with(mock_size)
+
+    def test_read_coincidence_data_acceptance(self):
+        #TODO teken: t2 - t1
+        self.muonlab._device.read.return_value = ''
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [])
+
+        self.muonlab._device.read.return_value = '\xc5\x20'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [183.33333333333334])
+
+        self.muonlab._device.read.return_value = '\xc5\x20\xc0\x13'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [183.33333333333334, 9.895833333333334])
+
+        self.muonlab._device.read.return_value = '\x85\x60'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [-183.33333333333334])
+
+        self.muonlab._device.read.return_value = '\x85\x60\x80\x53'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [-183.33333333333334, -9.895833333333334])
+
+    def test_read_coincidence_data_raises_ValueError(self):
+        # first received byte is not high byte
+        self.muonlab._device.read.return_value = '\x00\x00'
+        self.assertRaises(ValueError, self.muonlab.read_coincidence_data)
+
+        # second received byte is not low byte
+        self.muonlab._device.read.return_value = '\x80\x80'
+        self.assertRaises(ValueError, self.muonlab.read_coincidence_data)
+
+        # no detector has 'hit first' flag set
+        self.muonlab._device.read.return_value = '\x80\x00'
+        self.assertRaises(ValueError, self.muonlab.read_coincidence_data)
 
     @patch.object(muonlab_ii.MuonlabII, '_set_pmt1_voltage')
     @patch.object(muonlab_ii.MuonlabII, '_set_pmt2_voltage')

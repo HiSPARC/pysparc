@@ -165,3 +165,39 @@ class MuonlabII:
             return lifetimes
         else:
             return []
+
+    def read_coincidence_data(self):
+        """Read coincidence data from detector
+
+        :returns: list of coincidence time difference measurements
+
+        """
+        data = self._device.read(READ_SIZE)
+        if data:
+            deltatimes = []
+            #for word_value in data[::2]:
+            for i in range(0, len(data), 2):
+                high_byte, low_byte = ord(data[i]), ord(data[i + 1])
+
+                det1_firsthit = high_byte & 0x40
+                det2_firsthit = low_byte & 0x40
+
+                # sanity checks
+                if not (high_byte & 0x80):
+                    raise ValueError(
+                        "Corrupt coincidence data (high byte bit flag not set)")
+                if (low_byte & 0x80):
+                    raise ValueError(
+                        "Corrupt coincidence data (low byte bit flag set)")
+                if not det1_firsthit and not det2_firsthit:
+                    raise ValueError(
+                        "Corrupt coincidence data (no hit first flag set)")
+
+                adc_value = ((high_byte & 0x3f) << 6) | (low_byte & 0x3f)
+                deltatime = (6.25 / 12) * adc_value
+                if det2_firsthit:
+                    deltatime *= -1
+                deltatimes.append(deltatime)
+            return deltatimes
+        else:
+            return []
