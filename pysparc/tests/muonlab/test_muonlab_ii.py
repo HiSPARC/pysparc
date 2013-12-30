@@ -158,6 +158,15 @@ class MuonlabIITest(unittest.TestCase):
         del self.muonlab
         self.mock_device.close.assert_called_once_with()
 
+    def test_BUFFER_SIZE_is_multiple_of_62(self):
+        self.assertTrue(muonlab_ii.BUFFER_SIZE % 62 == 0)
+
+    @patch.object(muonlab_ii, 'BUFFER_SIZE')
+    def test_flush_device(self, mock_size):
+        self.muonlab.flush_device()
+        self.mock_device.flush_output.assert_called_once_with()
+        self.mock_device.read.assert_called_once_with(mock_size)
+
 
 if __name__ == '__main__':
     unittest.main()

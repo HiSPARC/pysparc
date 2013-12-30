@@ -11,6 +11,9 @@ DESCRIPTION = "USB <-> Serial"
 # with 2 bytes overhead.  So, must be multiple of 62 bytes.
 READ_SIZE = 62
 
+# Default buffer size is 4K (64 * 64 bytes), but mind the overhead
+BUFFER_SIZE = 64 * 62
+
 
 class MuonlabII:
 
@@ -122,6 +125,17 @@ class MuonlabII:
         """select coincidence time difference measurement mode"""
 
         self._write_setting('MEAS', 0x00)
+
+    def flush_device(self):
+        """Flush device output buffers.
+
+        To completely clear out outdated measurements when changing
+        parameters, call this method.  All data received after this method
+        was called is really newly measured.
+
+        """
+        self._device.flush_output()
+        self._device.read(BUFFER_SIZE)
 
     def read_lifetime_data(self):
         """Read lifetime data from detector
