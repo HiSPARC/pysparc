@@ -25,8 +25,7 @@ class MuonlabII:
                 'HV_2': 1,
                 'THR_1': 3,
                 'THR_2': 4,
-                'MEAS': 5,
-              }
+                'MEAS': 5}
 
     def __init__(self):
         self._device = pylibftdi.Device(DESCRIPTION)
@@ -187,8 +186,8 @@ class MuonlabII:
 
                 # sanity checks
                 if not (high_byte & 0x80):
-                    raise ValueError(
-                        "Corrupt coincidence data (high byte bit flag not set)")
+                    raise ValueError("Corrupt coincidence data "
+                                     "(high byte bit flag not set)")
                 if (low_byte & 0x80):
                     raise ValueError(
                         "Corrupt coincidence data (low byte bit flag set)")
