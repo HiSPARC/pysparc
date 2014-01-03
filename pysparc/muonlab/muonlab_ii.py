@@ -1,3 +1,13 @@
+"""Access Muonlab II hardware.
+
+Contents
+--------
+
+:class:`MuonlabII`
+    Access Muonlab II hardware.
+
+"""
+
 from array import array
 
 import pylibftdi
@@ -20,6 +30,13 @@ COINCIDENCE_TIMEDELTA_SCALE = 6.25 / 12
 
 class MuonlabII:
 
+    """Access Muonlab II hardware.
+
+    Instantiate this class to get access to connected Muonlab II hardware.
+    The hardware device is opened during instantiation.
+
+    """
+
     # Yes, really, HV1 and 2 are reversed
     _address = {'HV_1': 2,
                 'HV_2': 1,
@@ -38,7 +55,7 @@ class MuonlabII:
         self._device.close()
 
     def _write_setting(self, setting, data):
-        """write setting to device.
+        """Write setting to device.
 
         :param setting: string specifying the setting to write.  Must be
             one of HV_1 (for PMT 1 high voltage), HV_2 (for PMT 2 high
@@ -73,7 +90,7 @@ class MuonlabII:
         self._device.write(command)
 
     def _set_pmt1_voltage(self, voltage):
-        """set high voltage for PMT 1.
+        """Set high voltage for PMT 1.
 
         :param voltage: integer.  Values are clipped to a 300 - 1500 V
             range.
@@ -83,7 +100,7 @@ class MuonlabII:
         self._write_setting('HV_1', voltage_byte)
 
     def _set_pmt2_voltage(self, voltage):
-        """set high voltage for PMT 2.
+        """Set high voltage for PMT 2.
 
         :param voltage: integer.  Values are clipped to a 300 - 1500 V
             range.
@@ -93,7 +110,7 @@ class MuonlabII:
         self._write_setting('HV_2', voltage_byte)
 
     def _set_pmt1_threshold(self, threshold):
-        """set threshold for PMT 1.
+        """Set threshold for PMT 1.
 
         Events with a signal strength below the specified threshold will
         be ignored as noise.
@@ -106,7 +123,7 @@ class MuonlabII:
         self._write_setting('THR_1', threshold_byte)
 
     def _set_pmt2_threshold(self, threshold):
-        """set threshold for PMT 2.
+        """Set threshold for PMT 2.
 
         Events with a signal strength below the specified threshold will
         be ignored as noise.
@@ -119,12 +136,12 @@ class MuonlabII:
         self._write_setting('THR_2', threshold_byte)
 
     def _set_lifetime_measurement(self):
-        """select lifetime measurement mode"""
+        """Select lifetime measurement mode."""
 
         self._write_setting('MEAS', 0xff)
 
     def _set_coincidence_measurement(self):
-        """select coincidence time difference measurement mode"""
+        """Select coincidence time difference measurement mode."""
 
         self._write_setting('MEAS', 0x00)
 
@@ -140,7 +157,7 @@ class MuonlabII:
         self._device.read(BUFFER_SIZE)
 
     def read_lifetime_data(self):
-        """Read lifetime data from detector
+        """Read lifetime data from detector.
 
         :returns: list of lifetime measurements
 
@@ -169,7 +186,7 @@ class MuonlabII:
             return []
 
     def read_coincidence_data(self):
-        """Read coincidence data from detector
+        """Read coincidence data from detector.
 
         :returns: list of coincidence time difference measurements
 

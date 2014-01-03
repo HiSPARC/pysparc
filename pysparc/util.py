@@ -1,4 +1,4 @@
-"""Unassorted utility functions"""
+"""Unassorted utility functions."""
 
 
 def clipped_map(value, from_low, from_high, to_low, to_high):
