@@ -7,9 +7,9 @@ class Main(object):
 
     def __init__(self):
         self.muonlab = MuonlabII()
-        self.muonlab._set_lifetime_measurement()
-        self.muonlab._set_pmt1_voltage(900)
-        self.muonlab._set_pmt1_threshold(500)
+        self.muonlab.select_lifetime_measurement()
+        self.muonlab.set_pmt1_voltage(900)
+        self.muonlab.set_pmt1_threshold(500)
 
         self.data = []
 

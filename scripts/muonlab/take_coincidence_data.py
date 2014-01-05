@@ -7,11 +7,11 @@ class Main(object):
 
     def __init__(self):
         self.muonlab = MuonlabII()
-        self.muonlab._set_coincidence_measurement()
-        self.muonlab._set_pmt1_voltage(900)
-        self.muonlab._set_pmt1_threshold(200)
-        self.muonlab._set_pmt2_voltage(1000)
-        self.muonlab._set_pmt2_threshold(200)
+        self.muonlab.select_coincidence_measurement()
+        self.muonlab.set_pmt1_voltage(900)
+        self.muonlab.set_pmt1_threshold(200)
+        self.muonlab.set_pmt2_voltage(1000)
+        self.muonlab.set_pmt2_threshold(200)
 
         self.data = []
 
