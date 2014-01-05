@@ -100,13 +100,13 @@ class MuonlabIITest(unittest.TestCase):
         mock_map.assert_called_once_with(600, 0, 1200, 0x00, 0xff)
 
     @patch.object(muonlab_ii.MuonlabII, '_write_setting')
-    def test_set_lifetime_measurement(self, mock_write):
-        self.muonlab.set_lifetime_measurement()
+    def test_select_lifetime_measurement(self, mock_write):
+        self.muonlab.select_lifetime_measurement()
         mock_write.assert_called_with('MEAS', 0xff)
 
     @patch.object(muonlab_ii.MuonlabII, '_write_setting')
-    def test_set_coincidence_measurement(self, mock_write):
-        self.muonlab.set_coincidence_measurement()
+    def test_select_coincidence_measurement(self, mock_write):
+        self.muonlab.select_coincidence_measurement()
         mock_write.assert_called_with('MEAS', 0x00)
 
     def test_read_lifetime_data_returns_list(self):

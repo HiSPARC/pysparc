@@ -135,12 +135,12 @@ class MuonlabII:
         threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
         self._write_setting('THR_2', threshold_byte)
 
-    def set_lifetime_measurement(self):
+    def select_lifetime_measurement(self):
         """Select lifetime measurement mode."""
 
         self._write_setting('MEAS', 0xff)
 
-    def set_coincidence_measurement(self):
+    def select_coincidence_measurement(self):
         """Select coincidence time difference measurement mode."""
 
         self._write_setting('MEAS', 0x00)
