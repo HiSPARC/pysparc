@@ -50,8 +50,8 @@ class MuonlabII:
     def __del__(self):
         """Cleanly shut down muonlab hardware."""
 
-        self._set_pmt1_voltage(0)
-        self._set_pmt2_voltage(0)
+        self.set_pmt1_voltage(0)
+        self.set_pmt2_voltage(0)
         self._device.close()
 
     def _write_setting(self, setting, data):
@@ -89,7 +89,7 @@ class MuonlabII:
             command = array('B', [high_byte, low_byte]).tostring()
         self._device.write(command)
 
-    def _set_pmt1_voltage(self, voltage):
+    def set_pmt1_voltage(self, voltage):
         """Set high voltage for PMT 1.
 
         :param voltage: integer.  Values are clipped to a 300 - 1500 V
@@ -99,7 +99,7 @@ class MuonlabII:
         voltage_byte = map_setting(voltage, 300, 1500, 0x00, 0xff)
         self._write_setting('HV_1', voltage_byte)
 
-    def _set_pmt2_voltage(self, voltage):
+    def set_pmt2_voltage(self, voltage):
         """Set high voltage for PMT 2.
 
         :param voltage: integer.  Values are clipped to a 300 - 1500 V
@@ -109,7 +109,7 @@ class MuonlabII:
         voltage_byte = map_setting(voltage, 300, 1500, 0x00, 0xff)
         self._write_setting('HV_2', voltage_byte)
 
-    def _set_pmt1_threshold(self, threshold):
+    def set_pmt1_threshold(self, threshold):
         """Set threshold for PMT 1.
 
         Events with a signal strength below the specified threshold will
@@ -122,7 +122,7 @@ class MuonlabII:
         threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
         self._write_setting('THR_1', threshold_byte)
 
-    def _set_pmt2_threshold(self, threshold):
+    def set_pmt2_threshold(self, threshold):
         """Set threshold for PMT 2.
 
         Events with a signal strength below the specified threshold will
@@ -135,12 +135,12 @@ class MuonlabII:
         threshold_byte = map_setting(threshold, 0, 1200, 0x00, 0xff)
         self._write_setting('THR_2', threshold_byte)
 
-    def _set_lifetime_measurement(self):
+    def set_lifetime_measurement(self):
         """Select lifetime measurement mode."""
 
         self._write_setting('MEAS', 0xff)
 
-    def _set_coincidence_measurement(self):
+    def set_coincidence_measurement(self):
         """Select coincidence time difference measurement mode."""
 
         self._write_setting('MEAS', 0x00)
