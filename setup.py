@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 
 setup(name='pysparc',
-      version='0.1',
+      version='0.2',
       packages=find_packages(),
       url='http://github.com/hisparc/pysparc/',
       bugtrack_url='http://github.com/HiSPARC/pysparc/issues',
       license='GPLv3',
-      author='David Fokkema',
+      author='David Fokkema, et al.',
       author_email='davidf@nikhef.nl',
       maintainer='HiSPARC',
       maintainer_email='beheer@hisparc.nl',
