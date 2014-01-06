@@ -198,8 +198,8 @@ class MuonlabII:
             for i in range(0, len(data), 2):
                 high_byte, low_byte = ord(data[i]), ord(data[i + 1])
 
-                det1_firsthit = bool(high_byte & 0x40)
-                det2_firsthit = bool(low_byte & 0x40)
+                det1_isfirsthit = bool(high_byte & 0x40)
+                det2_isfirsthit = bool(low_byte & 0x40)
 
                 # sanity checks
                 if not (high_byte & 0x80):
@@ -208,16 +208,16 @@ class MuonlabII:
                 if (low_byte & 0x80):
                     raise ValueError(
                         "Corrupt coincidence data (low byte bit flag set)")
-                if not det1_firsthit and not det2_firsthit:
+                if not det1_isfirsthit and not det2_isfirsthit:
                     raise ValueError(
                         "Corrupt coincidence data (no hit first flag set)")
 
                 adc_value = ((high_byte & 0x3f) << 6) | (low_byte & 0x3f)
                 deltatime = COINCIDENCE_TIMEDELTA_SCALE * adc_value
-                if det2_firsthit:
+                if det2_isfirsthit:
                     deltatime *= -1
-                deltatimes.append((deltatime, det1_firsthit,
-                                   det2_firsthit))
+                deltatimes.append((deltatime, det1_isfirsthit,
+                                   det2_isfirsthit))
             return deltatimes
         else:
             return []
