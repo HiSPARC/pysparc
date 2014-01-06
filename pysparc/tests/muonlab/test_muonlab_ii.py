@@ -177,6 +177,11 @@ class MuonlabIITest(unittest.TestCase):
         data = self.muonlab.read_coincidence_data()
         self.assertEqual(data, [(0., True, True)])
 
+    def test_read_coincidence_data_returns_positive_time_if_both_hit(self):
+        self.muonlab._device.read.return_value = '\xc0\x41'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [(6.25 / 12, True, True)])
+
     def test_read_coincidence_data_acceptance(self):
         self.muonlab._device.read.return_value = ''
         data = self.muonlab.read_coincidence_data()

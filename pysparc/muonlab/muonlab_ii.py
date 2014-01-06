@@ -214,7 +214,7 @@ class MuonlabII:
 
                 adc_value = ((high_byte & 0x3f) << 6) | (low_byte & 0x3f)
                 deltatime = COINCIDENCE_TIMEDELTA_SCALE * adc_value
-                if det2_isfirsthit:
+                if det2_isfirsthit and not det1_isfirsthit:
                     deltatime *= -1
                 deltatimes.append((deltatime, det1_isfirsthit,
                                    det2_isfirsthit))
