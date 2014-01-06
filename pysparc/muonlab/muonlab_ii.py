@@ -198,8 +198,8 @@ class MuonlabII:
             for i in range(0, len(data), 2):
                 high_byte, low_byte = ord(data[i]), ord(data[i + 1])
 
-                det1_firsthit = high_byte & 0x40
-                det2_firsthit = low_byte & 0x40
+                det1_firsthit = bool(high_byte & 0x40)
+                det2_firsthit = bool(low_byte & 0x40)
 
                 # sanity checks
                 if not (high_byte & 0x80):
@@ -216,7 +216,8 @@ class MuonlabII:
                 deltatime = COINCIDENCE_TIMEDELTA_SCALE * adc_value
                 if det2_firsthit:
                     deltatime *= -1
-                deltatimes.append(deltatime)
+                deltatimes.append((deltatime, det1_firsthit,
+                                   det2_firsthit))
             return deltatimes
         else:
             return []

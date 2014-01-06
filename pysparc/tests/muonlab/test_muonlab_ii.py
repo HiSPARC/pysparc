@@ -164,27 +164,41 @@ class MuonlabIITest(unittest.TestCase):
         self.muonlab.read_coincidence_data()
         self.muonlab._device.read.assert_called_once_with(mock_size)
 
+    def test_read_coincidence_data_returns_time_and_flags(self):
+        self.muonlab._device.read.return_value = '\xc0\x00'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [(0., True, False)])
+
+        self.muonlab._device.read.return_value = '\x80\x40'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [(0., False, True)])
+
+        self.muonlab._device.read.return_value = '\xc0\x40'
+        data = self.muonlab.read_coincidence_data()
+        self.assertEqual(data, [(0., True, True)])
+
     def test_read_coincidence_data_acceptance(self):
-        #TODO teken: t2 - t1
         self.muonlab._device.read.return_value = ''
         data = self.muonlab.read_coincidence_data()
         self.assertEqual(data, [])
 
         self.muonlab._device.read.return_value = '\xc5\x20'
         data = self.muonlab.read_coincidence_data()
-        self.assertEqual(data, [183.33333333333334])
+        self.assertEqual(data, [(183.33333333333334, True, False)])
 
         self.muonlab._device.read.return_value = '\xc5\x20\xc0\x13'
         data = self.muonlab.read_coincidence_data()
-        self.assertEqual(data, [183.33333333333334, 9.895833333333334])
+        self.assertEqual(data, [(183.33333333333334, True, False), 
+                                (9.895833333333334, True, False)])
 
         self.muonlab._device.read.return_value = '\x85\x60'
         data = self.muonlab.read_coincidence_data()
-        self.assertEqual(data, [-183.33333333333334])
+        self.assertEqual(data, [(-183.33333333333334, False, True)])
 
         self.muonlab._device.read.return_value = '\x85\x60\x80\x53'
         data = self.muonlab.read_coincidence_data()
-        self.assertEqual(data, [-183.33333333333334, -9.895833333333334])
+        self.assertEqual(data, [(-183.33333333333334, False, True),
+                                (-9.895833333333334, False, True)])
 
     def test_read_coincidence_data_raises_ValueError(self):
         # first received byte is not high byte
