@@ -22,6 +22,7 @@ class ListDevicesTest(unittest.TestCase):
     def test_list_devices_returns_list(self):
         self.assertIsInstance(self.devices, list)
 
+    @unittest.expectedFailure
     def test_find_muonlab_in_devices_list(self):
         self.assertIn(MUONLAB_ID, self.devices)
 
