@@ -29,6 +29,8 @@ class MuonlabII:
 
     """
 
+    _device = None
+
     # Yes, really, HV1 and 2 are reversed
     _address = {'HV_1': 2,
                 'HV_2': 1,
@@ -42,9 +44,10 @@ class MuonlabII:
     def __del__(self):
         """Cleanly shut down muonlab hardware."""
 
-        self.set_pmt1_voltage(0)
-        self.set_pmt2_voltage(0)
-        self._device.close()
+        if self._device:
+            self.set_pmt1_voltage(0)
+            self.set_pmt2_voltage(0)
+            self._device.close()
 
     def _write_setting(self, setting, data):
         """Write setting to device.
