@@ -1,22 +1,58 @@
 import pylibftdi
 
 
-class DeviceNotFoundError(Exception):
+# FTDI documentation: must be multiple of block size, which is 64 bytes
+# with 2 bytes overhead.  So, must be multiple of 62 bytes.
+READ_SIZE = 62
+
+# Default buffer size is 4K (64 * 64 bytes), but mind the overhead
+BUFFER_SIZE = 64 * 62
+
+
+class Error(Exception):
+
     def __init__(self, msg):
         self.ftdi_msg = msg
 
+
+class DeviceNotFoundError(Error):
+
     def __str__(self):
-        return "Device not found"
+        return "Device not found."
+
+
+class DeviceError(Error):
+
+    def __str__(self):
+        return "Device error: %s" % self.ftdi_msg
 
 
 class FtdiChip(object):
+
+    _device = None
 
     def __init__(self, device_description=None):
         try:
             self._device = pylibftdi.Device(device_description)
         except pylibftdi.FtdiError as e:
-            raise DeviceNotFoundError(str(e))
+            if "(-3)" in str(e):
+                raise DeviceNotFoundError(str(e))
+            else:
+                raise DeviceError(str(e))
+        else:
+            self.flush_device()
+
+    def __del__(self):
+        if self._device:
+            self.close()
+
+    def close(self):
+        self._device.close()
 
     @staticmethod
     def find_all():
         return pylibftdi.Driver().list_devices()
+
+    def flush_device(self):
+        self._device.flush()
+        self._device.read(BUFFER_SIZE)

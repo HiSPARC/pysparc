@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, sentinel
+from mock import patch, sentinel, Mock
 
 from pysparc.muonlab import ftdi_chip
 
@@ -44,15 +44,54 @@ class FtdiChipTest(unittest.TestCase):
                           ftdi_chip.FtdiChip)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
-    def test_init_raises_DeviceNotFoundError_if_no_rights(self,
-                                                          mock_Device):
+    def test_init_raises_DeviceError_if_no_rights(self, mock_Device):
         # This occurs on OS X Mavericks.  You'll have to unload the driver
         # from OS X:
         # $ sudo kextunload -b com.apple.driver.AppleUSBFTDI
         mock_Device.side_effect = ftdi_chip.pylibftdi.FtdiError(
             "unable to claim usb device. Make sure the default FTDI driver is not in use (-5)")
-        self.assertRaises(ftdi_chip.DeviceNotFoundError,
+        self.assertRaises(ftdi_chip.DeviceError,
                           ftdi_chip.FtdiChip)
+
+    @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
+    def test_init_raises_DeviceError_if_error_and_returns_ftdi_msg(self,
+        mock_Device):
+
+        msg = "Foobaz"
+        mock_Device.side_effect = ftdi_chip.pylibftdi.FtdiError(msg)
+        self.assertRaisesRegexp(ftdi_chip.DeviceError, msg,
+                          ftdi_chip.FtdiChip)
+
+    @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
+    @patch.object(ftdi_chip.FtdiChip, 'flush_device')
+    def test_init_calls_flush_device(self, mock_flush, mock_Device):
+        ftdi_chip.FtdiChip()
+        mock_flush.assert_called_once_with()
+
+    def test_flush_device_flushes_device(self):
+        self.mock_device.flush.assert_called_once_with()
+
+    @patch.object(ftdi_chip, 'BUFFER_SIZE')
+    def test_flush_device(self, mock_size):
+        self.mock_device.reset_mock()
+        self.device.flush_device()
+
+        self.mock_device.flush.assert_called_once_with()
+        self.mock_device.read.assert_called_once_with(mock_size)
+        method_names = [x[0] for x in self.mock_device.method_calls]
+        # Assert flush called before read
+        self.assertLess(method_names.index('flush'),
+                        method_names.index('read'))
+
+    def test_close_closes_device(self):
+        self.device.close()
+        self.mock_device.close.assert_called_once_with()
+
+    def test_destructor_calls_close(self):
+        mock_close = Mock()
+        self.device.close = mock_close
+        del self.device
+        mock_close.assert_called_once_with()
 
 
 if __name__ == '__main__':
