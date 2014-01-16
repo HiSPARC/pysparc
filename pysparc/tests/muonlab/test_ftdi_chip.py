@@ -71,6 +71,9 @@ class FtdiChipTest(unittest.TestCase):
     def test_flush_device_flushes_device(self):
         self.mock_device.flush.assert_called_once_with()
 
+    def test_BUFFER_SIZE_is_multiple_of_62(self):
+        self.assertTrue(ftdi_chip.BUFFER_SIZE % 62 == 0)
+
     @patch.object(ftdi_chip, 'BUFFER_SIZE')
     def test_flush_device(self, mock_size):
         self.mock_device.reset_mock()
@@ -92,6 +95,9 @@ class FtdiChipTest(unittest.TestCase):
         self.device.close = mock_close
         del self.device
         mock_close.assert_called_once_with()
+
+    def test_READ_SIZE_is_multiple_of_62(self):
+        self.assertTrue(ftdi_chip.READ_SIZE % 62 == 0)
 
     @patch.object(ftdi_chip, 'READ_SIZE')
     def test_read_calls_device_read_with_correct_size(self, mock_size):

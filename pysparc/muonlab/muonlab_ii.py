@@ -10,19 +10,11 @@ Contents
 
 from array import array
 
-import pylibftdi
-
+from ftdi_chip import FtdiChip
 from pysparc.util import map_setting
 
 
 DESCRIPTION = "USB <-> Serial"
-
-# FTDI documentation: must be multiple of block size, which is 64 bytes
-# with 2 bytes overhead.  So, must be multiple of 62 bytes.
-READ_SIZE = 62
-
-# Default buffer size is 4K (64 * 64 bytes), but mind the overhead
-BUFFER_SIZE = 64 * 62
 
 LIFETIME_SCALE = 6.25
 COINCIDENCE_TIMEDELTA_SCALE = 6.25 / 12
@@ -45,7 +37,7 @@ class MuonlabII:
                 'MEAS': 5}
 
     def __init__(self):
-        self._device = pylibftdi.Device(DESCRIPTION)
+        self._device = FtdiChip(DESCRIPTION)
 
     def __del__(self):
         """Cleanly shut down muonlab hardware."""
@@ -153,16 +145,17 @@ class MuonlabII:
         was called is really newly measured.
 
         """
-        self._device.flush_output()
-        self._device.read(BUFFER_SIZE)
+        self._device.flush_device()
 
     def read_lifetime_data(self):
         """Read lifetime data from detector.
 
+        Raises ValueError when corrupt data is received.
+
         :returns: list of lifetime measurements
 
         """
-        data = self._device.read(READ_SIZE)
+        data = self._device.read()
 
         if data:
             lifetimes = []
@@ -188,10 +181,12 @@ class MuonlabII:
     def read_coincidence_data(self):
         """Read coincidence data from detector.
 
+        Raises ValueError when corrupt data is received.
+
         :returns: list of coincidence time difference measurements
 
         """
-        data = self._device.read(READ_SIZE)
+        data = self._device.read()
         if data:
             deltatimes = []
             #for word_value in data[::2]:

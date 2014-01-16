@@ -7,7 +7,7 @@ from pysparc.muonlab import muonlab_ii
 
 class MuonlabIITest(unittest.TestCase):
 
-    @patch('pysparc.muonlab.muonlab_ii.pylibftdi.Device')
+    @patch('pysparc.muonlab.muonlab_ii.FtdiChip')
     def setUp(self, mock_Device):
         self.mock_Device = mock_Device
         self.mock_device = mock_Device.return_value
@@ -118,14 +118,10 @@ class MuonlabIITest(unittest.TestCase):
         data = self.muonlab.read_lifetime_data()
         self.assertIsInstance(data, list)
 
-    @patch.object(muonlab_ii, 'READ_SIZE')
-    def test_read_lifetime_data_calls_device_read(self, mock_size):
+    def test_read_lifetime_data_calls_device_read(self):
         self.muonlab._device.read.return_value = ''
         self.muonlab.read_lifetime_data()
-        self.muonlab._device.read.assert_called_once_with(mock_size)
-
-    def test_READ_SIZE_is_multiple_of_62(self):
-        self.assertTrue(muonlab_ii.READ_SIZE % 62 == 0)
+        self.muonlab._device.read.assert_called_once_with()
 
     def test_read_lifetime_data_acceptance(self):
         self.muonlab._device.read.return_value = ''
@@ -158,11 +154,10 @@ class MuonlabIITest(unittest.TestCase):
         data = self.muonlab.read_coincidence_data()
         self.assertIsInstance(data, list)
 
-    @patch.object(muonlab_ii, 'READ_SIZE')
-    def test_read_coincidence_data_calls_device_read(self, mock_size):
+    def test_read_coincidence_data_calls_device_read(self):
         self.muonlab._device.read.return_value = ''
         self.muonlab.read_coincidence_data()
-        self.muonlab._device.read.assert_called_once_with(mock_size)
+        self.muonlab._device.read.assert_called_once_with()
 
     def test_read_coincidence_data_returns_time_and_flags(self):
         self.muonlab._device.read.return_value = '\xc0\x00'
@@ -229,14 +224,9 @@ class MuonlabIITest(unittest.TestCase):
         del self.muonlab
         self.mock_device.close.assert_called_once_with()
 
-    def test_BUFFER_SIZE_is_multiple_of_62(self):
-        self.assertTrue(muonlab_ii.BUFFER_SIZE % 62 == 0)
-
-    @patch.object(muonlab_ii, 'BUFFER_SIZE')
-    def test_flush_device(self, mock_size):
+    def test_flush_device_calls_device_flush(self):
         self.muonlab.flush_device()
-        self.mock_device.flush_output.assert_called_once_with()
-        self.mock_device.read.assert_called_once_with(mock_size)
+        self.mock_device.flush_device.assert_called_once_with()
 
 
 if __name__ == '__main__':
