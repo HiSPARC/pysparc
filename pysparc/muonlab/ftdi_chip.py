@@ -27,6 +27,12 @@ class DeviceError(Error):
         return "Device error: %s" % self.ftdi_msg
 
 
+class ReadError(Error):
+
+    def __str__(self):
+        return "Device read error: %s" % self.ftdi_msg
+
+
 class FtdiChip(object):
 
     _device = None
@@ -34,11 +40,11 @@ class FtdiChip(object):
     def __init__(self, device_description=None):
         try:
             self._device = pylibftdi.Device(device_description)
-        except pylibftdi.FtdiError as e:
-            if "(-3)" in str(e):
-                raise DeviceNotFoundError(str(e))
+        except pylibftdi.FtdiError as exc:
+            if "(-3)" in str(exc):
+                raise DeviceNotFoundError(str(exc))
             else:
-                raise DeviceError(str(e))
+                raise DeviceError(str(exc))
         else:
             self.flush_device()
 
@@ -56,3 +62,16 @@ class FtdiChip(object):
     def flush_device(self):
         self._device.flush()
         self._device.read(BUFFER_SIZE)
+
+    def read(self):
+        for i in range(3):
+            try:
+                data = self._device.read(READ_SIZE)
+            except pylibftdi.FtdiError as exc:
+                continue
+            else:
+                return data
+        raise ReadError(str(exc))
+
+    def write(self, data):
+        self._device.write(data)

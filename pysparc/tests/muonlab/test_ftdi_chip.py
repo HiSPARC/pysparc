@@ -93,6 +93,32 @@ class FtdiChipTest(unittest.TestCase):
         del self.device
         mock_close.assert_called_once_with()
 
+    @patch.object(ftdi_chip, 'READ_SIZE')
+    def test_read_calls_device_read_with_correct_size(self, mock_size):
+        self.mock_device.reset_mock()
+        self.device.read()
+        self.mock_device.read.assert_called_once_with(mock_size)
+
+    def test_read_returns_device_read(self):
+        data = self.device.read()
+        self.assertIs(data, self.mock_device.read.return_value)
+
+    def test_read_retries_read_on_exception_three_times(self):
+        self.mock_device.read.side_effect = [
+            ftdi_chip.pylibftdi.FtdiError(),
+            ftdi_chip.pylibftdi.FtdiError(), None]
+        self.device.read()
+
+    def test_read_raises_ReadError_on_failed_read(self):
+        self.mock_device.read.side_effect = \
+            ftdi_chip.pylibftdi.FtdiError("Foo")
+        self.assertRaisesRegexp(ftdi_chip.ReadError, "Foo",
+                                self.device.read)
+
+    def test_write_calls_device_write(self):
+        self.device.write(sentinel.data)
+        self.mock_device.write.assert_called_once_with(sentinel.data)
+
 
 if __name__ == '__main__':
     unittest.main()
