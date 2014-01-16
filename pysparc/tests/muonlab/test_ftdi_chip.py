@@ -1,8 +1,12 @@
 import unittest
+import logging
 
 from mock import patch, sentinel, Mock
 
 from pysparc.muonlab import ftdi_chip
+
+
+logging.disable(logging.CRITICAL)
 
 
 class FtdiChipStaticMethodTest(unittest.TestCase):

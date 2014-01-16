@@ -1,4 +1,5 @@
 import time
+import logging
 
 from pysparc.muonlab.muonlab_ii import MuonlabII
 
@@ -36,6 +37,8 @@ class Main(object):
 
 
 if __name__ == '__main__':
+    logging.basicConfig()
+
     if 'main' not in globals():
         main = Main()
     main.main()

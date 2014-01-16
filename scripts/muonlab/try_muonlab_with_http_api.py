@@ -1,5 +1,6 @@
 import time
 from multiprocessing import Process, Pipe, Event
+import logging
 
 from flask import Flask
 app = Flask(__name__)
@@ -42,6 +43,8 @@ def muonlab(conn, must_shutdown):
 
 
 if __name__ == '__main__':
+    logging.basicConfig()
+
     conn1, conn2 = Pipe()
     must_shutdown = Event()
 

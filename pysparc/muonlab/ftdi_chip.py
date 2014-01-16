@@ -23,7 +23,12 @@ Contents
 
 """
 
+import logging
+
 import pylibftdi
+
+
+logger = logging.getLogger(__name__)
 
 
 # FTDI documentation: must be multiple of block size, which is 64 bytes
@@ -143,6 +148,7 @@ class FtdiChip(object):
             try:
                 data = self._device.read(READ_SIZE)
             except pylibftdi.FtdiError as exc:
+                logger.warning("Read failed, retrying...")
                 continue
             else:
                 return data
@@ -161,6 +167,7 @@ class FtdiChip(object):
             try:
                 self._device.write(data)
             except pylibftdi.FtdiError as exc:
+                logger.warning("Write failed, retrying...")
                 continue
             else:
                 return
