@@ -33,6 +33,12 @@ class ReadError(Error):
         return "Device read error: %s" % self.ftdi_msg
 
 
+class WriteError(Error):
+
+    def __str__(self):
+        return "Device write error: %s" % self.ftdi_msg
+
+
 class FtdiChip(object):
 
     _device = None
@@ -74,4 +80,11 @@ class FtdiChip(object):
         raise ReadError(str(exc))
 
     def write(self, data):
-        self._device.write(data)
+        for i in range(3):
+            try:
+                self._device.write(data)
+            except pylibftdi.FtdiError as exc:
+                continue
+            else:
+                return
+        raise WriteError(str(exc))
