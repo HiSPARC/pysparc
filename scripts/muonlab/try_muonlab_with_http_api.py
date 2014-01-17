@@ -58,5 +58,4 @@ if __name__ == '__main__':
     p2.start()
 
     p2.join()
-    must_shutdown.wait()
     p.terminate()
