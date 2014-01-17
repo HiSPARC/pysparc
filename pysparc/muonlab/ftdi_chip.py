@@ -152,6 +152,7 @@ class FtdiChip(object):
                 continue
             else:
                 return data
+        logger.error("Read failed.")
         raise ReadError(str(exc))
 
     def write(self, data):
@@ -171,4 +172,5 @@ class FtdiChip(object):
                 continue
             else:
                 return
+        logger.error("Write failed.")
         raise WriteError(str(exc))
