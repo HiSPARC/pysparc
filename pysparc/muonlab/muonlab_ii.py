@@ -9,6 +9,7 @@ Contents
 """
 
 from array import array
+import random
 
 from ftdi_chip import FtdiChip
 from pysparc.util import map_setting
@@ -219,3 +220,44 @@ class MuonlabII:
             return deltatimes
         else:
             return []
+
+
+class FakeMuonlabII:
+
+    """Access FAKE Muonlab II hardware.
+
+    Instantiate this class to test an application without needing to
+    connect actual hardware.  This class does very little.
+
+    """
+
+    def set_pmt1_voltage(self, voltage):
+        pass
+
+    def set_pmt2_voltage(self, voltage):
+        pass
+
+    def set_pmt1_threshold(self, threshold):
+        pass
+
+    def set_pmt2_threshold(self, threshold):
+        pass
+
+    def select_lifetime_measurement(self):
+        pass
+
+    def select_coincidence_measurement(self):
+        pass
+
+    def flush_device(self):
+        pass
+
+    def read_lifetime_data(self):
+        """Return FAKE lifetime data matching a 2.2 us lifetime."""
+
+        return [random.expovariate(1. / 2200)]
+
+    def read_coincidence_data(self):
+        """Return FAKE coincidence data matching a 10 ns sigma."""
+
+        return [random.normalvariate(0, 10.)]
