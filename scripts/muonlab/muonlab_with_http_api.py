@@ -7,8 +7,8 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-#from pysparc.muonlab.muonlab_ii import MuonlabII
-from pysparc.muonlab.muonlab_ii import FakeMuonlabII as MuonlabII
+from pysparc.muonlab.muonlab_ii import MuonlabII, FakeMuonlabII
+from pysparc.muonlab.ftdi_chip import DeviceNotFoundError
 
 
 @app.route('/')
@@ -36,7 +36,13 @@ def muonlab(conn, must_shutdown):
 
     logger = logging.getLogger('muonlab')
 
-    muonlab = MuonlabII()
+    try:
+        muonlab = MuonlabII()
+    except DeviceNotFoundError:
+        logger.warning(
+            "Hardware not detected, falling back to FAKE hardware")
+        muonlab = FakeMuonlabII()
+
     muonlab.set_pmt1_voltage(900)
     muonlab.set_pmt1_threshold(100)
     muonlab.select_lifetime_measurement()
