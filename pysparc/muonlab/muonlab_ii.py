@@ -10,6 +10,7 @@ Contents
 
 from array import array
 import random
+import time
 
 from ftdi_chip import FtdiChip
 from pysparc.util import map_setting
@@ -253,11 +254,13 @@ class FakeMuonlabII:
         pass
 
     def read_lifetime_data(self):
-        """Return FAKE lifetime data matching a 2.2 us lifetime."""
+        """Return FAKE lifetime data matching a 2.2 us lifetime at 2 Hz."""
 
+        time.sleep(.5)
         return [random.expovariate(1. / 2200)]
 
     def read_coincidence_data(self):
-        """Return FAKE coincidence data matching a 10 ns sigma."""
+        """Return FAKE coincidence data matching a 10 ns sigma at 2 Hz."""
 
+        time.sleep(.5)
         return [random.normalvariate(0, 10.)]
