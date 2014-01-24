@@ -3,7 +3,7 @@ from multiprocessing import Process, Pipe, Event
 import logging
 import signal
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect
 
 app = Flask(__name__)
 
@@ -11,9 +11,19 @@ from pysparc.muonlab.muonlab_ii import MuonlabII, FakeMuonlabII
 from pysparc.muonlab.ftdi_chip import DeviceNotFoundError
 
 
+def message(cmd, **kwargs):
+    return dict(cmd=cmd, kwargs=kwargs)
+
+
 @app.route('/')
-def hello_world():
-    app.muonlab.send("GET")
+def landing_page():
+    return redirect('/data')
+
+
+@app.route('/data/', defaults={'start': 0})
+@app.route('/data/<int:start>')
+def get_data(start):
+    app.muonlab.send(message('get', start=start))
     data = app.muonlab.recv()
     app.mylogger.info("Sending data")
     return jsonify(lifetime_data=data)
@@ -55,8 +65,9 @@ def muonlab(conn, must_shutdown):
             all_data.extend(data)
         if conn.poll():
             msg = conn.recv()
-            if msg == 'GET':
-                conn.send(all_data)
+            if msg['cmd'] == 'get':
+                start = msg['kwargs']['start']
+                conn.send(all_data[start:])
     logger.info("MUONLAB shutting down.")
 
 
