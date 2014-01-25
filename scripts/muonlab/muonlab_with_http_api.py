@@ -3,7 +3,7 @@ from multiprocessing import Process, Pipe, Event
 import logging
 import signal
 
-from flask import Flask, jsonify, redirect
+from flask import Flask, jsonify, redirect, request
 
 app = Flask(__name__)
 
@@ -20,10 +20,15 @@ def landing_page():
     return redirect('/data')
 
 
-@app.route('/data/', defaults={'start': 0})
-@app.route('/data/<int:start>')
-def get_data(start):
-    app.muonlab.send(message('get', start=start))
+@app.route('/data')
+def get_data():
+    start = request.args.get('start', None)
+    if start is not None:
+        start = int(start)
+    stop = request.args.get('stop', None)
+    if stop is not None:
+        stop = int(stop)
+    app.muonlab.send(message('get', start=start, stop=stop))
     data = app.muonlab.recv()
     app.mylogger.info("Sending data")
     return jsonify(lifetime_data=data)
@@ -67,7 +72,8 @@ def muonlab(conn, must_shutdown):
             msg = conn.recv()
             if msg['cmd'] == 'get':
                 start = msg['kwargs']['start']
-                conn.send(all_data[start:])
+                stop = msg['kwargs']['stop']
+                conn.send(all_data[start:stop])
     logger.info("MUONLAB shutting down.")
 
 
