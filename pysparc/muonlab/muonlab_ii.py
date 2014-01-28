@@ -9,20 +9,14 @@ Contents
 """
 
 from array import array
+import random
+import time
 
-import pylibftdi
-
+from ftdi_chip import FtdiChip
 from pysparc.util import map_setting
 
 
 DESCRIPTION = "USB <-> Serial"
-
-# FTDI documentation: must be multiple of block size, which is 64 bytes
-# with 2 bytes overhead.  So, must be multiple of 62 bytes.
-READ_SIZE = 62
-
-# Default buffer size is 4K (64 * 64 bytes), but mind the overhead
-BUFFER_SIZE = 64 * 62
 
 LIFETIME_SCALE = 6.25
 COINCIDENCE_TIMEDELTA_SCALE = 6.25 / 12
@@ -37,6 +31,8 @@ class MuonlabII:
 
     """
 
+    _device = None
+
     # Yes, really, HV1 and 2 are reversed
     _address = {'HV_1': 2,
                 'HV_2': 1,
@@ -45,14 +41,15 @@ class MuonlabII:
                 'MEAS': 5}
 
     def __init__(self):
-        self._device = pylibftdi.Device(DESCRIPTION)
+        self._device = FtdiChip(DESCRIPTION)
 
     def __del__(self):
         """Cleanly shut down muonlab hardware."""
 
-        self.set_pmt1_voltage(0)
-        self.set_pmt2_voltage(0)
-        self._device.close()
+        if self._device:
+            self.set_pmt1_voltage(0)
+            self.set_pmt2_voltage(0)
+            self._device.close()
 
     def _write_setting(self, setting, data):
         """Write setting to device.
@@ -153,16 +150,17 @@ class MuonlabII:
         was called is really newly measured.
 
         """
-        self._device.flush_output()
-        self._device.read(BUFFER_SIZE)
+        self._device.flush_device()
 
     def read_lifetime_data(self):
         """Read lifetime data from detector.
 
+        Raises ValueError when corrupt data is received.
+
         :returns: list of lifetime measurements
 
         """
-        data = self._device.read(READ_SIZE)
+        data = self._device.read()
 
         if data:
             lifetimes = []
@@ -188,10 +186,12 @@ class MuonlabII:
     def read_coincidence_data(self):
         """Read coincidence data from detector.
 
+        Raises ValueError when corrupt data is received.
+
         :returns: list of coincidence time difference measurements
 
         """
-        data = self._device.read(READ_SIZE)
+        data = self._device.read()
         if data:
             deltatimes = []
             #for word_value in data[::2]:
@@ -221,3 +221,46 @@ class MuonlabII:
             return deltatimes
         else:
             return []
+
+
+class FakeMuonlabII:
+
+    """Access FAKE Muonlab II hardware.
+
+    Instantiate this class to test an application without needing to
+    connect actual hardware.  This class does very little.
+
+    """
+
+    def set_pmt1_voltage(self, voltage):
+        pass
+
+    def set_pmt2_voltage(self, voltage):
+        pass
+
+    def set_pmt1_threshold(self, threshold):
+        pass
+
+    def set_pmt2_threshold(self, threshold):
+        pass
+
+    def select_lifetime_measurement(self):
+        pass
+
+    def select_coincidence_measurement(self):
+        pass
+
+    def flush_device(self):
+        pass
+
+    def read_lifetime_data(self):
+        """Return FAKE lifetime data matching a 2.2 us lifetime at 2 Hz."""
+
+        time.sleep(.5)
+        return [random.expovariate(1. / 2200)]
+
+    def read_coincidence_data(self):
+        """Return FAKE coincidence data matching a 10 ns sigma at 2 Hz."""
+
+        time.sleep(.5)
+        return [random.normalvariate(0, 10.)]
