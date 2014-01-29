@@ -28,8 +28,15 @@ class FtdiChipTest(unittest.TestCase):
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
     def setUp(self, mock_Device):
-        self.mock_device = mock_Device.return_value
         self.device = ftdi_chip.FtdiChip()
+        # this setup does not depend on __init__ to store the device.  We
+        # do that explicitly here, to isolate quite a few tests from
+        # correct __init__ behavior.  Be sure to test __init__!  We also
+        # do *not* use mock_Device.return_value as the mock_device.  This
+        # is to ensure we have a clean, not-even-called-once mock for
+        # use in the tests.  This saves us a few reset_mock().
+        self.mock_device = Mock()
+        self.device._device = self.mock_device
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
     def test_init_stores_device_description(self, mock_Device):
@@ -88,18 +95,14 @@ class FtdiChipTest(unittest.TestCase):
         mock_flush.assert_called_once_with()
 
     def test_flush_device_flushes_device(self):
-        mock_device = Mock()
-        self.device._device = mock_device
-
         self.device.flush_device()
-        mock_device.flush.assert_called_once_with()
+        self.mock_device.flush.assert_called_once_with()
 
     def test_BUFFER_SIZE_is_multiple_of_62(self):
         self.assertTrue(ftdi_chip.BUFFER_SIZE % 62 == 0)
 
     @patch.object(ftdi_chip, 'BUFFER_SIZE')
     def test_flush_device(self, mock_size):
-        self.mock_device.reset_mock()
         self.device.flush_device()
 
         self.mock_device.flush.assert_called_once_with()
@@ -110,11 +113,8 @@ class FtdiChipTest(unittest.TestCase):
                         method_names.index('read'))
 
     def test_close_closes_device(self):
-        mock_device = Mock()
-        self.device._device = mock_device
-
         self.device.close()
-        mock_device.close.assert_called_once_with()
+        self.mock_device.close.assert_called_once_with()
 
     def test_close_only_closes_if_open(self):
         self.device._device = None
@@ -138,7 +138,6 @@ class FtdiChipTest(unittest.TestCase):
 
     @patch.object(ftdi_chip, 'READ_SIZE')
     def test_read_calls_device_read_with_correct_size(self, mock_size):
-        self.mock_device.reset_mock()
         self.device.read()
         self.mock_device.read.assert_called_once_with(mock_size)
 
@@ -152,7 +151,7 @@ class FtdiChipTest(unittest.TestCase):
         self.assertRaisesRegexp(ftdi_chip.ReadError, "Foo",
                                 self.device.read)
 
-    def test_read_retries_read_on_exception_three_times(self):
+    def test_read_retries_read_on_exception_at_least_three_times(self):
         self.mock_device.read.side_effect = [
             ftdi_chip.pylibftdi.FtdiError(),
             ftdi_chip.pylibftdi.FtdiError(), None]
