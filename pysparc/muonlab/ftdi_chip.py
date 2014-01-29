@@ -106,15 +106,19 @@ class FtdiChip(object):
         Raises :class:`DeviceError` if the device cannot be opened.
 
         """
-        try:
-            self._device = pylibftdi.Device(self._device_description)
-        except pylibftdi.FtdiError as exc:
-            if "(-3)" in str(exc):
-                raise DeviceNotFoundError(str(exc))
+        if self._device is None:
+            try:
+                self._device = pylibftdi.Device(self._device_description)
+            except pylibftdi.FtdiError as exc:
+                if "(-3)" in str(exc):
+                    raise DeviceNotFoundError(str(exc))
+                else:
+                    raise DeviceError(str(exc))
             else:
-                raise DeviceError(str(exc))
+                self.closed = False
+                self.flush()
         else:
-            self.flush()
+            return
 
     def __del__(self):
         self.close()
