@@ -114,7 +114,7 @@ class FtdiChip(object):
             else:
                 raise DeviceError(str(exc))
         else:
-            self.flush_device()
+            self.flush()
 
     def __del__(self):
         self.close()
@@ -135,7 +135,7 @@ class FtdiChip(object):
         """
         return pylibftdi.Driver().list_devices()
 
-    def flush_device(self):
+    def flush(self):
         """Flush device buffers.
 
         To completely clear out outdated measurements, e.g. when changing

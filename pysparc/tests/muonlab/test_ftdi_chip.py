@@ -89,21 +89,21 @@ class FtdiChipTest(unittest.TestCase):
                                 self.device.open)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
-    @patch.object(ftdi_chip.FtdiChip, 'flush_device')
-    def test_open_calls_flush_device(self, mock_flush, mock_Device):
+    @patch.object(ftdi_chip.FtdiChip, 'flush')
+    def test_open_calls_flush(self, mock_flush, mock_Device):
         self.device.open()
         mock_flush.assert_called_once_with()
 
-    def test_flush_device_flushes_device(self):
-        self.device.flush_device()
+    def test_flush_flushes_device(self):
+        self.device.flush()
         self.mock_device.flush.assert_called_once_with()
 
     def test_BUFFER_SIZE_is_multiple_of_62(self):
         self.assertTrue(ftdi_chip.BUFFER_SIZE % 62 == 0)
 
     @patch.object(ftdi_chip, 'BUFFER_SIZE')
-    def test_flush_device(self, mock_size):
-        self.device.flush_device()
+    def test_flush(self, mock_size):
+        self.device.flush()
 
         self.mock_device.flush.assert_called_once_with()
         self.mock_device.read.assert_called_once_with(mock_size)
