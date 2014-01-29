@@ -96,8 +96,18 @@ class FtdiChip(object):
     _device = None
 
     def __init__(self, device_description=None):
+        self._device_description = device_description
+        self.open()
+
+    def open(self):
+        """Open device.
+
+        Raises :class:`DeviceNotFoundError` if the device cannot be found.
+        Raises :class:`DeviceError` if the device cannot be opened.
+
+        """
         try:
-            self._device = pylibftdi.Device(device_description)
+            self._device = pylibftdi.Device(self._device_description)
         except pylibftdi.FtdiError as exc:
             if "(-3)" in str(exc):
                 raise DeviceNotFoundError(str(exc))
@@ -107,13 +117,14 @@ class FtdiChip(object):
             self.flush_device()
 
     def __del__(self):
-        if self._device:
-            self.close()
+        self.close()
 
     def close(self):
         """Close device."""
 
-        self._device.close()
+        if self._device:
+            self._device.close()
+            self._device = None
 
     @staticmethod
     def find_all():

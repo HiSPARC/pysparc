@@ -32,48 +32,67 @@ class FtdiChipTest(unittest.TestCase):
         self.device = ftdi_chip.FtdiChip()
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
-    def test_init_opens_device_with_description(self, mock_Device):
+    def test_init_stores_device_description(self, mock_Device):
         device = ftdi_chip.FtdiChip(sentinel.description)
-        mock_Device.assert_called_once_with(sentinel.description)
+        self.assertIs(device._device_description, sentinel.description)
 
-    def test_init_stores_device(self):
-        self.assertIs(self.device._device, self.mock_device)
+    @patch.object(ftdi_chip.FtdiChip, 'open')
+    def test_init_calls_open(self, mock_open):
+        device = ftdi_chip.FtdiChip()
+        mock_open.assert_called_once_with()
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
-    def test_init_raises_DeviceNotFoundError_if_not_present(self,
+    def test_open_opens_device_with_description(self, mock_Device):
+        self.device._device_description = sentinel.description
+        self.device.open()
+        mock_Device.assert_called_once_with(sentinel.description)
+
+    @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
+    def test_open_stores_device(self, mock_Device):
+        mock_device = Mock()
+        mock_Device.return_value = mock_device
+        self.device.open()
+        self.assertIs(self.device._device, mock_device)
+
+    @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
+    def test_open_raises_DeviceNotFoundError_if_not_present(self,
                                                             mock_Device):
         mock_Device.side_effect = ftdi_chip.pylibftdi.FtdiError(
             "FtdiError: device not found (-3)")
         self.assertRaises(ftdi_chip.DeviceNotFoundError,
-                          ftdi_chip.FtdiChip)
+                          self.device.open)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
-    def test_init_raises_DeviceError_if_no_rights(self, mock_Device):
+    def test_open_raises_DeviceError_if_no_rights(self, mock_Device):
         # This occurs on OS X Mavericks.  You'll have to unload the driver
         # from OS X:
         # $ sudo kextunload -b com.apple.driver.AppleUSBFTDI
         mock_Device.side_effect = ftdi_chip.pylibftdi.FtdiError(
             "unable to claim usb device. Make sure the default FTDI driver is not in use (-5)")
         self.assertRaises(ftdi_chip.DeviceError,
-                          ftdi_chip.FtdiChip)
+                          self.device.open)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
-    def test_init_raises_DeviceError_if_error_and_returns_ftdi_msg(self,
+    def test_open_raises_DeviceError_if_error_and_returns_ftdi_msg(self,
         mock_Device):
 
         msg = "Foobaz"
         mock_Device.side_effect = ftdi_chip.pylibftdi.FtdiError(msg)
         self.assertRaisesRegexp(ftdi_chip.DeviceError, msg,
-                          ftdi_chip.FtdiChip)
+                                self.device.open)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
     @patch.object(ftdi_chip.FtdiChip, 'flush_device')
-    def test_init_calls_flush_device(self, mock_flush, mock_Device):
-        ftdi_chip.FtdiChip()
+    def test_open_calls_flush_device(self, mock_flush, mock_Device):
+        self.device.open()
         mock_flush.assert_called_once_with()
 
     def test_flush_device_flushes_device(self):
-        self.mock_device.flush.assert_called_once_with()
+        mock_device = Mock()
+        self.device._device = mock_device
+
+        self.device.flush_device()
+        mock_device.flush.assert_called_once_with()
 
     def test_BUFFER_SIZE_is_multiple_of_62(self):
         self.assertTrue(ftdi_chip.BUFFER_SIZE % 62 == 0)
@@ -91,8 +110,22 @@ class FtdiChipTest(unittest.TestCase):
                         method_names.index('read'))
 
     def test_close_closes_device(self):
+        mock_device = Mock()
+        self.device._device = mock_device
+
         self.device.close()
-        self.mock_device.close.assert_called_once_with()
+        mock_device.close.assert_called_once_with()
+
+    def test_close_only_closes_if_open(self):
+        self.device._device = None
+        try:
+            self.device.close()
+        except AttributeError:
+            self.fail("close() raises AtributeError")
+
+    def test_close_sets_device_to_none(self):
+        self.device.close()
+        self.assertIs(self.device._device, None)
 
     def test_destructor_calls_close(self):
         mock_close = Mock()
