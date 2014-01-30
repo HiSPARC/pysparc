@@ -94,6 +94,7 @@ class FtdiChip(object):
     """
 
     _device = None
+    closed = True
 
     def __init__(self, device_description=None):
         self._device_description = device_description
@@ -126,9 +127,10 @@ class FtdiChip(object):
     def close(self):
         """Close device."""
 
-        if self._device:
+        if not self.closed:
             self._device.close()
             self._device = None
+            self.closed = True
 
     @staticmethod
     def find_all():

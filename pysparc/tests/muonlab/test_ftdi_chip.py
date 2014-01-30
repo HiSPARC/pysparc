@@ -70,12 +70,18 @@ class FtdiChipTest(unittest.TestCase):
         self.device.close()
         self.mock_device.close.assert_called_once_with()
 
-    def test_close_only_closes_if_open(self):
-        self.device._device = None
+    def test_close_sets_closed(self):
+        self.device.close()
+        self.assertTrue(self.device.closed)
+
+    def test_close_only_closes_if_not_closed(self):
+        self.device.close()
         try:
             self.device.close()
         except AttributeError:
             self.fail("close() raises AtributeError")
+        else:
+            self.mock_device.close.assert_called_once_with()
 
     def test_close_sets_device_to_none(self):
         self.device.close()
@@ -133,6 +139,9 @@ class FtdiChipTestWithClosedDevice(unittest.TestCase):
     @patch.object(ftdi_chip.FtdiChip, 'open')
     def setUp(self, mock_open):
         self.device = ftdi_chip.FtdiChip()
+
+    def test_device_is_closed_if_not_opened(self):
+        self.assertTrue(self.device.closed)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
     def test_open_opens_device_with_description(self, mock_Device):
