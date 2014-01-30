@@ -94,26 +94,43 @@ class FtdiChip(object):
     """
 
     _device = None
+    closed = True
 
     def __init__(self, device_description=None):
-        try:
-            self._device = pylibftdi.Device(device_description)
-        except pylibftdi.FtdiError as exc:
-            if "(-3)" in str(exc):
-                raise DeviceNotFoundError(str(exc))
+        self._device_description = device_description
+        self.open()
+
+    def open(self):
+        """Open device.
+
+        Raises :class:`DeviceNotFoundError` if the device cannot be found.
+        Raises :class:`DeviceError` if the device cannot be opened.
+
+        """
+        if self._device is None:
+            try:
+                self._device = pylibftdi.Device(self._device_description)
+            except pylibftdi.FtdiError as exc:
+                if "(-3)" in str(exc):
+                    raise DeviceNotFoundError(str(exc))
+                else:
+                    raise DeviceError(str(exc))
             else:
-                raise DeviceError(str(exc))
+                self.closed = False
+                self.flush()
         else:
-            self.flush_device()
+            return
 
     def __del__(self):
-        if self._device:
-            self.close()
+        self.close()
 
     def close(self):
         """Close device."""
 
-        self._device.close()
+        if not self.closed:
+            self._device.close()
+            self._device = None
+            self.closed = True
 
     @staticmethod
     def find_all():
@@ -124,7 +141,7 @@ class FtdiChip(object):
         """
         return pylibftdi.Driver().list_devices()
 
-    def flush_device(self):
+    def flush(self):
         """Flush device buffers.
 
         To completely clear out outdated measurements, e.g. when changing
