@@ -18,6 +18,7 @@ import argparse
 import time
 from multiprocessing import Process, Pipe, Event
 import logging
+import os.path
 import signal
 
 import tables
@@ -74,15 +75,17 @@ def muonlab(conn, must_shutdown, args):
 
     logger = logging.getLogger('muonlab')
 
+    table_name = args.name
+    table_path = os.path.join('/', table_name)
     data = tables.openFile('muonlab.h5', 'a')
-    if '/lifetime' not in data:
-        table = data.createTable('/', 'lifetime', LifeTime)
+    if table_path not in data:
+        table = data.createTable('/', table_name, LifeTime)
     elif not args.append:
         logger.error("Existing data found, but append not specified.")
         return
     else:
         logger.info("Existing data found, appending...")
-        table = data.getNode('/lifetime')
+        table = data.getNode(table_path)
     measurement = table.row
 
     try:
@@ -120,11 +123,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-V', '--voltage', type=int, default=900,
-                        help="PMT high voltage setting in V")
+                        help="PMT high voltage setting in V "
+                             "(default: 900 V)")
     parser.add_argument('-t', '--threshold', type=int, default=200,
-                        help="PMT threshold setting in mV")
+                        help="PMT threshold setting in mV "
+                             "(default: 200 mV)")
     parser.add_argument('-a', '--append', action='store_true',
                         help="Append measurement data to existing table")
+    parser.add_argument('-n', '--name', default='lifetime',
+                        help="Name of the table to create in the HDF5 "
+                             "file (default: lifetime)")
     args = parser.parse_args()
 
     conn1, conn2 = Pipe()
