@@ -105,33 +105,58 @@ class FtdiChipTest(unittest.TestCase):
         data = self.device.read()
         self.assertIs(data, self.mock_device.read.return_value)
 
-    def test_read_raises_ReadError_on_failed_read(self):
+    @patch('pysparc.muonlab.ftdi_chip.time.sleep')
+    def test_read_raises_ReadError_on_failed_read(self, mock_sleep):
         self.mock_device.read.side_effect = \
             ftdi_chip.pylibftdi.FtdiError("Foo")
         self.assertRaisesRegexp(ftdi_chip.ReadError, "Foo",
                                 self.device.read)
 
-    def test_read_retries_read_on_exception_at_least_three_times(self):
+    @patch('pysparc.muonlab.ftdi_chip.time.sleep')
+    def test_read_retries_read_on_exception_at_least_three_times(self,
+        mock_sleep):
+
         self.mock_device.read.side_effect = [
             ftdi_chip.pylibftdi.FtdiError(),
             ftdi_chip.pylibftdi.FtdiError(), None]
         self.device.read()
 
+    @patch('pysparc.muonlab.ftdi_chip.time.sleep')
+    def test_read_waits_before_retry(self, mock_sleep):
+        self.device.read()
+        self.assertFalse(mock_sleep.called)
+        self.mock_device.read.side_effect = \
+            [ftdi_chip.pylibftdi.FtdiError(), None]
+        self.device.read()
+        mock_sleep.assert_called_once_with(ftdi_chip.RW_ERROR_WAIT)
+
     def test_write_calls_device_write(self):
         self.device.write(sentinel.data)
         self.mock_device.write.assert_called_once_with(sentinel.data)
 
-    def test_write_retries_write_on_exception_three_times(self):
+    @patch('pysparc.muonlab.ftdi_chip.time.sleep')
+    def test_write_raises_WriteError_on_failed_write(self, mock_sleep):
+        self.mock_device.write.side_effect = \
+            ftdi_chip.pylibftdi.FtdiError("Foo")
+        self.assertRaisesRegexp(ftdi_chip.WriteError, "Foo",
+                                self.device.write, sentinel.data)
+
+    @patch('pysparc.muonlab.ftdi_chip.time.sleep')
+    def test_write_retries_write_on_exception_three_times(self,
+                                                          mock_sleep):
         self.mock_device.write.side_effect = [
             ftdi_chip.pylibftdi.FtdiError(),
             ftdi_chip.pylibftdi.FtdiError(), None]
         self.device.write(sentinel.data)
 
-    def test_write_raises_WriteError_on_failed_write(self):
+    @patch('pysparc.muonlab.ftdi_chip.time.sleep')
+    def test_write_waits_before_retry(self, mock_sleep):
+        self.device.write('foo')
+        self.assertFalse(mock_sleep.called)
         self.mock_device.write.side_effect = \
-            ftdi_chip.pylibftdi.FtdiError("Foo")
-        self.assertRaisesRegexp(ftdi_chip.WriteError, "Foo",
-                                self.device.write, sentinel.data)
+            [ftdi_chip.pylibftdi.FtdiError(), None]
+        self.device.write('foo')
+        mock_sleep.assert_called_once_with(ftdi_chip.RW_ERROR_WAIT)
 
 
 class FtdiChipTestWithClosedDevice(unittest.TestCase):

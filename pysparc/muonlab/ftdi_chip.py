@@ -24,6 +24,7 @@ Contents
 """
 
 import logging
+import time
 
 import pylibftdi
 
@@ -37,6 +38,9 @@ READ_SIZE = 62
 
 # Default buffer size is 4K (64 * 64 bytes), but mind the overhead
 BUFFER_SIZE = 64 * 62
+
+# Sleep between read/write error retries in seconds
+RW_ERROR_WAIT = .1
 
 
 class Error(Exception):
@@ -166,6 +170,7 @@ class FtdiChip(object):
                 data = self._device.read(READ_SIZE)
             except pylibftdi.FtdiError as exc:
                 logger.warning("Read failed, retrying...")
+                time.sleep(RW_ERROR_WAIT)
                 continue
             else:
                 return data
@@ -186,6 +191,7 @@ class FtdiChip(object):
                 self._device.write(data)
             except pylibftdi.FtdiError as exc:
                 logger.warning("Write failed, retrying...")
+                time.sleep(RW_ERROR_WAIT)
                 continue
             else:
                 return
