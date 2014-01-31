@@ -3,12 +3,18 @@ from multiprocessing import Process, Pipe, Event
 import logging
 import signal
 
+import tables
 from flask import Flask, jsonify, redirect, request
 
 app = Flask(__name__)
 
 from pysparc.muonlab.muonlab_ii import MuonlabII, FakeMuonlabII
 from pysparc.muonlab.ftdi_chip import DeviceNotFoundError
+
+
+class LifeTime(tables.IsDescription):
+    timestamp = tables.Time32Col()
+    lifetime = tables.Float32Col()
 
 
 def message(cmd, **kwargs):
@@ -51,6 +57,13 @@ def muonlab(conn, must_shutdown):
 
     logger = logging.getLogger('muonlab')
 
+    data = tables.openFile('muonlab.h5', 'a')
+    if '/lifetime' not in data:
+        table = data.createTable('/', 'lifetime', LifeTime)
+    else:
+        table = data.getNode('/lifetime')
+    measurement = table.row
+
     try:
         muonlab = MuonlabII()
     except DeviceNotFoundError:
@@ -62,18 +75,20 @@ def muonlab(conn, must_shutdown):
     muonlab.set_pmt1_threshold(100)
     muonlab.select_lifetime_measurement()
 
-    all_data = []
-
     while not must_shutdown.is_set():
         data = muonlab.read_lifetime_data()
         if data:
-            all_data.extend(data)
+            measurement['timestamp'] = time.time()
+            for value in data:
+                measurement['lifetime'] = value
+                measurement.append()
+            table.flush()
         if conn.poll():
             msg = conn.recv()
             if msg['cmd'] == 'get':
                 start = msg['kwargs']['start']
                 stop = msg['kwargs']['stop']
-                conn.send(all_data[start:stop])
+                conn.send(table.col('lifetime')[start:stop].tolist())
     logger.info("MUONLAB shutting down.")
 
 
