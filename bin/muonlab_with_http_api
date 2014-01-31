@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+"""Run the muonlab lifetime experiment with HTTP API access.
+
+This is an early and unpolished bag of bits.  It is merely intended to
+flesh out a few ideas.  However, it works!
+
+The muonlab lifetime experiment is run as a separate process, while a
+single-threaded HTTP server is run in another process.  The main process
+just waits for either one of them to shut down, or to receive a CTRL-C.
+
+The HTTP server listens for requests to `/data` and returns lifetime
+measurement values in a JSON object.  Optionally, a `start` and/or `stop`
+parameter can be specified as a 0-based index number to limit the data.
+
+"""
+
 import time
 from multiprocessing import Process, Pipe, Event
 import logging
@@ -114,7 +130,7 @@ if __name__ == '__main__':
             if not p.is_alive() or not p2.is_alive():
                 break
         except KeyboardInterrupt:
-            logging.info("CATCHED CTRL_C IN MAIN THREAD")
+            logging.info("CATCHED CTRL-C IN MAIN THREAD")
             break
 
     logging.info("SHUTTING DOWN")

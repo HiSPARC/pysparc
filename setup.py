@@ -22,5 +22,6 @@ setup(name='pysparc',
                    'Topic :: Scientific/Engineering',
                    'Topic :: Education',
                    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'],
+      scripts=['bin/muonlab_with_http_api'],
       package_data={},
       install_requires=[])
