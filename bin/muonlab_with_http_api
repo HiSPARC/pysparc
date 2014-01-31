@@ -14,6 +14,7 @@ parameter can be specified as a 0-based index number to limit the data.
 
 """
 
+import argparse
 import time
 from multiprocessing import Process, Pipe, Event
 import logging
@@ -67,7 +68,7 @@ def get_data():
 #    return 'Shutting down.'
 
 
-def muonlab(conn, must_shutdown):
+def muonlab(conn, must_shutdown, args):
     # Ignore interrupt signal, let main process catch ctrl-c
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -76,7 +77,11 @@ def muonlab(conn, must_shutdown):
     data = tables.openFile('muonlab.h5', 'a')
     if '/lifetime' not in data:
         table = data.createTable('/', 'lifetime', LifeTime)
+    elif not args.append:
+        logger.error("Existing data found, but append not specified.")
+        return
     else:
+        logger.info("Existing data found, appending...")
         table = data.getNode('/lifetime')
     measurement = table.row
 
@@ -87,8 +92,10 @@ def muonlab(conn, must_shutdown):
             "Hardware not detected, falling back to FAKE hardware")
         muonlab = FakeMuonlabII()
 
-    muonlab.set_pmt1_voltage(900)
-    muonlab.set_pmt1_threshold(100)
+    logger.info("Setting PMT voltage to %d V", args.voltage)
+    muonlab.set_pmt1_voltage(args.voltage)
+    logger.info("Setting PMT threshold to %d mV", args.threshold)
+    muonlab.set_pmt1_threshold(args.threshold)
     muonlab.select_lifetime_measurement()
 
     while not must_shutdown.is_set():
@@ -111,6 +118,15 @@ def muonlab(conn, must_shutdown):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-V', '--voltage', type=int, default=900,
+                        help="PMT high voltage setting in V")
+    parser.add_argument('-t', '--threshold', type=int, default=200,
+                        help="PMT threshold setting in mV")
+    parser.add_argument('-a', '--append', action='store_true',
+                        help="Append measurement data to existing table")
+    args = parser.parse_args()
+
     conn1, conn2 = Pipe()
     must_shutdown = Event()
 
@@ -119,7 +135,7 @@ if __name__ == '__main__':
     app.mylogger = logging.getLogger('http_api')
 
     p = Process(target=app.run)
-    p2 = Process(target=muonlab, args=(conn2, must_shutdown))
+    p2 = Process(target=muonlab, args=(conn2, must_shutdown, args))
 
     p2.start()
     p.start()
