@@ -40,7 +40,7 @@ READ_SIZE = 62
 BUFFER_SIZE = 64 * 62
 
 # Sleep between read/write error retries in seconds
-RW_ERROR_WAIT = .1
+RW_ERROR_WAIT = .5
 
 
 class Error(Exception):
