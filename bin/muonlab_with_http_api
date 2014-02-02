@@ -142,7 +142,7 @@ if __name__ == '__main__':
     app.must_shutdown = must_shutdown
     app.mylogger = logging.getLogger('http_api')
 
-    p = Process(target=app.run)
+    p = Process(target=app.run, kwargs={'host': '0.0.0.0'})
     p2 = Process(target=muonlab, args=(conn2, must_shutdown, args))
 
     p2.start()
