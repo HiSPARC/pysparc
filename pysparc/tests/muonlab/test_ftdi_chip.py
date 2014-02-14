@@ -146,6 +146,20 @@ class FtdiChipTest(unittest.TestCase):
         self.device.read()
         mock_sleep.assert_called_once_with(ftdi_chip.RW_ERROR_WAIT)
 
+    @patch.object(ftdi_chip.FtdiChip, 'close')
+    def test_write_closes_device_if_exception(self, mock_close):
+        self.mock_device.write.side_effect = \
+            ftdi_chip.pylibftdi.FtdiError("Foo")
+        self.assertRaises(ftdi_chip.WriteError, self.device.write,
+                          sentinel.data)
+        mock_close.assert_called_once_with()
+
+    @patch.object(ftdi_chip.FtdiChip, 'open')
+    def test_write_opens_device_if_closed(self, mock_open):
+        self.device.closed = True
+        self.device.write(sentinel.data)
+        mock_open.assert_called_once_with()
+
     def test_write_calls_device_write(self):
         self.device.write(sentinel.data)
         self.mock_device.write.assert_called_once_with(sentinel.data)

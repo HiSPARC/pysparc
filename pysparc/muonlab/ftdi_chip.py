@@ -187,7 +187,7 @@ class FtdiChip(object):
         raise ReadError(str(exc))
 
     def write(self, data):
-        """Write to device.
+        """Write to device and retry if necessary.
 
         A write is tried three times.  When unsuccesful, raises
         :class:`WriteError`.
@@ -195,6 +195,9 @@ class FtdiChip(object):
         :param data: string containing the data to write.
 
         """
+        if self.closed:
+            self.open()
+
         for i in range(3):
             try:
                 self._device.write(data)
@@ -205,4 +208,5 @@ class FtdiChip(object):
             else:
                 return
         logger.error("Write failed.")
+        self.close()
         raise WriteError(str(exc))
