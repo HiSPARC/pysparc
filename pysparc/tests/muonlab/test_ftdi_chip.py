@@ -1,7 +1,7 @@
 import unittest
 import logging
 
-from mock import patch, sentinel, Mock
+from mock import patch, sentinel, Mock, call
 
 from pysparc.muonlab import ftdi_chip
 
@@ -57,14 +57,14 @@ class FtdiChipTest(unittest.TestCase):
 
     @patch.object(ftdi_chip, 'BUFFER_SIZE')
     def test_flush(self, mock_size):
+        mock = Mock()
+        self.device._device = mock.device
+        self.device.read = mock.read
+
         self.device.flush()
 
-        self.mock_device.flush.assert_called_once_with()
-        self.mock_device.read.assert_called_once_with(mock_size)
-        method_names = [x[0] for x in self.mock_device.method_calls]
-        # Assert flush called before read
-        self.assertLess(method_names.index('flush'),
-                        method_names.index('read'))
+        expected = [call.device.flush(), call.read(mock_size)]
+        self.assertListEqual(expected, mock.mock_calls)
 
     def test_close_closes_device(self):
         self.device.close()
