@@ -156,18 +156,26 @@ class FtdiChip(object):
         self._device.flush()
         self._device.read(BUFFER_SIZE)
 
-    def read(self):
-        """Read from device.
+    def read(self, read_size=None):
+        """Read from device and retry if necessary.
 
         A read is tried three times.  When unsuccesful, raises
         :class:`ReadError`.
 
+        :param read_size: number of bytes to read (defaults to READ_SIZE).
+
         :returns: string containing the data.
 
         """
+        if not read_size:
+            read_size = READ_SIZE
+
+        if self.closed:
+            self.open()
+
         for i in range(3):
             try:
-                data = self._device.read(READ_SIZE)
+                data = self._device.read(read_size)
             except pylibftdi.FtdiError as exc:
                 logger.warning("Read failed, retrying...")
                 time.sleep(RW_ERROR_WAIT)
@@ -175,6 +183,7 @@ class FtdiChip(object):
             else:
                 return data
         logger.error("Read failed.")
+        self.close()
         raise ReadError(str(exc))
 
     def write(self, data):

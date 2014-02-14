@@ -93,6 +93,19 @@ class FtdiChipTest(unittest.TestCase):
         del self.device
         mock_close.assert_called_once_with()
 
+    @patch.object(ftdi_chip.FtdiChip, 'close')
+    def test_read_closes_device_if_exception(self, mock_close):
+        self.mock_device.read.side_effect = \
+            ftdi_chip.pylibftdi.FtdiError("Foo")
+        self.assertRaises(ftdi_chip.ReadError, self.device.read)
+        mock_close.assert_called_once_with()
+
+    @patch.object(ftdi_chip.FtdiChip, 'open')
+    def test_read_opens_device_if_closed(self, mock_open):
+        self.device.closed = True
+        self.device.read()
+        mock_open.assert_called_once_with()
+
     def test_READ_SIZE_is_multiple_of_62(self):
         self.assertTrue(ftdi_chip.READ_SIZE % 62 == 0)
 
@@ -100,6 +113,10 @@ class FtdiChipTest(unittest.TestCase):
     def test_read_calls_device_read_with_correct_size(self, mock_size):
         self.device.read()
         self.mock_device.read.assert_called_once_with(mock_size)
+
+        self.mock_device.reset_mock()
+        self.device.read(sentinel.read_size)
+        self.mock_device.read.assert_called_once_with(sentinel.read_size)
 
     def test_read_returns_device_read(self):
         data = self.device.read()
@@ -114,8 +131,7 @@ class FtdiChipTest(unittest.TestCase):
 
     @patch('pysparc.muonlab.ftdi_chip.time.sleep')
     def test_read_retries_read_on_exception_at_least_three_times(self,
-        mock_sleep):
-
+            mock_sleep):
         self.mock_device.read.side_effect = [
             ftdi_chip.pylibftdi.FtdiError(),
             ftdi_chip.pylibftdi.FtdiError(), None]
