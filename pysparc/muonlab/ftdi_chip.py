@@ -67,6 +67,14 @@ class DeviceError(Error):
         return "Device error: %s" % self.ftdi_msg
 
 
+class ClosedDeviceError(Error):
+
+    """Raised when trying a read/write operation if device is closed."""
+
+    def __str__(self):
+        return "Device is closed, %s" % self.ftdi_msg
+
+
 class ReadError(Error):
 
     """Raised on read errors."""
@@ -160,13 +168,18 @@ class FtdiChip(object):
         """Read from device and retry if necessary.
 
         A read is tried three times.  When unsuccesful, raises
-        :class:`ReadError`.
+        :class:`ReadError`.  Raises :class:`ClosedDeviceError` when
+        attempting to read from a closed device.
 
         :param read_size: number of bytes to read (defaults to READ_SIZE).
 
         :returns: string containing the data.
 
         """
+        if self.closed:
+            logger.warning("Attempting to read from closed device.")
+            raise ClosedDeviceError("attempting to read.")
+
         if not read_size:
             read_size = READ_SIZE
 
@@ -187,11 +200,16 @@ class FtdiChip(object):
         """Write to device and retry if necessary.
 
         A write is tried three times.  When unsuccesful, raises
-        :class:`WriteError`.
+        :class:`WriteError`.  Raises :class:`ClosedDeviceError` when
+        attempting to write from a closed device.
 
         :param data: string containing the data to write.
 
         """
+        if self.closed:
+            logger.warning("Attempting to read from closed device.")
+            raise ClosedDeviceError("attempting to write.")
+
         for i in range(3):
             try:
                 self._device.write(data)

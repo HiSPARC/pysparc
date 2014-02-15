@@ -116,6 +116,10 @@ class FtdiChipTest(unittest.TestCase):
         data = self.device.read()
         self.assertIs(data, self.mock_device.read.return_value)
 
+    def test_read_raises_ClosedDeviceError_if_closed(self):
+        self.device.close()
+        self.assertRaises(ftdi_chip.ClosedDeviceError, self.device.read)
+
     @patch('pysparc.muonlab.ftdi_chip.time.sleep')
     def test_read_raises_ReadError_on_failed_read(self, mock_sleep):
         self.mock_device.read.side_effect = \
@@ -151,6 +155,11 @@ class FtdiChipTest(unittest.TestCase):
     def test_write_calls_device_write(self):
         self.device.write(sentinel.data)
         self.mock_device.write.assert_called_once_with(sentinel.data)
+
+    def test_write_raises_ClosedDeviceError_if_closed(self):
+        self.device.close()
+        self.assertRaises(ftdi_chip.ClosedDeviceError, self.device.write,
+                          sentinel.data)
 
     @patch('pysparc.muonlab.ftdi_chip.time.sleep')
     def test_write_raises_WriteError_on_failed_write(self, mock_sleep):
