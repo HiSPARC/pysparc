@@ -170,9 +170,6 @@ class FtdiChip(object):
         if not read_size:
             read_size = READ_SIZE
 
-        if self.closed:
-            self.open()
-
         for i in range(3):
             try:
                 data = self._device.read(read_size)
@@ -195,9 +192,6 @@ class FtdiChip(object):
         :param data: string containing the data to write.
 
         """
-        if self.closed:
-            self.open()
-
         for i in range(3):
             try:
                 self._device.write(data)

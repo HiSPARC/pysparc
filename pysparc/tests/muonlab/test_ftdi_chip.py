@@ -100,12 +100,6 @@ class FtdiChipTest(unittest.TestCase):
         self.assertRaises(ftdi_chip.ReadError, self.device.read)
         mock_close.assert_called_once_with()
 
-    @patch.object(ftdi_chip.FtdiChip, 'open')
-    def test_read_opens_device_if_closed(self, mock_open):
-        self.device.closed = True
-        self.device.read()
-        mock_open.assert_called_once_with()
-
     def test_READ_SIZE_is_multiple_of_62(self):
         self.assertTrue(ftdi_chip.READ_SIZE % 62 == 0)
 
@@ -153,12 +147,6 @@ class FtdiChipTest(unittest.TestCase):
         self.assertRaises(ftdi_chip.WriteError, self.device.write,
                           sentinel.data)
         mock_close.assert_called_once_with()
-
-    @patch.object(ftdi_chip.FtdiChip, 'open')
-    def test_write_opens_device_if_closed(self, mock_open):
-        self.device.closed = True
-        self.device.write(sentinel.data)
-        mock_open.assert_called_once_with()
 
     def test_write_calls_device_write(self):
         self.device.write(sentinel.data)
