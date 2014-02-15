@@ -27,7 +27,8 @@ from flask import Flask, jsonify, redirect, request
 app = Flask(__name__)
 
 from pysparc.muonlab.muonlab_ii import MuonlabII, FakeMuonlabII
-from pysparc.muonlab.ftdi_chip import DeviceNotFoundError
+from pysparc.muonlab.ftdi_chip import (DeviceNotFoundError, ReadError,
+                                       ClosedDeviceError)
 
 
 class LifeTime(tables.IsDescription):
@@ -77,32 +78,36 @@ def muonlab(conn, must_shutdown, args):
 
     table_name = args.name
     table_path = os.path.join('/', table_name)
-    data = tables.openFile('muonlab.h5', 'a')
-    if table_path not in data:
-        table = data.createTable('/', table_name, LifeTime)
+    datafile = tables.openFile('muonlab.h5', 'a')
+    if table_path not in datafile:
+        table = datafile.createTable('/', table_name, LifeTime)
+        table._v_attrs['voltage'] = args.voltage
+        table._v_attrs['threshold'] = args.threshold
     elif not args.append:
         logger.error("Existing data found, but append not specified.")
         return
     else:
-        logger.info("Existing data found, appending...")
-        table = data.getNode(table_path)
+        logger.info("Existing data found, using same settings and "
+                    "appending...")
+        table = datafile.getNode(table_path)
+
+    voltage = table._v_attrs['voltage']
+    threshold = table._v_attrs['threshold']
     measurement = table.row
 
-    try:
-        muonlab = MuonlabII()
-    except DeviceNotFoundError:
-        logger.warning(
-            "Hardware not detected, falling back to FAKE hardware")
-        muonlab = FakeMuonlabII()
+    muonlab = initialize_muonlab(voltage, threshold)
 
-    logger.info("Setting PMT voltage to %d V", args.voltage)
-    muonlab.set_pmt1_voltage(args.voltage)
-    logger.info("Setting PMT threshold to %d mV", args.threshold)
-    muonlab.set_pmt1_threshold(args.threshold)
-    muonlab.select_lifetime_measurement()
+    logger.info("Taking data...")
 
     while not must_shutdown.is_set():
-        data = muonlab.read_lifetime_data()
+        try:
+            data = muonlab.read_lifetime_data()
+        except ReadError:
+            pass
+        except ClosedDeviceError:
+            time.sleep(1)
+            muonlab = initialize_muonlab(voltage, threshold)
+
         if data:
             measurement['timestamp'] = time.time()
             for value in data:
@@ -116,6 +121,28 @@ def muonlab(conn, must_shutdown, args):
                 stop = msg['kwargs']['stop']
                 conn.send(table.col('lifetime')[start:stop].tolist())
     logger.info("MUONLAB shutting down.")
+    datafile.close()
+
+
+def initialize_muonlab(voltage, threshold):
+    logger = logging.getLogger('muonlab')
+    logger.info("Initializing muonlab hardware.")
+
+    try:
+        muonlab = MuonlabII()
+    except DeviceNotFoundError:
+        logger.warning(
+            "Hardware not detected, falling back to FAKE hardware")
+        muonlab = FakeMuonlabII()
+    else:
+        logger.info("Found muonlab II hardware")
+
+    logger.info("Setting PMT voltage to %d V", voltage)
+    muonlab.set_pmt1_voltage(voltage)
+    logger.info("Setting PMT threshold to %d mV", threshold)
+    muonlab.set_pmt1_threshold(threshold)
+    muonlab.select_lifetime_measurement()
+    return muonlab
 
 
 if __name__ == '__main__':
