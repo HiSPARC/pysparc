@@ -24,6 +24,7 @@ Contents
 """
 
 import logging
+import time
 
 import pylibftdi
 
@@ -37,6 +38,9 @@ READ_SIZE = 62
 
 # Default buffer size is 4K (64 * 64 bytes), but mind the overhead
 BUFFER_SIZE = 64 * 62
+
+# Sleep between read/write error retries in seconds
+RW_ERROR_WAIT = .5
 
 
 class Error(Exception):
@@ -61,6 +65,14 @@ class DeviceError(Error):
 
     def __str__(self):
         return "Device error: %s" % self.ftdi_msg
+
+
+class ClosedDeviceError(Error):
+
+    """Raised when trying a read/write operation if device is closed."""
+
+    def __str__(self):
+        return "Device is closed, %s" % self.ftdi_msg
 
 
 class ReadError(Error):
@@ -150,44 +162,63 @@ class FtdiChip(object):
 
         """
         self._device.flush()
-        self._device.read(BUFFER_SIZE)
+        self.read(BUFFER_SIZE)
 
-    def read(self):
-        """Read from device.
+    def read(self, read_size=None):
+        """Read from device and retry if necessary.
 
         A read is tried three times.  When unsuccesful, raises
-        :class:`ReadError`.
+        :class:`ReadError`.  Raises :class:`ClosedDeviceError` when
+        attempting to read from a closed device.
+
+        :param read_size: number of bytes to read (defaults to READ_SIZE).
 
         :returns: string containing the data.
 
         """
+        if self.closed:
+            logger.warning("Attempting to read from closed device.")
+            raise ClosedDeviceError("attempting to read.")
+
+        if not read_size:
+            read_size = READ_SIZE
+
         for i in range(3):
             try:
-                data = self._device.read(READ_SIZE)
+                data = self._device.read(read_size)
             except pylibftdi.FtdiError as exc:
                 logger.warning("Read failed, retrying...")
+                time.sleep(RW_ERROR_WAIT)
                 continue
             else:
                 return data
         logger.error("Read failed.")
+        self.close()
         raise ReadError(str(exc))
 
     def write(self, data):
-        """Write to device.
+        """Write to device and retry if necessary.
 
         A write is tried three times.  When unsuccesful, raises
-        :class:`WriteError`.
+        :class:`WriteError`.  Raises :class:`ClosedDeviceError` when
+        attempting to write from a closed device.
 
         :param data: string containing the data to write.
 
         """
+        if self.closed:
+            logger.warning("Attempting to read from closed device.")
+            raise ClosedDeviceError("attempting to write.")
+
         for i in range(3):
             try:
                 self._device.write(data)
             except pylibftdi.FtdiError as exc:
                 logger.warning("Write failed, retrying...")
+                time.sleep(RW_ERROR_WAIT)
                 continue
             else:
                 return
         logger.error("Write failed.")
+        self.close()
         raise WriteError(str(exc))

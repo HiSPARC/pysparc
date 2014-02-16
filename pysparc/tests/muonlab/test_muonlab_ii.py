@@ -11,6 +11,7 @@ class MuonlabIITest(unittest.TestCase):
     def setUp(self, mock_Device):
         self.mock_Device = mock_Device
         self.mock_device = mock_Device.return_value
+        self.mock_device.closed = False
         self.muonlab = muonlab_ii.MuonlabII()
 
     def test_address_is_dictionary(self):
@@ -223,6 +224,11 @@ class MuonlabIITest(unittest.TestCase):
     def test_destructor_closes_device(self):
         del self.muonlab
         self.mock_device.close.assert_called_once_with()
+
+    def test_destructor_does_nothing_if_device_is_closed(self):
+        self.mock_device.closed = True
+        del self.muonlab
+        self.assertFalse(self.mock_device.close.called)
 
     def test_flush_device_calls_device_flush(self):
         self.muonlab.flush_device()

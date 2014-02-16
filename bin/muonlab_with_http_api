@@ -1,0 +1,190 @@
+#!/usr/bin/env python
+"""Run the muonlab lifetime experiment with HTTP API access.
+
+This is an early and unpolished bag of bits.  It is merely intended to
+flesh out a few ideas.  However, it works!
+
+The muonlab lifetime experiment is run as a separate process, while a
+single-threaded HTTP server is run in another process.  The main process
+just waits for either one of them to shut down, or to receive a CTRL-C.
+
+The HTTP server listens for requests to `/data` and returns lifetime
+measurement values in a JSON object.  Optionally, a `start` and/or `stop`
+parameter can be specified as a 0-based index number to limit the data.
+
+"""
+
+import argparse
+import time
+from multiprocessing import Process, Pipe, Event
+import logging
+import os.path
+import signal
+
+import tables
+from flask import Flask, jsonify, redirect, request
+
+app = Flask(__name__)
+
+from pysparc.muonlab.muonlab_ii import MuonlabII, FakeMuonlabII
+from pysparc.muonlab.ftdi_chip import (DeviceNotFoundError, ReadError,
+                                       ClosedDeviceError)
+
+
+class LifeTime(tables.IsDescription):
+    timestamp = tables.Time32Col()
+    lifetime = tables.Float32Col()
+
+
+def message(cmd, **kwargs):
+    return dict(cmd=cmd, kwargs=kwargs)
+
+
+@app.route('/')
+def landing_page():
+    return redirect('/data')
+
+
+@app.route('/data')
+def get_data():
+    start = request.args.get('start', None)
+    if start is not None:
+        start = int(start)
+    stop = request.args.get('stop', None)
+    if stop is not None:
+        stop = int(stop)
+    app.muonlab.send(message('get', start=start, stop=stop))
+    data = app.muonlab.recv()
+    app.mylogger.info("Sending data")
+    return jsonify(lifetime_data=data)
+
+
+# You could shut down the app remotely by uncommenting the following code.
+# Beware!  Browsers may preload content while you type in a url and shut
+# down the application in the process.
+#
+#@app.route('/stop')
+#def stop():
+#    app.must_shutdown.set()
+#    app.mylogger.info("RECV SHUTDOWN")
+#    return 'Shutting down.'
+
+
+def muonlab(conn, must_shutdown, args):
+    # Ignore interrupt signal, let main process catch ctrl-c
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+    logger = logging.getLogger('muonlab')
+
+    table_name = args.name
+    table_path = os.path.join('/', table_name)
+    datafile = tables.openFile('muonlab.h5', 'a')
+    if table_path not in datafile:
+        table = datafile.createTable('/', table_name, LifeTime)
+        table._v_attrs['voltage'] = args.voltage
+        table._v_attrs['threshold'] = args.threshold
+    elif not args.append:
+        logger.error("Existing data found, but append not specified.")
+        return
+    else:
+        logger.info("Existing data found, using same settings and "
+                    "appending...")
+        table = datafile.getNode(table_path)
+
+    voltage = table._v_attrs['voltage']
+    threshold = table._v_attrs['threshold']
+    measurement = table.row
+
+    muonlab = initialize_muonlab(voltage, threshold)
+
+    logger.info("Taking data...")
+
+    while not must_shutdown.is_set():
+        try:
+            data = muonlab.read_lifetime_data()
+        except ReadError:
+            pass
+        except ClosedDeviceError:
+            time.sleep(1)
+            muonlab = initialize_muonlab(voltage, threshold)
+
+        if data:
+            measurement['timestamp'] = time.time()
+            for value in data:
+                measurement['lifetime'] = value
+                measurement.append()
+            table.flush()
+        if conn.poll():
+            msg = conn.recv()
+            if msg['cmd'] == 'get':
+                start = msg['kwargs']['start']
+                stop = msg['kwargs']['stop']
+                conn.send(table.col('lifetime')[start:stop].tolist())
+    logger.info("MUONLAB shutting down.")
+    datafile.close()
+
+
+def initialize_muonlab(voltage, threshold):
+    logger = logging.getLogger('muonlab')
+    logger.info("Initializing muonlab hardware.")
+
+    try:
+        muonlab = MuonlabII()
+    except DeviceNotFoundError:
+        logger.warning(
+            "Hardware not detected, falling back to FAKE hardware")
+        muonlab = FakeMuonlabII()
+    else:
+        logger.info("Found muonlab II hardware")
+
+    logger.info("Setting PMT voltage to %d V", voltage)
+    muonlab.set_pmt1_voltage(voltage)
+    logger.info("Setting PMT threshold to %d mV", threshold)
+    muonlab.set_pmt1_threshold(threshold)
+    muonlab.select_lifetime_measurement()
+    return muonlab
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-V', '--voltage', type=int, default=900,
+                        help="PMT high voltage setting in V "
+                             "(default: 900 V)")
+    parser.add_argument('-t', '--threshold', type=int, default=200,
+                        help="PMT threshold setting in mV "
+                             "(default: 200 mV)")
+    parser.add_argument('-a', '--append', action='store_true',
+                        help="Append measurement data to existing table")
+    parser.add_argument('-n', '--name', default='lifetime',
+                        help="Name of the table to create in the HDF5 "
+                             "file (default: lifetime)")
+    args = parser.parse_args()
+
+    conn1, conn2 = Pipe()
+    must_shutdown = Event()
+
+    app.muonlab = conn1
+    app.must_shutdown = must_shutdown
+    app.mylogger = logging.getLogger('http_api')
+
+    p = Process(target=app.run, kwargs={'host': '0.0.0.0'})
+    p2 = Process(target=muonlab, args=(conn2, must_shutdown, args))
+
+    p2.start()
+    p.start()
+
+    while True:
+        try:
+            time.sleep(2)
+            if not p.is_alive() or not p2.is_alive():
+                break
+        except KeyboardInterrupt:
+            logging.info("CATCHED CTRL-C IN MAIN THREAD")
+            break
+
+    logging.info("SHUTTING DOWN")
+    p.terminate()
+    must_shutdown.set()
+    p2.join()

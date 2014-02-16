@@ -46,7 +46,7 @@ class MuonlabII:
     def __del__(self):
         """Cleanly shut down muonlab hardware."""
 
-        if self._device:
+        if self._device and not self._device.closed:
             self.set_pmt1_voltage(0)
             self.set_pmt2_voltage(0)
             self._device.close()
