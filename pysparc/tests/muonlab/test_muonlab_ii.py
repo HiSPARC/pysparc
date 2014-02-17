@@ -232,7 +232,7 @@ class MuonlabIITest(unittest.TestCase):
 
     def test_flush_device_calls_device_flush(self):
         self.muonlab.flush_device()
-        self.mock_device.flush_device.assert_called_once_with()
+        self.mock_device.flush.assert_called_once_with()
 
 
 if __name__ == '__main__':

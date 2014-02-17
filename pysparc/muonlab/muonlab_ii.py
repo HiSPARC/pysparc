@@ -150,7 +150,7 @@ class MuonlabII:
         was called is really newly measured.
 
         """
-        self._device.flush_device()
+        self._device.flush()
 
     def read_lifetime_data(self):
         """Read lifetime data from detector.
