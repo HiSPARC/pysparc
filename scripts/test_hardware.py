@@ -3,9 +3,9 @@ from __future__ import division
 import logging
 import time
 
-from hardware import Hardware
-from align_adcs import AlignADCs
-import messages
+from pysparc.hardware import Hardware
+from pysparc.align_adcs import AlignADCs
+import pysparc.messages
 
 
 def average(values):
