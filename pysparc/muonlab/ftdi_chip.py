@@ -108,8 +108,9 @@ class FtdiChip(object):
     _device = None
     closed = True
 
-    def __init__(self, device_description=None):
+    def __init__(self, device_description=None, interface_select=0):
         self._device_description = device_description
+        self._interface_select = interface_select
         self.open()
 
     def open(self):
@@ -121,7 +122,8 @@ class FtdiChip(object):
         """
         if self._device is None:
             try:
-                self._device = pylibftdi.Device(self._device_description)
+                self._device = pylibftdi.Device(self._device_description,
+                    interface_select=self._interface_select)
             except pylibftdi.FtdiError as exc:
                 if "(-3)" in str(exc):
                     raise DeviceNotFoundError(str(exc))

@@ -5,7 +5,7 @@ import time
 
 from pysparc.hardware import Hardware
 from pysparc.align_adcs import AlignADCs
-import pysparc.messages
+from pysparc import messages
 
 
 def average(values):

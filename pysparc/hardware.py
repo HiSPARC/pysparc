@@ -2,7 +2,7 @@ import logging
 import time
 import random
 
-from ftdi import FtdiChip
+from muonlab.ftdi_chip import FtdiChip
 import messages
 from messages import *
 from config import *
@@ -22,7 +22,7 @@ class Hardware:
         master = self.get_master()
         if not master:
             raise RuntimeError("HiSPARC III Master not found")
-        logger.info("Master found: %s" % master.serial)
+        logger.info("Master found")
         self.init_hardware(master)
         self.master = master
         self.master_buffer = bytearray()
@@ -30,11 +30,12 @@ class Hardware:
         logger.info("HiSPARC III Master initialized")
 
     def get_master(self):
-        serial = self.get_master_serial()
-        if serial:
-            return FtdiChip(serial)
-        else:
-            return None
+        return FtdiChip("HiSPARC III Master", interface_select=2)
+        # serial = self.get_master_serial()
+        # if serial:
+        #     return FtdiChip(serial)
+        # else:
+        #     return None
 
     def get_master_serial(self):
         devices = FtdiChip.find_all()
@@ -51,7 +52,7 @@ class Hardware:
             device.write(message.encode())
 
     def flush_and_get_measured_data_message(self):
-        self.master.device.flushInput()
+        self.master.flush()
         while True:
             msg = self.read_message()
             if type(msg) == messages.MeasuredDataMessage:
@@ -75,7 +76,7 @@ class Hardware:
         if self.master:
             self.master.write(ResetMessage(True).encode())
             time.sleep(1)
-            self.master.flush_input()
+            self.master.flush()
             self.master.close()
         self._closed = True
 
