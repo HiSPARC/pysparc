@@ -31,19 +31,6 @@ class Hardware:
 
     def get_master(self):
         return FtdiChip("HiSPARC III Master", interface_select=2)
-        # serial = self.get_master_serial()
-        # if serial:
-        #     return FtdiChip(serial)
-        # else:
-        #     return None
-
-    def get_master_serial(self):
-        devices = FtdiChip.find_all()
-        for device in devices:
-            serial_str, description = device
-            if description == "HiSPARC III Master":
-                return serial_str
-        return None
 
     def init_hardware(self, device):
         messages = [ResetMessage(True), InitializeMessage(True)]
