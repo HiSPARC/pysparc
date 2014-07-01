@@ -12,7 +12,7 @@ from array import array
 import random
 import time
 
-from ftdi_chip import FtdiChip
+from pysparc.ftdi_chip import FtdiChip
 from pysparc.util import map_setting
 
 
