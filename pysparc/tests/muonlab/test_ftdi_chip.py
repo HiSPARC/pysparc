@@ -188,6 +188,8 @@ class FtdiChipTest(unittest.TestCase):
 
 class FtdiChipTestWithClosedDevice(unittest.TestCase):
 
+    # Because we patch the 'open' method, the device is not opened in the
+    # setUp call, and should still be closed
     @patch.object(ftdi_chip.FtdiChip, 'open')
     def setUp(self, mock_open):
         self.device = ftdi_chip.FtdiChip()
@@ -196,10 +198,12 @@ class FtdiChipTestWithClosedDevice(unittest.TestCase):
         self.assertTrue(self.device.closed)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
-    def test_open_opens_device_with_description(self, mock_Device):
+    def test_open_opens_device_with_parameters(self, mock_Device):
         self.device._device_description = sentinel.description
+        self.device._interface_select = sentinel.interface_select
         self.device.open()
-        mock_Device.assert_called_once_with(sentinel.description)
+        mock_Device.assert_called_once_with(sentinel.description,
+            interface_select=sentinel.interface_select)
 
     @patch('pysparc.muonlab.ftdi_chip.pylibftdi.Device')
     def test_open_stores_device(self, mock_Device):
