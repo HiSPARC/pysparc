@@ -30,7 +30,7 @@ def print_high_bits(f):
     print 'high:', [bin(ord(u)) for u in f.read(1)]
 
 def burn(firmware_file):
-    f = pylibftdi.Device(interface_select=1)
+    f = pylibftdi.Device("HiSPARC III Master", interface_select=1)
 
     # Select MPSSE mode (0x02)
     # Direction is not used here, it doesn't seem to work.
