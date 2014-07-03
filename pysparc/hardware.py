@@ -2,7 +2,7 @@ import logging
 import time
 import random
 
-from muonlab.ftdi_chip import FtdiChip
+from ftdi_chip import FtdiChip
 import messages
 from messages import *
 from config import *
