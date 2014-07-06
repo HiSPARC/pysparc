@@ -29,6 +29,16 @@ class ConfigTest(unittest.TestCase):
                 self.assertEqual(getattr(self.config, name),
                                  30 if level == 'low' else 70)
 
+    def test_individual_gains_and_offsets(self):
+        for channel in [1, 2]:
+            for type in ['gain', 'offset']:
+                for edge in ['positive', 'negative']:
+                    name = 'ch%d_%s_%s' % (channel, type, edge)
+                    low, high = self._get_range_from(self.config, name)
+                    self.assertEqual(low, 0x00)
+                    self.assertEqual(high, 0xff)
+                    self.assertEqual(getattr(self.config, name), 0x80)
+
     def _get_range_from(self, instance, name):
         """Get the range from an atom object.
 

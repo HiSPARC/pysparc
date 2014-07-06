@@ -16,6 +16,14 @@ class NewConfig(Atom):
     ch1_threshold_high = Range(0, 2000, 70)
     ch2_threshold_high = Range(0, 2000, 70)
 
+    ch1_offset_positive = Range(0x00, 0xff, 0x80)
+    ch1_offset_negative = Range(0x00, 0xff, 0x80)
+    ch2_offset_positive = Range(0x00, 0xff, 0x80)
+    ch2_offset_negative = Range(0x00, 0xff, 0x80)
+    ch1_gain_positive = Range(0x00, 0xff, 0x80)
+    ch1_gain_negative = Range(0x00, 0xff, 0x80)
+    ch2_gain_positive = Range(0x00, 0xff, 0x80)
+    ch2_gain_negative = Range(0x00, 0xff, 0x80)
     @observe('ch1_voltage', 'ch2_voltage', 'ch1_threshold_low', 'ch2_threshold_low')
     def _write_setting_to_device(self, setting):
         print "DEBUG: setting %s of type %s changed to %s" % (setting['name'], setting['type'], setting['value'])
