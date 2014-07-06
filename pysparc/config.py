@@ -13,6 +13,8 @@ class NewConfig(Atom):
     ch2_voltage = Range(300, 1500, 300)
     ch1_threshold_low = Range(0, 2000, 30)
     ch2_threshold_low = Range(0, 2000, 30)
+    ch1_threshold_high = Range(0, 2000, 70)
+    ch2_threshold_high = Range(0, 2000, 70)
 
     @observe('ch1_voltage', 'ch2_voltage', 'ch1_threshold_low', 'ch2_threshold_low')
     def _write_setting_to_device(self, setting):

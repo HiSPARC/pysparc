@@ -7,11 +7,27 @@ import pysparc.config
 
 
 class ConfigTest(unittest.TestCase):
-    def test_range(self):
-        cfg = pysparc.config.NewConfig()
-        low, high = self._get_range_from(cfg, 'ch1_voltage')
-        self.assertEqual(low, 300)
-        self.assertEqual(high, 1500)
+
+    def setUp(self):
+        self.config = pysparc.config.NewConfig()
+
+    def test_voltage_settings(self):
+        for channel in [1, 2]:
+            name = 'ch%d_voltage' % channel
+            low, high = self._get_range_from(self.config, name)
+            self.assertEqual(low, 300)
+            self.assertEqual(high, 1500)
+            self.assertEqual(getattr(self.config, name), low)
+
+    def test_threshold_settings(self):
+        for channel in [1, 2]:
+            for level in ['low', 'high']:
+                name = 'ch%d_threshold_%s' % (channel, level)
+                low, high = self._get_range_from(self.config, name)
+                self.assertEqual(low, 0)
+                self.assertEqual(high, 2000)
+                self.assertEqual(getattr(self.config, name),
+                                 30 if level == 'low' else 70)
 
     def _get_range_from(self, instance, name):
         """Get the range from an atom object.
