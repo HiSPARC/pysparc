@@ -12,16 +12,40 @@ import numpy as np
 
 
 codons = {'start': 0x99, 'stop': 0x66}
+
 msg_ids = {'measured_data': 0xa0,
            'comparator_data': 0xa2,
            'one_second': 0xa4,
            'all_controls': 0x55,
            'communication_error': 0x88,
+           'reset': 0xff,
+
+           # config settings (INCOMPLETE)
+           'ch1_offset_positive' : 0x10,
+           'ch1_offset_negative': 0x11,
+           'ch2_offset_positive': 0x12,
+           'ch2_offset_negative': 0x13,
+           'ch1_gain_positive': 0x14,
+           'ch1_gain_negative': 0x15,
+           'ch2_gain_positive': 0x16,
+           'ch2_gain_negative': 0x17,
+           'common_offset': 0x18,
+           'full_scale': 0x19,
+           'ch1_voltage': 0x1e,
+           'ch2_voltage': 0x1f,
+           'ch1_threshold_low': 0x20,
+           'ch1_threshold_high': 0x21,
+           'ch2_threshold_low': 0x22,
+           'ch2_threshold_high': 0x23,
+           'trigger_condition': 0x30,
+           'spare_bytes': 0x35,
           }
+
 error_ids = {'header_not_detected': 0x99,
              'identifier_unknown': 0x89,
              'stop_codon_not_detected': 0x66,
             }
+
 command_ids = {'soft_reset': 0xff,
                'set_all_controls': 0x50,
                'get_all_controls': 0x55,
@@ -29,6 +53,7 @@ command_ids = {'soft_reset': 0xff,
 
 
 class MessageError(Exception):
+
     pass
 
 
@@ -80,6 +105,7 @@ class HisparcMessage(object):
 
 
 class OneSecondMessage(HisparcMessage):
+
     identifier = msg_ids['one_second']
     msg_format = '>2B2BH3B2I4H61s1B'
 
@@ -110,6 +136,7 @@ class OneSecondMessage(HisparcMessage):
 
 
 class MeasuredDataMessage(HisparcMessage):
+
     identifier = msg_ids['measured_data']
     msg_format = '>2BB4H2BH3BI'
     msg_tail_format = '>%dsB'
@@ -202,92 +229,6 @@ class MeasuredDataMessage(HisparcMessage):
             yield raw_trace[i:i + 3]
 
 
-class ChannelOffsetAdjustMessage(HisparcMessage):
-    def __init__(self, channel, positive = True, offset = 0x80):
-        super(ChannelOffsetAdjustMessage, self).__init__()
-
-        if 1 is channel:
-            self.identifier = 0x10 if positive else 0x11
-        if 2 is channel:
-            self.identifier = 0x12 if positive else 0x13
-
-        self.data = [offset]
-
-
-class ChannelGainAdjustMessage(HisparcMessage):
-    def __init__(self, channel, positive = True, gain = 0x80):
-        super(ChannelGainAdjustMessage, self).__init__()
-
-        if 1 is channel:
-            self.identifier = 0x14 if positive else 0x15
-        if 2 is channel:
-            self.identifier = 0x16 if positive else 0x17
-
-        self.data = [gain]
-
-
-class CommonOffsetAdjustMessage(HisparcMessage):
-    def __init__(self, offset = 0x00):
-        super(CommonOffsetAdjustMessage, self).__init__()
-
-        self.identifier = 0x18
-        self.data = [offset]
-
-
-class FullScaleAdjustHisparcMessage(HisparcMessage):
-    def __init__(self, scale = 0x00):
-        HisparcMessage.__init__(self)
-
-        self.identifier = 0x19
-        self.data = [scale]
-
-
-class IntergratorTimeAdjustMessage(HisparcMessage):
-    def __init__(self, channel, time = 0xff):
-        super(IntergratorTimeAdjustMessage, self).__init__()
-
-        if channel is 1 or channel is 2:
-            self.identifier = 0x1a + (channel - 1)
-
-        self.data = [time]
-
-
-class ComperatorThresholdLowMessage(HisparcMessage):
-    def __init__(self, low = True, threshold = None):
-        super(ComperatorThresholdLowMessage, self).__init__()
-
-        if None is threshold:
-            threshold = 0x58 if low else 0xe6
-
-        self.identifier = 0x1c if low else 0x1d
-        self.data = [threshold]
-
-
-class PMTHighVoltageAdjustMessage(HisparcMessage):
-    def __init__(self, channel, voltage = 0x00):
-        super(PMTHighVoltageAdjustMessage, self).__init__()
-
-        if channel is 1 or channel is 2:
-            self.identifier = 0x1e + (channel - 1)
-
-        self.data = [voltage]
-
-
-class ThresholdAdjustMessage(HisparcMessage):
-    def __init__(self, channel, low = True, threshold = None):
-        super(ThresholdAdjustMessage, self).__init__()
-
-        if threshold is None:
-            threshold = 0x0100 if low else 0x0800
-
-        if channel is 1:
-            self.identifier = 0x20 if low else 0x21
-        if channel is 2:
-            self.identifier = 0x22 if low else 0x23
-
-        self.data = [((threshold >> 8) & 0xff), (threshold & 0xff)]
-
-
 class TriggerConditionMessage(HisparcMessage):
     def __init__(self, condition = 0x08):
         super(TriggerConditionMessage, self).__init__()
@@ -296,43 +237,24 @@ class TriggerConditionMessage(HisparcMessage):
         self.data = [condition]
 
 
-class PreCoincidenceTimeMessage(HisparcMessage):
-    def __init__(self, time = 0x00c8):
-        super(PreCoincidenceTimeMessage, self).__init__()
-
-        self.identifier = 0x31
-        self.data = [((time >> 8) & 0xff), (time & 0xff)]
-
-
-class CoincidenceTimeMessage(HisparcMessage):
-    def __init__(self, time = 0x0190):
-        super(CoincidenceTimeMessage, self).__init__()
-
-        self.identifier = 0x32
-        self.data = [((time >> 8) & 0xff), (time & 0xff)]
-
-
-class PostCoincidenceTime(HisparcMessage):
-    def __init__(self, time = 0x0190):
-        super(PostCoincidenceTime, self).__init__()
-
-        self.identifier = 0x33
-        self.data = [((time >> 8) & 0xff), (time & 0xff)]
-
-
 class InitializeMessage(HisparcMessage):
-    def __init__(self, one_second_enabled = True):
+
+    identifier = msg_ids['spare_bytes']
+
+    def __init__(self, one_second_enabled=False):
         super(InitializeMessage, self).__init__()
 
-        self.identifier = 0x35
-        self.data = [0x00, 0x00, 0x00, 0x03 if one_second_enabled else 0x01]
+        # bit 0 enables two-way communication
+        self.data = [0x00, 0x00, 0x00, 0x01]
+
+        if one_second_enabled:
+            # enable one-second messages from electronics
+            self.data[3] |= 0b10
 
 
 class ResetMessage(HisparcMessage):
-    def __init__(self, confirm = False):
-        super(ResetMessage, self).__init__()
 
-        self.identifier = 0xff
+    identifier = msg_ids['reset']
 
 
 def HisparcMessageFactory(buff):
