@@ -1,8 +1,23 @@
 import struct
 import logging
 
+from atom.api import Atom, observe, Range
+
 
 logger = logging.getLogger(__name__)
+
+
+class NewConfig(Atom):
+
+    ch1_voltage = Range(300, 1500, 300)
+    ch2_voltage = Range(300, 1500, 300)
+    ch1_threshold_low = Range(0, 2000, 30)
+    ch2_threshold_low = Range(0, 2000, 30)
+
+    @observe('ch1_voltage', 'ch2_voltage', 'ch1_threshold_low', 'ch2_threshold_low')
+    def _write_setting_to_device(self, setting):
+        print "DEBUG: setting %s of type %s changed to %s" % (setting['name'], setting['type'], setting['value'])
+
 
 
 class Config(object):
