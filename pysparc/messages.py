@@ -248,7 +248,7 @@ class InitializeMessage(HisparcMessage):
         self.data = [0x00, 0x00, 0x00, 0x01]
 
         if one_second_enabled:
-            # enable one-second messages from electronics
+            # bit 1 enables one-second messages from electronics
             self.data[3] |= 0b10
 
 
