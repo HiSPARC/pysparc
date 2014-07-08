@@ -1,5 +1,4 @@
 import unittest
-import logging
 
 from mock import patch, sentinel, Mock, call
 

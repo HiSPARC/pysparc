@@ -65,9 +65,9 @@ class HisparcMessage(object):
 
     """
     identifier = None
+    msg_format = ''
 
     def __init__(self):
-        self.info = []
         self.data = []
 
     @classmethod
@@ -92,16 +92,17 @@ class HisparcMessage(object):
                 (header, identifier, end))
 
     def encode(self):
-        if None is self.identifier:
-            return ''
+        if self.identifier is None:
+            return None
 
-        format = ('2B%(info)ds%(data)dsB' %
-                  {'info': len(str(bytearray(self.info))),
-                   'data': len(str(bytearray(self.data)))})
+        format = '>BB' + self.msg_format + 'B'
         packer = Struct(format)
-
-        return packer.pack(0x99, self.identifier, str(bytearray(self.info)),
-                           str(bytearray(self.data)), 0x66)
+        data = [codons['start'], self.identifier]
+        if self.data:
+            data += self.data
+        data.append(codons['stop'])
+        msg = packer.pack(*data)
+        return msg
 
 
 class OneSecondMessage(HisparcMessage):
@@ -237,19 +238,28 @@ class TriggerConditionMessage(HisparcMessage):
         self.data = [condition]
 
 
+class SetControlParameter(HisparcMessage):
+
+    def __init__(self, parameter, value, nbytes=1):
+        super(SetControlParameter, self).__init__()
+        self.identifier = msg_ids[parameter]
+        self.data = [value]
+
+
 class InitializeMessage(HisparcMessage):
 
     identifier = msg_ids['spare_bytes']
+    msg_format = 'I'
 
     def __init__(self, one_second_enabled=False):
         super(InitializeMessage, self).__init__()
 
         # bit 0 enables two-way communication
-        self.data = [0x00, 0x00, 0x00, 0x01]
-
+        data = 0
         if one_second_enabled:
             # bit 1 enables one-second messages from electronics
-            self.data[3] |= 0b10
+            data |= 0b10
+        self.data = [data]
 
 
 class ResetMessage(HisparcMessage):
