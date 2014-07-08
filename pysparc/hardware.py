@@ -3,9 +3,9 @@ import time
 import random
 
 from ftdi_chip import FtdiChip
-import messages
-from messages import *
-from config import *
+from messages import (HisparcMessageFactory, ResetMessage,
+                      InitializeMessage, MeasuredDataMessage)
+import config
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class Hardware:
         self.init_hardware(master)
         self.master = master
         self.master_buffer = bytearray()
-        self.config = NewConfig(self)
+        self.config = config.Config(self)
         logger.info("HiSPARC III Master initialized")
 
     def get_master(self):
@@ -42,7 +42,7 @@ class Hardware:
         self.master.flush()
         while True:
             msg = self.read_message()
-            if type(msg) == messages.MeasuredDataMessage:
+            if type(msg) == MeasuredDataMessage:
                 break
         return msg
 

@@ -20,7 +20,7 @@ def main():
         t1 = time.time()
         logging.info("Alignment took %.1f s", t1 - t0)
 
-        hardware.send_message(messages.TriggerConditionMessage(0x80))
+        hardware.config.trigger_condition = 0x80
         while True:
             msg = hardware.flush_and_get_measured_data_message()
             print '%d %d %d %d' % (msg.adc_ch1_pos.mean(),

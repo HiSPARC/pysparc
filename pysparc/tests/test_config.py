@@ -9,12 +9,12 @@ class ConfigTest(unittest.TestCase):
 
     def setUp(self):
         self.mock_device = Mock()
-        self.config = pysparc.config.NewConfig(self.mock_device)
+        self.config = pysparc.config.Config(self.mock_device)
 
     def test_init_stores_device(self):
         self.assertEqual(self.config._device, self.mock_device)
 
-    @patch.object(pysparc.config.NewConfig, 'get_member')
+    @patch.object(pysparc.config.Config, 'get_member')
     def test_get_range_from_calls_get_member(self, mock_get_member):
         try:
             self.config._get_range_from(sentinel.name)
@@ -22,7 +22,7 @@ class ConfigTest(unittest.TestCase):
             pass
         mock_get_member.assert_called_once_with(sentinel.name)
 
-    @patch.object(pysparc.config.NewConfig, 'get_member')
+    @patch.object(pysparc.config.Config, 'get_member')
     def test_get_range_from_returns_range(self, mock_get_member):
         mock_get_member.return_value.validate_mode = [
             sentinel.validator, (sentinel.low, sentinel.high)]
@@ -69,7 +69,7 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(high, 0xff)
             self.assertEqual(value, 0x00)
 
-    @patch.object(pysparc.config.NewConfig, '_observe_trigger_condition')
+    @patch.object(pysparc.config.Config, '_observe_trigger_condition')
     def test_trigger_condition(self, mock_observer):
         low, high = self.config._get_range_from('trigger_condition')
         value = self.config.trigger_condition
@@ -93,7 +93,7 @@ class ConfigTest(unittest.TestCase):
 class WriteSettingTest(unittest.TestCase):
 
     def setUp(self):
-        self.patcher1 = patch.object(pysparc.config.NewConfig, '_get_range_from')
+        self.patcher1 = patch.object(pysparc.config.Config, '_get_range_from')
         self.patcher2 = patch.object(pysparc.config, 'map_setting')
         self.patcher3 = patch('pysparc.config.SetControlParameter')
         self.mock_get_range_from = self.patcher1.start()
@@ -102,7 +102,7 @@ class WriteSettingTest(unittest.TestCase):
         self.mock_Message = self.patcher3.start()
 
         self.mock_device = Mock()
-        self.config = pysparc.config.NewConfig(self.mock_device)
+        self.config = pysparc.config.Config(self.mock_device)
 
         self.mock_get_range_from.return_value = sentinel.low, sentinel.high
         self.mock_setting = {'name': sentinel.name, 'value': sentinel.value}
