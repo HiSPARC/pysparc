@@ -118,11 +118,18 @@ class InitializeMessageTest(unittest.TestCase):
 
     def test_data_if_one_second_messages_disabled(self):
         msg = pysparc.messages.InitializeMessage(False)
-        self.assertEqual(msg.data, [0])
+        self.assertEqual(msg.data, [1])
 
     def test_data_if_one_second_messages_enabled(self):
         msg = pysparc.messages.InitializeMessage(True)
-        self.assertEqual(msg.data, [0b10])
+        self.assertEqual(msg.data, [0b11])
+
+
+class ResetMessageTest(unittest.TestCase):
+
+    def test_identifier(self):
+        self.assertEqual(pysparc.messages.ResetMessage.identifier,
+                         pysparc.messages.msg_ids['reset'])
 
 
 if __name__ == '__main__':

@@ -253,7 +253,7 @@ class InitializeMessage(HisparcMessage):
         super(InitializeMessage, self).__init__()
 
         # bit 0 enables two-way communication
-        data = 0
+        data = 1
         if one_second_enabled:
             # bit 1 enables one-second messages from electronics
             data |= 0b10
