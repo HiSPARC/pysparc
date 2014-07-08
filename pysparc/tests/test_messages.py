@@ -106,5 +106,24 @@ class HisparcMessageTest(unittest.TestCase):
         self.msg.validate_codons_and_id(start, identifier, stop)
 
 
+class InitializeMessageTest(unittest.TestCase):
+
+    def test_identifier(self):
+        self.assertEqual(pysparc.messages.InitializeMessage.identifier,
+                         pysparc.messages.msg_ids['spare_bytes'])
+
+    def test_msg_format(self):
+        self.assertEqual(pysparc.messages.InitializeMessage.msg_format,
+                         'I')
+
+    def test_data_if_one_second_messages_disabled(self):
+        msg = pysparc.messages.InitializeMessage(False)
+        self.assertEqual(msg.data, [0])
+
+    def test_data_if_one_second_messages_enabled(self):
+        msg = pysparc.messages.InitializeMessage(True)
+        self.assertEqual(msg.data, [0b10])
+
+
 if __name__ == '__main__':
     unittest.main()
