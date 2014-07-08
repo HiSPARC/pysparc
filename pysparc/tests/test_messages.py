@@ -57,20 +57,20 @@ class HisparcMessageTest(unittest.TestCase):
         buff.__getitem__.assert_called_once_with(1)
 
     @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
-    def test_is_message_for_if_is_match(self,
+    @patch.object(pysparc.messages.HisparcMessage, 'identifier')
+    def test_is_message_for_if_is_match(self, mock_identifier,
             mock_validate_message_start):
         buff = MagicMock()
-        buff.__getitem__.return_value = sentinel.identifier
-        pysparc.messages.HisparcMessage.identifier = sentinel.identifier
+        buff.__getitem__.return_value = mock_identifier
         actual = pysparc.messages.HisparcMessage.is_message_for(buff)
         self.assertEqual(actual, True)
 
     @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
-    def test_is_message_for_if_no_match(self,
+    @patch.object(pysparc.messages.HisparcMessage, 'identifier')
+    def test_is_message_for_if_no_match(self, mock_identifier,
             mock_validate_message_start):
         buff = MagicMock()
-        buff.__getitem__.return_value = sentinel.identifier
-        pysparc.messages.HisparcMessage.identifier = sentinel.other
+        buff.__getitem__.return_value = sentinel.other_identifier
         actual = pysparc.messages.HisparcMessage.is_message_for(buff)
         self.assertEqual(actual, False)
 
