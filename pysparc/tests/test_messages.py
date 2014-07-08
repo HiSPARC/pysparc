@@ -90,6 +90,21 @@ class HisparcMessageTest(unittest.TestCase):
         buff = [pysparc.messages.codons['start']]
         pysparc.messages.HisparcMessage.validate_message_start(buff)
 
+    def test_validate_codons_and_id(self):
+        codons = pysparc.messages.codons
+        start, identifier, stop = codons['start'], 0x11, codons['stop']
+        self.msg.identifier = identifier
+        self.assertRaises(pysparc.messages.MessageError,
+                          self.msg.validate_codons_and_id,
+                          0x00, identifier, stop)
+        self.assertRaises(pysparc.messages.MessageError,
+                          self.msg.validate_codons_and_id,
+                          start, 0x00, stop)
+        self.assertRaises(pysparc.messages.MessageError,
+                          self.msg.validate_codons_and_id,
+                          start, identifier, 0x00)
+        self.msg.validate_codons_and_id(start, identifier, stop)
+
 
 if __name__ == '__main__':
     unittest.main()
