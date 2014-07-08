@@ -231,7 +231,7 @@ class MeasuredDataMessage(HisparcMessage):
 class TriggerConditionMessage(HisparcMessage):
 
     msg_format = 'B'
-    
+
     def __init__(self, condition = 0x08):
         super(TriggerConditionMessage, self).__init__()
 
@@ -245,6 +245,12 @@ class SetControlParameter(HisparcMessage):
         super(SetControlParameter, self).__init__()
         self.identifier = msg_ids[parameter]
         self.data = [value]
+        if nbytes == 1:
+            self.msg_format = 'B'
+        elif nbytes == 2:
+            self.msg_format = 'H'
+        else:
+            raise NotImplementedError("nbytes out of range")
 
 
 class InitializeMessage(HisparcMessage):

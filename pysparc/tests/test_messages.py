@@ -106,6 +106,42 @@ class HisparcMessageTest(unittest.TestCase):
         self.msg.validate_codons_and_id(start, identifier, stop)
 
 
+class SetControlParameterTest(unittest.TestCase):
+
+    def setUp(self):
+        self.msg_ids_patcher = patch.object(pysparc.messages, 'msg_ids')
+        self.mock_msg_ids = self.msg_ids_patcher.start()
+
+    def tearDown(self):
+        self.msg_ids_patcher.stop()
+
+    def test_identifier(self):
+        msg = pysparc.messages.SetControlParameter(sentinel.parameter,
+            sentinel.value)
+        self.mock_msg_ids.__getitem__.assert_called_once_with(sentinel.parameter)
+        self.assertEqual(msg.identifier, self.mock_msg_ids.__getitem__.return_value)
+
+    def test_data(self):
+        msg = pysparc.messages.SetControlParameter(sentinel.parameter,
+            sentinel.value)
+        self.assertEqual(msg.data, [sentinel.value])
+
+    def test_msg_format_for_nbytes_is_1(self):
+        msg = pysparc.messages.SetControlParameter(sentinel.parameter,
+            sentinel.value, nbytes=1)
+        self.assertEqual(msg.msg_format, 'B')
+
+    def test_msg_format_for_nbytes_is_2(self):
+        msg = pysparc.messages.SetControlParameter(sentinel.parameter,
+            sentinel.value, nbytes=2)
+        self.assertEqual(msg.msg_format, 'H')
+
+    def test_msg_format_raises_NotImplementedError(self):
+        self.assertRaises(NotImplementedError,
+                          pysparc.messages.SetControlParameter,
+                          sentinel.parameter, sentinel.value, nbytes=4)
+
+
 class InitializeMessageTest(unittest.TestCase):
 
     def test_identifier(self):
