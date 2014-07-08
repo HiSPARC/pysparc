@@ -229,6 +229,9 @@ class MeasuredDataMessage(HisparcMessage):
 
 
 class TriggerConditionMessage(HisparcMessage):
+
+    msg_format = 'B'
+    
     def __init__(self, condition = 0x08):
         super(TriggerConditionMessage, self).__init__()
 
