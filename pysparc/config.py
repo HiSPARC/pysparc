@@ -1,7 +1,10 @@
 import struct
 import logging
 
-from atom.api import Atom, observe, Range
+from atom.api import Atom, observe, Range, Value
+
+from pysparc.util import map_setting
+from pysparc.messages import SetControlParameter
 
 
 logger = logging.getLogger(__name__)
@@ -27,11 +30,30 @@ class NewConfig(Atom):
     common_offset = Range(0x00, 0xff, 0x00)
     full_scale = Range(0x00, 0xff, 0x00)
 
+    _device = Value()
 
-    @observe('ch1_voltage', 'ch2_voltage', 'ch1_threshold_low', 'ch2_threshold_low')
+    def __init__(self, device):
+        super(NewConfig, self).__init__()
+        self._device = device
+
+    # @observe('ch1_voltage', 'ch2_voltage', 'ch1_threshold_low', 'ch2_threshold_low')
     def _write_setting_to_device(self, setting):
-        print "DEBUG: setting %s of type %s changed to %s" % (setting['name'], setting['type'], setting['value'])
+        name, value = setting['name'], setting['value']
+        low, high = self._get_range_from(name)
+        setting_value = map_setting(value, low, high, 0x00, 0xff)
+        msg = SetControlParameter(name, setting_value)
+        self._device.send_message(msg)
 
+    def _get_range_from(self, name):
+        """Get the low, high range from an atom Range object.
+
+        :param name: name of the range attribute
+        :returns: (low, high) values of the range
+
+        """
+        atom = self.get_member(name)
+        validator, (low, high) = atom.validate_mode
+        return low, high
 
 
 class Config(object):

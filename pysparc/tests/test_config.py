@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, sentinel, Mock, call
+from mock import patch, sentinel, Mock, MagicMock
 
 import pysparc.config
 
@@ -8,12 +8,32 @@ import pysparc.config
 class ConfigTest(unittest.TestCase):
 
     def setUp(self):
-        self.config = pysparc.config.NewConfig()
+        self.mock_device = Mock()
+        self.config = pysparc.config.NewConfig(self.mock_device)
+
+    def test_init_stores_device(self):
+        self.assertEqual(self.config._device, self.mock_device)
+
+    @patch.object(pysparc.config.NewConfig, 'get_member')
+    def test_get_range_from_calls_get_member(self, mock_get_member):
+        try:
+            self.config._get_range_from(sentinel.name)
+        except:
+            pass
+        mock_get_member.assert_called_once_with(sentinel.name)
+
+    @patch.object(pysparc.config.NewConfig, 'get_member')
+    def test_get_range_from_returns_range(self, mock_get_member):
+        mock_get_member.return_value.validate_mode = [
+            sentinel.validator, (sentinel.low, sentinel.high)]
+        low, high = self.config._get_range_from(sentinel.name)
+        self.assertEqual(low, sentinel.low)
+        self.assertEqual(high, sentinel.high)
 
     def test_voltage_settings(self):
         for channel in [1, 2]:
             name = 'ch%d_voltage' % channel
-            low, high = self._get_range_from(self.config, name)
+            low, high = self.config._get_range_from(name)
             value = getattr(self.config, name)
             self.assertEqual(low, 300)
             self.assertEqual(high, 1500)
@@ -23,7 +43,7 @@ class ConfigTest(unittest.TestCase):
         for channel in [1, 2]:
             for level in ['low', 'high']:
                 name = 'ch%d_threshold_%s' % (channel, level)
-                low, high = self._get_range_from(self.config, name)
+                low, high = self.config._get_range_from(name)
                 value = getattr(self.config, name)
                 self.assertEqual(low, 0)
                 self.assertEqual(high, 2000)
@@ -34,7 +54,7 @@ class ConfigTest(unittest.TestCase):
             for type in ['gain', 'offset']:
                 for edge in ['positive', 'negative']:
                     name = 'ch%d_%s_%s' % (channel, type, edge)
-                    low, high = self._get_range_from(self.config, name)
+                    low, high = self.config._get_range_from(name)
                     value = getattr(self.config, name)
                     self.assertEqual(low, 0x00)
                     self.assertEqual(high, 0xff)
@@ -43,24 +63,53 @@ class ConfigTest(unittest.TestCase):
     def test_common_gain_and_offset(self):
         # Unfortunately, the common gain is called 'full scale'
         for name in ['common_offset', 'full_scale']:
-            low, high = self._get_range_from(self.config, name)
+            low, high = self.config._get_range_from(name)
             value = getattr(self.config, name)
             self.assertEqual(low, 0x00)
             self.assertEqual(high, 0xff)
             self.assertEqual(value, 0x00)
 
-    def _get_range_from(self, instance, name):
-        """Get the range from an atom object.
 
-        :param instance: instance of an Atom class
-        :param name: name of the range attribute
+class WriteSettingTest(unittest.TestCase):
 
-        :returns: (low, high) values of the range
+    def setUp(self):
+        self.patcher1 = patch.object(pysparc.config.NewConfig, '_get_range_from')
+        self.patcher2 = patch.object(pysparc.config, 'map_setting')
+        self.patcher3 = patch('pysparc.config.SetControlParameter')
+        self.mock_get_range_from = self.patcher1.start()
+        self.mock_map_setting = self.patcher2.start()
+        self.mock_map_setting.return_value = sentinel.setting_value
+        self.mock_Message = self.patcher3.start()
 
-        """
-        atom = instance.get_member(name)
-        validator, (low, high) = atom.validate_mode
-        return low, high
+        self.mock_device = Mock()
+        self.config = pysparc.config.NewConfig(self.mock_device)
+
+        self.mock_get_range_from.return_value = sentinel.low, sentinel.high
+        self.mock_setting = {'name': sentinel.name, 'value': sentinel.value}
+
+    def tearDown(self):
+        self.patcher1.stop()
+        self.patcher2.stop()
+        self.patcher3.stop()
+
+    def test_write_setting_to_device_calls_get_range_from(self):
+        self.config._write_setting_to_device(self.mock_setting)
+        self.mock_get_range_from.assert_called_once_with(sentinel.name)
+
+    def test_write_setting_to_device_calls_map_setting(self):
+        self.config._write_setting_to_device(self.mock_setting)
+        self.mock_map_setting.assert_called_once_with(sentinel.value,
+            sentinel.low, sentinel.high, 0x00, 0xff)
+
+    def test_write_setting_to_device_creates_message(self):
+        self.config._write_setting_to_device(self.mock_setting)
+        self.mock_Message.assert_called_once_with(sentinel.name,
+                                                  sentinel.setting_value)
+
+    def test_write_setting_to_device_writes_to_device(self):
+        self.config._write_setting_to_device(self.mock_setting)
+        msg = self.mock_Message.return_value
+        self.mock_device.send_message.assert_called_once_with(msg)
 
 
 if __name__ == '__main__':
