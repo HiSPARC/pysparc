@@ -30,18 +30,33 @@ class NewConfig(Atom):
     common_offset = Range(0x00, 0xff, 0x00)
     full_scale = Range(0x00, 0xff, 0x00)
 
+    trigger_condition = Range(0x01, 0xff, 0x08)
+
     _device = Value()
 
     def __init__(self, device):
         super(NewConfig, self).__init__()
         self._device = device
 
-    # @observe('ch1_voltage', 'ch2_voltage', 'ch1_threshold_low', 'ch2_threshold_low')
+    @observe('ch1_offset_positive',
+             'ch1_offset_negative',
+             'ch2_offset_positive',
+             'ch2_offset_negative',
+             'ch1_gain_positive',
+             'ch1_gain_negative',
+             'ch2_gain_positive',
+             'ch2_gain_negative',
+             'common_offset',
+             'full_scale')
     def _write_setting_to_device(self, setting):
         name, value = setting['name'], setting['value']
         low, high = self._get_range_from(name)
         setting_value = map_setting(value, low, high, 0x00, 0xff)
         msg = SetControlParameter(name, setting_value)
+        self._device.send_message(msg)
+
+    def _observe_trigger_condition(self, value):
+        msg = SetControlParameter('trigger_condition', value['value'])
         self._device.send_message(msg)
 
     def _get_range_from(self, name):

@@ -45,11 +45,12 @@ def main():
         print "Interrupted by user."
     finally:
         hardware.close()
+        hardware.config.set_notifications_enabled(False)
         print
         print "All configuration settings:"
         print
-        for key, value in sorted(hardware.config.__dict__.iteritems()):
-            print key, value['value']
+        for attr in sorted(hardware.config.members()):
+            print attr, getattr(hardware.config, attr)
         print
 
 

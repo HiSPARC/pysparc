@@ -69,6 +69,26 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(high, 0xff)
             self.assertEqual(value, 0x00)
 
+    @patch.object(pysparc.config.NewConfig, '_observe_trigger_condition')
+    def test_trigger_condition(self, mock_observer):
+        low, high = self.config._get_range_from('trigger_condition')
+        value = self.config.trigger_condition
+        self.assertEqual(low, 0x01)
+        self.assertEqual(high, 0xff)
+        self.assertEqual(value, 0x08)
+
+    @patch('pysparc.config.SetControlParameter')
+    def test_observe_trigger_condition(self, mock_Message):
+        mock_value = MagicMock()
+        mock_value.__getitem__.return_value = sentinel.value
+        self.config._observe_trigger_condition(mock_value)
+
+        mock_value.__getitem__.assert_called_once_with('value')
+        mock_Message.assert_called_once_with('trigger_condition',
+                                             sentinel.value)
+        msg = mock_Message.return_value
+        self.mock_device.send_message.assert_called_once_with(msg)
+
 
 class WriteSettingTest(unittest.TestCase):
 

@@ -26,7 +26,7 @@ class Hardware:
         self.init_hardware(master)
         self.master = master
         self.master_buffer = bytearray()
-        self.config = Config(self)
+        self.config = NewConfig(self)
         logger.info("HiSPARC III Master initialized")
 
     def get_master(self):
