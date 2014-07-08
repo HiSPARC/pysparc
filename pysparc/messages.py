@@ -80,8 +80,6 @@ class HisparcMessage(object):
 
     @classmethod
     def validate_message_start(cls, buff):
-        if type(buff) != bytearray:
-            raise MessageError("Buffer must be of type bytearray")
         if buff[0] != codons['start']:
             raise MessageError("First byte of buffer is not start codon")
 

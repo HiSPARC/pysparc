@@ -74,6 +74,22 @@ class HisparcMessageTest(unittest.TestCase):
         actual = pysparc.messages.HisparcMessage.is_message_for(buff)
         self.assertEqual(actual, False)
 
+    def test_validate_message_start_checks_first_byte(self):
+        buff = MagicMock()
+        try:
+            pysparc.messages.HisparcMessage.validate_message_start(buff)
+        except:
+            pass
+        buff.__getitem__.assert_called_once_with(0)
+
+    def test_validate_message_start_raises_MessageError_if_not_start_codon(self):
+        self.assertRaises(pysparc.messages.MessageError,
+            pysparc.messages.HisparcMessage.validate_message_start, [0x00])
+
+    def test_validate_message_start_passes_if_match(self):
+        buff = [pysparc.messages.codons['start']]
+        pysparc.messages.HisparcMessage.validate_message_start(buff)
+
 
 if __name__ == '__main__':
     unittest.main()
