@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, sentinel
+from mock import patch, sentinel, MagicMock
 
 import pysparc.messages
 
@@ -40,6 +40,39 @@ class HisparcMessageTest(unittest.TestCase):
         self.msg.encode()
         expected = [sentinel.start, sentinel.identifier, sentinel.stop]
         mock_Struct.return_value.pack.assert_called_once_with(*expected)
+
+    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
+    def test_is_message_for_calls_validate_message_start(self,
+            mock_validate_message_start):
+        buff = MagicMock()
+        pysparc.messages.HisparcMessage.is_message_for(buff)
+        mock_validate_message_start.assert_called_once_with(buff)
+
+    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
+    def test_is_message_for_checks_for_identifier(self,
+            mock_validate_message_start):
+        buff = MagicMock()
+        buff.__getitem__.return_value = sentinel.identifier
+        pysparc.messages.HisparcMessage.is_message_for(buff)
+        buff.__getitem__.assert_called_once_with(1)
+
+    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
+    def test_is_message_for_if_is_match(self,
+            mock_validate_message_start):
+        buff = MagicMock()
+        buff.__getitem__.return_value = sentinel.identifier
+        pysparc.messages.HisparcMessage.identifier = sentinel.identifier
+        actual = pysparc.messages.HisparcMessage.is_message_for(buff)
+        self.assertEqual(actual, True)
+
+    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
+    def test_is_message_for_if_no_match(self,
+            mock_validate_message_start):
+        buff = MagicMock()
+        buff.__getitem__.return_value = sentinel.identifier
+        pysparc.messages.HisparcMessage.identifier = sentinel.other
+        actual = pysparc.messages.HisparcMessage.is_message_for(buff)
+        self.assertEqual(actual, False)
 
 
 if __name__ == '__main__':
