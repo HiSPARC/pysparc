@@ -20,7 +20,7 @@ def main():
         t1 = time.time()
         logging.info("Alignment took %.1f s", t1 - t0)
 
-        hardware.send_message(messages.TriggerConditionMessage(0x80))
+        hardware.config.trigger_condition = 0x80
         while True:
             msg = hardware.flush_and_get_measured_data_message()
             print '%d %d %d %d' % (msg.adc_ch1_pos.mean(),
@@ -45,11 +45,12 @@ def main():
         print "Interrupted by user."
     finally:
         hardware.close()
+        hardware.config.set_notifications_enabled(False)
         print
         print "All configuration settings:"
         print
-        for key, value in sorted(hardware.config.__dict__.iteritems()):
-            print key, value['value']
+        for attr in sorted(hardware.config.members()):
+            print attr, getattr(hardware.config, attr)
         print
 
 

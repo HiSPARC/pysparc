@@ -2,10 +2,10 @@ import logging
 import time
 import random
 
-from muonlab.ftdi_chip import FtdiChip
-import messages
-from messages import *
-from config import *
+from ftdi_chip import FtdiChip
+from messages import (HisparcMessageFactory, ResetMessage,
+                      InitializeMessage, MeasuredDataMessage)
+import config
 
 
 logger = logging.getLogger(__name__)
@@ -26,14 +26,14 @@ class Hardware:
         self.init_hardware(master)
         self.master = master
         self.master_buffer = bytearray()
-        self.config = Config(self)
+        self.config = config.Config(self)
         logger.info("HiSPARC III Master initialized")
 
     def get_master(self):
         return FtdiChip("HiSPARC III Master", interface_select=2)
 
     def init_hardware(self, device):
-        messages = [ResetMessage(True), InitializeMessage(True)]
+        messages = [ResetMessage(), InitializeMessage(True)]
 
         for message in messages:
             device.write(message.encode())
@@ -42,7 +42,7 @@ class Hardware:
         self.master.flush()
         while True:
             msg = self.read_message()
-            if type(msg) == messages.MeasuredDataMessage:
+            if type(msg) == MeasuredDataMessage:
                 break
         return msg
 
@@ -61,7 +61,7 @@ class Hardware:
 
     def close(self):
         if self.master:
-            self.master.write(ResetMessage(True).encode())
+            self.master.write(ResetMessage().encode())
             time.sleep(1)
             self.master.flush()
             self.master.close()

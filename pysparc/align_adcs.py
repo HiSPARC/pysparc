@@ -111,19 +111,18 @@ class AlignADCs(object):
         self.config.common_offset = value
 
     def _set_individual_offsets(self, values):
-        (self.config.channel1_offset_positive,
-         self.config.channel1_offset_negative,
-         self.config.channel2_offset_positive,
-         self.config.channel2_offset_negative) = values
+        (self.config.ch1_offset_positive,
+         self.config.ch1_offset_negative,
+         self.config.ch2_offset_positive,
+         self.config.ch2_offset_negative) = values
 
     def _set_individual_gains(self, values):
-        (self.config.channel1_gain_positive,
-         self.config.channel1_gain_negative,
-         self.config.channel2_gain_positive,
-         self.config.channel2_gain_negative) = values
+        (self.config.ch1_gain_positive,
+         self.config.ch1_gain_negative,
+         self.config.ch2_gain_positive,
+         self.config.ch2_gain_negative) = values
 
     def _get_mean_adc_value(self):
         msg = self.hardware.flush_and_get_measured_data_message()
         mean_value = (msg.trace_ch1.mean() + msg.trace_ch2.mean()) / 2
         return mean_value
-
