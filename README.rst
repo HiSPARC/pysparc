@@ -44,4 +44,4 @@ I (DF) am also planning on using this code to work out an event display
 and teaching materials for high school students.  This will focus on the
 muon lifetime experiment. However, there already exists a LabVIEW
 interface and a new LabVIEW interface is in development for driving the
-Muonlab II hardware.
+Muonlab III hardware.
