@@ -14,6 +14,51 @@ logger = logging.getLogger(__name__)
 READSIZE = 64 * 1024
 
 
+class HiSPARCIII:
+
+    """Access HiSPARC III hardware.
+
+    Instantiate this class to get access to connected HiSPARC III hardware.
+    The hardware device is opened during instantiation.
+
+    """
+
+    _description = "HiSPARC III Master"
+    _device = None
+    _buffer = None
+
+    def __init__(self):
+        self._device = FtdiChip(self._description)
+        self._buffer = bytearray()
+
+    def __del__(self):
+        if self._device and not self._device.closed:
+            self._device.close()
+
+    def flush_device(self):
+        """Flush device output buffers.
+
+        To completely clear out outdated measurements when changing
+        parameters, call this method.  All data received after this method
+        was called is really newly measured.
+
+        """
+        self._device.flush()
+        del self._buffer[:]
+
+    def reset_hardware(self):
+        """Reset the hardware device."""
+
+        self.send_message(ResetMessage())
+
+    def send_message(self, msg):
+        """Send a message to the hardware device."""
+
+        self._device.write(msg.encode())
+
+
+
+
 class Hardware:
     master = None
 
