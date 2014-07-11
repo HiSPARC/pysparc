@@ -5,9 +5,10 @@ Parse and operate on messages from and to the HiSPARC II / III hardware.
 :class:`HisparcMessage`: factory class for HiSPARC messages
 
 """
+
 import struct
-from struct import Struct
 import datetime
+
 import numpy as np
 
 
@@ -21,7 +22,7 @@ msg_ids = {'measured_data': 0xa0,
            'reset': 0xff,
 
            # config settings (INCOMPLETE)
-           'ch1_offset_positive' : 0x10,
+           'ch1_offset_positive': 0x10,
            'ch1_offset_negative': 0x11,
            'ch2_offset_positive': 0x12,
            'ch2_offset_negative': 0x13,
@@ -39,17 +40,17 @@ msg_ids = {'measured_data': 0xa0,
            'ch2_threshold_high': 0x23,
            'trigger_condition': 0x30,
            'spare_bytes': 0x35,
-          }
+           }
 
 error_ids = {'header_not_detected': 0x99,
              'identifier_unknown': 0x89,
              'stop_codon_not_detected': 0x66,
-            }
+             }
 
 command_ids = {'soft_reset': 0xff,
                'set_all_controls': 0x50,
                'get_all_controls': 0x55,
-              }
+               }
 
 
 class MessageError(Exception):
@@ -85,16 +86,16 @@ class HisparcMessage(object):
 
     def validate_codons_and_id(self, header, identifier, end):
         if (header != codons['start'] or end != codons['stop'] or
-            identifier != self.identifier):
+                identifier != self.identifier):
             raise MessageError("Corrupt message detected: %x %x %x" %
-                (header, identifier, end))
+                               (header, identifier, end))
 
     def encode(self):
         if self.identifier is None:
             return None
 
         format = '>BB' + self.msg_format + 'B'
-        packer = Struct(format)
+        packer = struct.Struct(format)
         data = [codons['start'], self.identifier]
         if self.data:
             data += self.data
@@ -154,8 +155,8 @@ class MeasuredDataMessage(HisparcMessage):
          self.gps_seconds, self.count_ticks_PPS) = \
             struct.unpack_from(self.msg_format, str_buff)
 
-        event_length = self.pre_coincidence_time + self.coincidence_time + \
-                       self.post_coincidence_time
+        event_length = (self.pre_coincidence_time + self.coincidence_time +
+                        self.post_coincidence_time)
         # 12 bits * 2 adcs / (8 bits / byte)
         trace_length = 3 * event_length
         # message contains data from two channels
@@ -164,8 +165,7 @@ class MeasuredDataMessage(HisparcMessage):
         total_length = msg_length + msg_tail_length
         str_buff = str(buff[msg_length:total_length])
 
-        self.raw_traces, end = struct.unpack_from(msg_tail_format,
-                                                  str_buff)
+        self.raw_traces, end = struct.unpack_from(msg_tail_format, str_buff)
 
         self.validate_codons_and_id(header, identifier, end)
         del buff[:total_length]
@@ -173,8 +173,7 @@ class MeasuredDataMessage(HisparcMessage):
         self.trace_length = trace_length
         self.timestamp = datetime.datetime(self.gps_year, self.gps_month,
                                            self.gps_day, self.gps_hours,
-                                           self.gps_minutes,
-                                           self.gps_seconds)
+                                           self.gps_minutes, self.gps_seconds)
 
     def __str__(self):
         return 'Event message: %s' % self.timestamp

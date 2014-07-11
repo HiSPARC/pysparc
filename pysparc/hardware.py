@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 READSIZE = 64 * 1024
 
 
-class HiSPARCIII:
+class HiSPARCIII(object):
 
     """Access HiSPARC III hardware.
 
@@ -57,9 +57,7 @@ class HiSPARCIII:
         self._device.write(msg.encode())
 
 
-
-
-class Hardware:
+class Hardware(object):
     master = None
 
     def __init__(self):
