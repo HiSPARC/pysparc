@@ -8,7 +8,10 @@ from pysparc import hardware
 class HiSPARCIIITest(unittest.TestCase):
 
     @patch('pysparc.hardware.FtdiChip')
-    def setUp(self, mock_Device):
+    @patch('pysparc.hardware.config.Config')
+    def setUp(self, mock_Config, mock_Device):
+        self.mock_Config = mock_Config
+        self.mock_config = mock_Config.return_value
         self.mock_Device = mock_Device
         self.mock_device = mock_Device.return_value
         self.mock_device.closed = False
@@ -25,6 +28,10 @@ class HiSPARCIIITest(unittest.TestCase):
 
     def test_init_saves_device_as_attribute(self):
         self.assertIs(self.hisparc._device, self.mock_device)
+
+    def test_init_creates_device_configuration(self):
+        self.mock_Config.assert_called_once_with(self.hisparc)
+        self.assertIs(self.hisparc.config, self.mock_config)
 
     def test_destructor_closes_device(self):
         self.hisparc.__del__()

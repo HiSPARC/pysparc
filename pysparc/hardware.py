@@ -30,6 +30,7 @@ class HiSPARCIII(object):
     def __init__(self):
         self._device = FtdiChip(self._description)
         self._buffer = bytearray()
+        self.config = config.Config(self)
 
     def __del__(self):
         if self._device and not self._device.closed:
