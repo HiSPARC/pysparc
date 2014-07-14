@@ -91,6 +91,24 @@ class HiSPARCIIITest(unittest.TestCase):
         self.hisparc.read_into_buffer()
         mock_buffer.extend.assert_called_once_with(read_data)
 
+    @patch.object(hardware.HiSPARCIII, 'read_into_buffer')
+    def test_read_message_calls_read_into_buffer(self, mock_read_into_buffer):
+        self.hisparc.read_message()
+        mock_read_into_buffer.assert_called_once_with()
+
+    @patch('pysparc.hardware.HisparcMessageFactory')
+    def test_read_message_calls_message_factory(self, mock_factory):
+        mock_buffer = Mock()
+        self.hisparc._buffer = mock_buffer
+        self.hisparc.read_message()
+        mock_factory.assert_called_once_with(mock_buffer)
+
+    @patch('pysparc.hardware.HisparcMessageFactory')
+    def test_read_message_returns_message(self, mock_factory):
+        mock_factory.return_value = sentinel.msg
+        actual = self.hisparc.read_message()
+        self.assertIs(actual, sentinel.msg)
+
 
 if __name__ == '__main__':
     unittest.main()

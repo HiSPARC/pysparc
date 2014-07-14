@@ -72,6 +72,18 @@ class HiSPARCIII(object):
         data = self._device.read(ftdi_chip.BUFFER_SIZE)
         self._buffer.extend(data)
 
+    def read_message(self):
+        """Read a message from the hardware device.
+
+        Call this method to communicate with the device.
+
+        :returns: a :class:`HisparcMessage` subclass instance
+
+        """
+        self.read_into_buffer()
+        return HisparcMessageFactory(self._buffer)
+
+
 
 class Hardware(object):
     master = None
