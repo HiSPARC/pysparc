@@ -2,7 +2,7 @@ import unittest
 
 from mock import patch, Mock, sentinel
 
-from pysparc import hardware
+from pysparc import hardware, ftdi_chip
 
 
 class HiSPARCIIITest(unittest.TestCase):
@@ -79,6 +79,17 @@ class HiSPARCIIITest(unittest.TestCase):
         self.hisparc.reset_hardware()
         msg = mock_Reset_msg.return_value
         mock_send.assert_called_once_with(msg)
+
+    def test_read_into_buffer_reads_from_device(self):
+        self.hisparc.read_into_buffer()
+        self.mock_device.read.assert_called_once_with(ftdi_chip.BUFFER_SIZE)
+
+    def test_read_into_buffer_reads_into_buffer(self):
+        mock_buffer = Mock()
+        self.hisparc._buffer = mock_buffer
+        read_data = self.mock_device.read.return_value
+        self.hisparc.read_into_buffer()
+        mock_buffer.extend.assert_called_once_with(read_data)
 
 
 if __name__ == '__main__':

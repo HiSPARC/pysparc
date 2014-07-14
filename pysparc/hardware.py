@@ -2,6 +2,7 @@ import logging
 import time
 import random
 
+import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
                       InitializeMessage, MeasuredDataMessage)
@@ -56,6 +57,20 @@ class HiSPARCIII(object):
         """Send a message to the hardware device."""
 
         self._device.write(msg.encode())
+
+    def read_into_buffer(self):
+        """Read data from device and place it in the read buffer.
+
+        Call this method to empty the device and host usb buffer.  All
+        data is read into the class instance's data buffer.  It is not
+        necessary to call this method in your program, unless you need to
+        make sure the usb buffers won't fill up while running long tasks.
+        If you just want to read messages from the device, use the
+        appropriate methods.  This method is called by those methods.
+
+        """
+        data = self._device.read(ftdi_chip.BUFFER_SIZE)
+        self._buffer.extend(data)
 
 
 class Hardware(object):
