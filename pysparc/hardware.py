@@ -34,6 +34,11 @@ class HiSPARCIII(object):
         self.config = config.Config(self)
 
     def __del__(self):
+        self.close()
+        
+    def close(self):
+        """Close the hardware device."""
+
         if self._device and not self._device.closed:
             self._device.close()
 

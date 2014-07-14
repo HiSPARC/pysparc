@@ -33,18 +33,23 @@ class HiSPARCIIITest(unittest.TestCase):
         self.mock_Config.assert_called_once_with(self.hisparc)
         self.assertIs(self.hisparc.config, self.mock_config)
 
-    def test_destructor_closes_device(self):
+    @patch.object(hardware.HiSPARCIII, 'close')
+    def test_destructor_calls_close(self, mock_close):
         self.hisparc.__del__()
+        mock_close.assert_called_once_with()
+
+    def test_close_closes_device(self):
+        self.hisparc.close()
         self.mock_device.close.assert_called_once_with()
 
-    def test_destructor_does_nothing_if_device_is_closed(self):
+    def test_close_does_nothing_if_device_is_closed(self):
         self.mock_device.closed = True
-        self.hisparc.__del__()
+        self.hisparc.close()
         self.assertFalse(self.mock_device.close.called)
 
-    def test_destructor_does_nothing_if_device_is_none(self):
+    def test_close_does_nothing_if_device_is_none(self):
         self.hisparc._device = None
-        self.hisparc.__del__()
+        self.hisparc.close()
         self.assertFalse(self.mock_device.close.called)
 
     def test_buffer_is_none_before_instantiation(self):
