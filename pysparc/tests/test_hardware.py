@@ -2,7 +2,7 @@ import unittest
 
 from mock import patch, Mock, sentinel
 
-from pysparc import hardware, ftdi_chip
+from pysparc import hardware, ftdi_chip, messages
 
 
 class HiSPARCIIITest(unittest.TestCase):
@@ -113,6 +113,23 @@ class HiSPARCIIITest(unittest.TestCase):
         mock_factory.return_value = sentinel.msg
         actual = self.hisparc.read_message()
         self.assertIs(actual, sentinel.msg)
+
+    @patch.object(hardware.HiSPARCIII, 'flush_device')
+    def test_flush_and_get_measured_data_message_calls_flush(self, mock_flush):
+        self.hisparc.flush_and_get_measured_data_message(timeout=.01)
+        mock_flush.assert_called_once_with()
+
+    @patch.object(hardware.HiSPARCIII, 'read_message')
+    def test_flush_and_get_measured_data_message_calls_read_message(self, mock_read):
+        self.hisparc.flush_and_get_measured_data_message(timeout=.01)
+        self.assertTrue(mock_read.called)
+
+    @patch.object(hardware.HiSPARCIII, 'read_message')
+    def test_flush_and_get_measured_data_message_returns_correct_type(self, mock_read):
+        mock_msg = Mock(spec=messages.MeasuredDataMessage)
+        mock_read.side_effect = [Mock(), Mock(), mock_msg, Mock()]
+        msg = self.hisparc.flush_and_get_measured_data_message()
+        self.assertIs(msg, mock_msg)
 
 
 if __name__ == '__main__':

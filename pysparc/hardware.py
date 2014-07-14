@@ -35,7 +35,7 @@ class HiSPARCIII(object):
 
     def __del__(self):
         self.close()
-        
+
     def close(self):
         """Close the hardware device."""
 
@@ -82,12 +82,34 @@ class HiSPARCIII(object):
 
         Call this method to communicate with the device.
 
-        :returns: a :class:`HisparcMessage` subclass instance
+        :returns: a :class:`pysparc.messages.HisparcMessage` subclass
+            instance
 
         """
         self.read_into_buffer()
         return HisparcMessageFactory(self._buffer)
 
+    def flush_and_get_measured_data_message(self, timeout=2):
+        """Flush output buffers and wait for measured data.
+
+        This method is useful if you want to change device parameters and
+        then measure the effect on the data.  To make sure that the data
+        is actually taken *after* changing the parameters, the output
+        buffers are flushed before a measured data message is returned.
+
+        The alignment procedure makes use of this method.
+
+        :param timeout: maximum time in seconds to wait for message
+        :returns: a :class:`pysparc.messages.MeasuredDataMessage`
+            instance or None if a timeout occured.
+
+        """
+        self.flush_device()
+        t0 = time.time()
+        while time.time() - t0 < timeout:
+            msg = self.read_message()
+            if isinstance(msg, MeasuredDataMessage):
+                return msg
 
 
 class Hardware(object):
