@@ -29,7 +29,8 @@ class HiSPARCIII(object):
     _buffer = None
 
     def __init__(self):
-        self._device = FtdiChip(self._description)
+        # open device's second interface (DAQ)
+        self._device = FtdiChip(self._description, interface_select=2)
         self._buffer = bytearray()
         self.config = config.Config(self)
 

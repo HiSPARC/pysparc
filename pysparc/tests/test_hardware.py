@@ -23,8 +23,8 @@ class HiSPARCIIITest(unittest.TestCase):
     def test_device_is_none_before_instantiation(self):
         self.assertIs(hardware.HiSPARCIII._device, None)
 
-    def test_init_opens_device_with_description(self):
-        self.mock_Device.assert_called_once_with(self.hisparc._description)
+    def test_init_opens_device_with_description_and_interface(self):
+        self.mock_Device.assert_called_once_with(self.hisparc._description, interface_select=2)
 
     def test_init_saves_device_as_attribute(self):
         self.assertIs(self.hisparc._device, self.mock_device)
