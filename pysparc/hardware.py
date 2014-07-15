@@ -92,7 +92,7 @@ class HiSPARCIII(object):
         self.read_into_buffer()
         return HisparcMessageFactory(self._buffer)
 
-    def flush_and_get_measured_data_message(self, timeout=2):
+    def flush_and_get_measured_data_message(self, timeout=15):
         """Flush output buffers and wait for measured data.
 
         This method is useful if you want to change device parameters and
