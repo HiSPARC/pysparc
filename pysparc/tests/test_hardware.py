@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, Mock, sentinel
+from mock import patch, Mock, sentinel, call
 
 from pysparc import hardware, ftdi_chip, messages
 
@@ -80,10 +80,12 @@ class HiSPARCIIITest(unittest.TestCase):
 
     @patch.object(hardware.HiSPARCIII, 'send_message')
     @patch('pysparc.hardware.ResetMessage')
-    def test_reset_hardware_sends_reset_message(self, mock_Reset_msg, mock_send):
+    @patch('pysparc.hardware.InitializeMessage')
+    def test_reset_hardware_sends_reset_and_init_messages(self, mock_Init_msg, mock_Reset_msg, mock_send):
         self.hisparc.reset_hardware()
-        msg = mock_Reset_msg.return_value
-        mock_send.assert_called_once_with(msg)
+        msg1 = mock_Reset_msg.return_value
+        msg2 = mock_Init_msg.return_value
+        mock_send.assert_has_calls([call(msg1), call(msg2)])
 
     def test_read_into_buffer_reads_from_device(self):
         self.hisparc.read_into_buffer()
