@@ -3,7 +3,7 @@ from __future__ import division
 import logging
 import time
 
-from pysparc.hardware import Hardware
+from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
 from pysparc import messages
 
@@ -12,7 +12,7 @@ def average(values):
     return sum(values) / len(values)
 
 def main():
-    hardware = Hardware()
+    hardware = HiSPARCIII()
     align_adcs = AlignADCs(hardware)
     try:
         t0 = time.time()
