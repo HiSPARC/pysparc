@@ -278,5 +278,8 @@ def HisparcMessageFactory(buff):
 
     for cls in HisparcMessage.__subclasses__():
         if cls.is_message_for(buff):
-            return cls(buff)
+            try:
+                return cls(buff)
+            except:
+                return None
     raise NotImplementedError("Message type not implemented")
