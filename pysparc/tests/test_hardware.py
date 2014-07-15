@@ -9,12 +9,14 @@ class HiSPARCIIITest(unittest.TestCase):
 
     @patch('pysparc.hardware.FtdiChip')
     @patch('pysparc.hardware.config.Config')
-    def setUp(self, mock_Config, mock_Device):
+    @patch.object(hardware.HiSPARCIII, 'reset_hardware')
+    def setUp(self, mock_reset, mock_Config, mock_Device):
         self.mock_Config = mock_Config
         self.mock_config = mock_Config.return_value
         self.mock_Device = mock_Device
         self.mock_device = mock_Device.return_value
         self.mock_device.closed = False
+        self.mock_reset = mock_reset
         self.hisparc = hardware.HiSPARCIII()
 
     def test_description(self):
@@ -32,6 +34,9 @@ class HiSPARCIIITest(unittest.TestCase):
     def test_init_creates_device_configuration(self):
         self.mock_Config.assert_called_once_with(self.hisparc)
         self.assertIs(self.hisparc.config, self.mock_config)
+
+    def test_init_calls_reset(self):
+        self.mock_reset.assert_called_once_with()
 
     @patch.object(hardware.HiSPARCIII, 'close')
     def test_destructor_calls_close(self, mock_close):

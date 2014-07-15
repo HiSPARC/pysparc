@@ -33,6 +33,7 @@ class HiSPARCIII(object):
         self._device = FtdiChip(self._description, interface_select=2)
         self._buffer = bytearray()
         self.config = config.Config(self)
+        self.reset_hardware()
 
     def __del__(self):
         self.close()
