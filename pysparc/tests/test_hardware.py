@@ -20,13 +20,13 @@ class HiSPARCIIITest(unittest.TestCase):
         self.hisparc = hardware.HiSPARCIII()
 
     def test_description(self):
-        self.assertEqual(hardware.HiSPARCIII._description, "HiSPARC III Master")
+        self.assertEqual(hardware.HiSPARCIII.description, "HiSPARC III Master")
 
     def test_device_is_none_before_instantiation(self):
         self.assertIs(hardware.HiSPARCIII._device, None)
 
     def test_init_opens_device_with_description_and_interface(self):
-        self.mock_Device.assert_called_once_with(self.hisparc._description, interface_select=2)
+        self.mock_Device.assert_called_once_with(self.hisparc.description, interface_select=2)
 
     def test_init_saves_device_as_attribute(self):
         self.assertIs(self.hisparc._device, self.mock_device)

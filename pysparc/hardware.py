@@ -24,13 +24,13 @@ class HiSPARCIII(object):
 
     """
 
-    _description = "HiSPARC III Master"
+    description = "HiSPARC III Master"
     _device = None
     _buffer = None
 
     def __init__(self):
         # open device's second interface (DAQ)
-        self._device = FtdiChip(self._description, interface_select=2)
+        self._device = FtdiChip(self.description, interface_select=2)
         self._buffer = bytearray()
         self.config = config.Config(self)
         self.reset_hardware()
