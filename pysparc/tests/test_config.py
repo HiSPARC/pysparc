@@ -107,7 +107,7 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
 
     def test_write_config_writes_config_to_file_last(self):
         self.config.write_config(sentinel.filename)
-        self.mock_open.assert_called_once_with(sentinel.filename, 'a')
+        self.mock_open.assert_called_once_with(sentinel.filename, 'w')
         mock_file = self.mock_open.return_value
 
         self.mock_configparser.write.assert_called_once_with(mock_file)

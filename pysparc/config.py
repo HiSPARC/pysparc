@@ -83,11 +83,11 @@ class Config(Atom):
         config.add_section(section)
 
         settings = self.members()
-        for setting in settings:
+        for setting in sorted(settings):
             if setting != '_device':
                 config.set(section, setting, getattr(self, setting))
 
-        with open(path, 'a') as f:
+        with open(path, 'w') as f:
             config.write(f)
 
     def read_config(self, path):

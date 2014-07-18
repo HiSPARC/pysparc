@@ -18,18 +18,17 @@ def average(values):
 def main():
     hardware = HiSPARCIII()
 
-    if not os.path.isfile(CONFIGFILE):
-        logger.info("No config file found.  Aligning ADCs.")
-        align_adcs = AlignADCs(hardware)
-    else:
-        logger.info("Reading config from file")
-        hardware.config.read_config(CONFIGFILE)
-
     try:
-        t0 = time.time()
-        align_adcs.align()
-        t1 = time.time()
-        logging.info("Alignment took %.1f s", t1 - t0)
+        if not os.path.isfile(CONFIGFILE):
+            logging.info("No config file found.  Aligning ADCs.")
+            align_adcs = AlignADCs(hardware)
+            t0 = time.time()
+            align_adcs.align()
+            t1 = time.time()
+            logging.info("Alignment took %.1f s", t1 - t0)
+        else:
+            logging.info("Reading config from file")
+            hardware.config.read_config(CONFIGFILE)
 
         hardware.config.trigger_condition = 0x80
         while True:
@@ -57,7 +56,7 @@ def main():
     finally:
         hardware.close()
         hardware.config.set_notifications_enabled(False)
-        logger.info("Writing config to file")
+        logging.info("Writing config to file")
         hardware.config.write_config(CONFIGFILE)
         print
         print "All configuration settings:"
