@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, sentinel, Mock, MagicMock
+from mock import patch, sentinel, Mock, MagicMock, mock_open
 
 import pysparc.config
 
@@ -88,6 +88,27 @@ class ConfigTest(unittest.TestCase):
                                              sentinel.value)
         msg = mock_Message.return_value
         self.mock_device.send_message.assert_called_once_with(msg)
+
+
+class ReadWriteConfigToFileTest(unittest.TestCase):
+
+    def setUp(self):
+        self.mock_device = Mock()
+        self.config = pysparc.config.Config(self.mock_device)
+        self.patcher1 = patch('pysparc.config.ConfigParser')
+        self.mock_ConfigParser = self.patcher1.start()
+        self.mock_configparser = self.mock_ConfigParser.return_value
+
+    def tearDown(self):
+        self.patcher1.stop()
+
+    def test_write_config_writes_config_to_file(self):
+        m = mock_open()
+        with patch('pysparc.config.open', m, create=True):
+            self.config.write_config(sentinel.filename)
+        m.assert_called_once_with(sentinel.filename, 'a')
+        mock_file = m.return_value
+        self.mock_configparser.write.assert_called_once_with(mock_file)
 
 
 class WriteSettingTest(unittest.TestCase):

@@ -1,5 +1,6 @@
 import struct
 import logging
+from ConfigParser import ConfigParser
 
 from atom.api import Atom, observe, Range, Value
 
@@ -69,3 +70,13 @@ class Config(Atom):
         atom = self.get_member(name)
         validator, (low, high) = atom.validate_mode
         return low, high
+
+    def write_config(self, path):
+        """Write config settings to file.
+
+        :param path: path to config file
+
+        """
+        config = ConfigParser()
+        with open(path, 'a') as f:
+            config.write(f)
