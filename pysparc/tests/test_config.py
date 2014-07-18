@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, sentinel, Mock, MagicMock, mock_open
+from mock import patch, sentinel, Mock, MagicMock, mock_open, call
 
 import pysparc.config
 
@@ -96,17 +96,27 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
         self.mock_device = Mock()
         self.config = pysparc.config.Config(self.mock_device)
         patcher1 = patch('pysparc.config.ConfigParser')
+        self.mock_open = mock_open()
+        patcher2 = patch('pysparc.config.open', self.mock_open, create=True)
+        patcher2.start()
         self.mock_ConfigParser = patcher1.start()
         self.mock_configparser = self.mock_ConfigParser.return_value
         self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
 
-    def test_write_config_writes_config_to_file(self):
-        m = mock_open()
-        with patch('pysparc.config.open', m, create=True):
-            self.config.write_config(sentinel.filename)
-        m.assert_called_once_with(sentinel.filename, 'a')
-        mock_file = m.return_value
+    def test_write_config_writes_config_to_file_last(self):
+        self.config.write_config(sentinel.filename)
+        self.mock_open.assert_called_once_with(sentinel.filename, 'a')
+        mock_file = self.mock_open.return_value
+        
         self.mock_configparser.write.assert_called_once_with(mock_file)
+        last_call = self.mock_configparser.mock_calls[-1]
+        self.assertEqual(last_call, call.write(mock_file))
+
+    def test_write_config_creates_section_with_description(self):
+        self.config.write_config(Mock())
+        self.mock_configparser.add_section.assert_called_once_with(
+            self.mock_device.description)
 
 
 class WriteSettingTest(unittest.TestCase):
