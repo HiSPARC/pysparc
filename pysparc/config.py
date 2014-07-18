@@ -89,3 +89,18 @@ class Config(Atom):
 
         with open(path, 'a') as f:
             config.write(f)
+
+    def read_config(self, path):
+        """Read config settings from file.
+
+        :param path: path to config file
+
+        """
+        config = ConfigParser()
+        config.read(path)
+
+        section = self._device.description
+        settings = self.members()
+        for setting in settings:
+            if setting != '_device':
+                setattr(self, setting, config.getint(section, setting))

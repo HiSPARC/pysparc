@@ -128,6 +128,26 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
         device_call = call.set(self.section, '_device', self.mock_device)
         assert device_call not in self.mock_configparser.mock_calls
 
+    @patch.object(pysparc.config.Config, '__setattr__')
+    def test_read_config_reads_config_from_file_first(self, mock_setattr):
+        self.config.read_config(sentinel.filename)
+        self.mock_configparser.read.assert_called_once_with(sentinel.filename)
+        first_call = self.mock_configparser.mock_calls[0]
+        self.assertEqual(first_call, call.read(sentinel.filename))
+
+    @patch.object(pysparc.config.Config, '__setattr__')
+    def test_read_config_gets_all_members_except_device(self, mock_setattr):
+        value = self.mock_configparser.getint.return_value
+
+        self.config.read_config(Mock())
+        for member in self.config.members():
+            if member != '_device':
+                self.mock_configparser.getint.assert_any_call(
+                    self.section, member)
+                mock_setattr.assert_any_call(member, value)
+        device_call = call.getint(self.section, '_device')
+        assert device_call not in self.mock_configparser.mock_calls
+
 
 class WriteSettingTest(unittest.TestCase):
 
