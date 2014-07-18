@@ -78,6 +78,14 @@ class Config(Atom):
 
         """
         config = ConfigParser()
-        config.add_section(self._device.description)
+
+        section = self._device.description
+        config.add_section(section)
+
+        settings = self.members()
+        for setting in settings:
+            if setting != '_device':
+                config.set(section, setting, getattr(self, setting))
+
         with open(path, 'a') as f:
             config.write(f)

@@ -94,6 +94,7 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
 
     def setUp(self):
         self.mock_device = Mock()
+        self.section = self.mock_device.description
         self.config = pysparc.config.Config(self.mock_device)
         patcher1 = patch('pysparc.config.ConfigParser')
         self.mock_open = mock_open()
@@ -108,7 +109,7 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
         self.config.write_config(sentinel.filename)
         self.mock_open.assert_called_once_with(sentinel.filename, 'a')
         mock_file = self.mock_open.return_value
-        
+
         self.mock_configparser.write.assert_called_once_with(mock_file)
         last_call = self.mock_configparser.mock_calls[-1]
         self.assertEqual(last_call, call.write(mock_file))
@@ -116,7 +117,16 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
     def test_write_config_creates_section_with_description(self):
         self.config.write_config(Mock())
         self.mock_configparser.add_section.assert_called_once_with(
-            self.mock_device.description)
+            self.section)
+
+    def test_write_config_sets_all_members_except_device(self):
+        self.config.write_config(Mock())
+        for member in self.config.members():
+            if member != '_device':
+                self.mock_configparser.set.assert_any_call(
+                    self.section, member, getattr(self.config, member))
+        device_call = call.set(self.section, '_device', self.mock_device)
+        assert device_call not in self.mock_configparser.mock_calls
 
 
 class WriteSettingTest(unittest.TestCase):
