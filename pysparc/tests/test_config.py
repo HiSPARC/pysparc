@@ -95,12 +95,10 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
     def setUp(self):
         self.mock_device = Mock()
         self.config = pysparc.config.Config(self.mock_device)
-        self.patcher1 = patch('pysparc.config.ConfigParser')
-        self.mock_ConfigParser = self.patcher1.start()
+        patcher1 = patch('pysparc.config.ConfigParser')
+        self.mock_ConfigParser = patcher1.start()
         self.mock_configparser = self.mock_ConfigParser.return_value
-
-    def tearDown(self):
-        self.patcher1.stop()
+        self.addCleanup(patcher1.stop)
 
     def test_write_config_writes_config_to_file(self):
         m = mock_open()
