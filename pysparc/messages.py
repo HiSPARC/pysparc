@@ -132,7 +132,11 @@ class OneSecondMessage(HisparcMessage):
                                            self.gps_seconds)
 
     def __str__(self):
-        return 'One second message: %s' % self.timestamp
+        return 'One second message: %s %d %d %d %d' % (self.timestamp,
+                                                       self.count_ch1_low,
+                                                       self.count_ch1_high,
+                                                       self.count_ch2_low,
+                                                       self.count_ch2_high)
 
 
 class MeasuredDataMessage(HisparcMessage):
@@ -176,7 +180,14 @@ class MeasuredDataMessage(HisparcMessage):
                                            self.gps_minutes, self.gps_seconds)
 
     def __str__(self):
-        return 'Event message: %s' % self.timestamp
+        bl1 = self.trace_ch1[:100].mean()
+        ph1 = self.trace_ch1.max() - bl1
+
+        bl2 = self.trace_ch2[:100].mean()
+        ph2 = self.trace_ch2.max() - bl2
+
+        return 'Event message: %s %d %d' % (self.timestamp, ph1, ph2)
+
 
     def __getattr__(self, name):
         """Create missing attributes on demand"""
