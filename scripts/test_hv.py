@@ -30,8 +30,11 @@ def main():
             logging.info("Reading config from file")
             hardware.config.read_config(CONFIGFILE)
 
-        # external trigger only
-        hardware.config.trigger_condition = 0b1000000
+        hardware.config.ch1_voltage = 800
+        hardware.config.ch2_voltage = 800
+
+        # at least two low
+        hardware.config.trigger_condition = 0b10
         hardware.send_message(messages.InitializeMessage(
                 one_second_enabled=True))
 
