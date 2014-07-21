@@ -39,7 +39,9 @@ class Config(Atom):
         super(Config, self).__init__()
         self._device = device
 
-    @observe('ch1_offset_positive',
+    @observe('ch1_voltage',
+             'ch2_voltage',
+             'ch1_offset_positive',
              'ch1_offset_negative',
              'ch2_offset_positive',
              'ch2_offset_negative',
