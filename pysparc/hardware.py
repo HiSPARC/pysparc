@@ -1,3 +1,13 @@
+"""Access HiSPARC hardware.
+
+Contents
+--------
+
+:class:`HiSPARCIII`
+    Access HiSPARC III hardware.
+
+"""
+
 import logging
 import time
 import random
