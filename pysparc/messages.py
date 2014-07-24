@@ -8,6 +8,7 @@ Parse and operate on messages from and to the HiSPARC II / III hardware.
 
 import struct
 import datetime
+import calendar
 
 import numpy as np
 
@@ -126,13 +127,14 @@ class OneSecondMessage(HisparcMessage):
         self.validate_codons_and_id(header, identifier, end)
         del buff[:msg_length]
 
-        self.timestamp = datetime.datetime(self.gps_year, self.gps_month,
-                                           self.gps_day, self.gps_hours,
-                                           self.gps_minutes,
-                                           self.gps_seconds)
+        self.datetime = datetime.datetime(self.gps_year, self.gps_month,
+                                          self.gps_day, self.gps_hours,
+                                          self.gps_minutes,
+                                          self.gps_seconds)
+        self.timestamp = calendar.timegm(self.datetime.utctimetuple())
 
     def __str__(self):
-        return 'One second message: %s %d %d %d %d' % (self.timestamp,
+        return 'One second message: %s %d %d %d %d' % (self.datetime,
                                                        self.count_ch1_low,
                                                        self.count_ch1_high,
                                                        self.count_ch2_low,
@@ -156,7 +158,7 @@ class MeasuredDataMessage(HisparcMessage):
          self.pre_coincidence_time, self.coincidence_time,
          self.post_coincidence_time, self.gps_day, self.gps_month,
          self.gps_year, self.gps_hours, self.gps_minutes,
-         self.gps_seconds, self.count_ticks_PPS) = \
+         self.gps_seconds, self.nanoseconds) = \
             struct.unpack_from(self.msg_format, str_buff)
 
         event_length = (self.pre_coincidence_time + self.coincidence_time +
@@ -175,9 +177,11 @@ class MeasuredDataMessage(HisparcMessage):
         del buff[:total_length]
 
         self.trace_length = trace_length
-        self.timestamp = datetime.datetime(self.gps_year, self.gps_month,
-                                           self.gps_day, self.gps_hours,
-                                           self.gps_minutes, self.gps_seconds)
+        self.datetime = datetime.datetime(self.gps_year, self.gps_month,
+                                          self.gps_day, self.gps_hours,
+                                          self.gps_minutes,
+                                          self.gps_seconds)
+        self.timestamp = calendar.timegm(self.datetime.utctimetuple())
 
     def __str__(self):
         bl1 = self.trace_ch1[:100].mean()
@@ -186,7 +190,7 @@ class MeasuredDataMessage(HisparcMessage):
         bl2 = self.trace_ch2[:100].mean()
         ph2 = self.trace_ch2.max() - bl2
 
-        return 'Event message: %s %d %d' % (self.timestamp, ph1, ph2)
+        return 'Event message: %s %d %d' % (self.datetime, ph1, ph2)
 
 
     def __getattr__(self, name):
