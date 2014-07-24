@@ -1,5 +1,6 @@
 import logging
 import os
+import zlib
 
 import tables
 
@@ -12,7 +13,7 @@ CONFIGFILE = os.path.expanduser('~/.pysparc')
 DATAFILE = 'hisparc.h5'
 
 
-class HisparcEvent(tables.is_description):
+class HisparcEvent(tables.IsDescription):
     event_id = tables.UInt32Col(pos=0)
     timestamp = tables.Time32Col(pos=1)
     nanoseconds = tables.UInt32Col(pos=2)
@@ -38,20 +39,21 @@ class Main(object):
     def initialize_device(self):
         if not os.path.isfile(CONFIGFILE):
             logging.info("No config file found.  Aligning ADCs.")
-            align_adcs = AlignADCs(hardware)
+            align_adcs = AlignADCs(self.device)
             align_adcs.align()
+	    self.device.config.write_config(CONFIGFILE)
         else:
             logging.info("Reading config from file")
-            hardware.config.read_config(CONFIGFILE)
+            self.device.config.read_config(CONFIGFILE)
 
     def initialize_local_storage(self):
-        self.datafile = tables.open_file(DATAFILE, 'a')
-        if 'hisparc' in self.datafile:
+        self.datafile = tables.openFile(DATAFILE, 'a')
+        if '/hisparc' in self.datafile:
             raise RuntimeError("Sorry, I will not overwrite data.  Aborting.")
         else:
-            self.events = self.datafile.create_table(
+            self.events = self.datafile.createTable(
                 '/', 'hisparc', HisparcEvent)
-            self.blobs = self.datafile.create_vlarray(
+            self.blobs = self.datafile.createVLArray(
                 '/', 'blobs', tables.VLStringAtom())
 
     def run(self):
@@ -65,12 +67,12 @@ class Main(object):
                 msg = self.device.read_message()
                 if msg is not None:
                     logging.info("Data received: %s", msg)
-                if isinstance(msg, MeasuredDataMessage):
+                if isinstance(msg, messages.MeasuredDataMessage):
                     self.store_event(msg)
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
 
-    def store_event(self, event_msg):
+    def store_event(self, msg):
         row = self.events.row
         row['event_id'] = len(self.events)
         row['timestamp'] = msg.timestamp
@@ -80,16 +82,16 @@ class Main(object):
         row['trigger_pattern'] = msg.trigger_pattern
         baselines = [msg.trace_ch1[:100].mean(),
                      msg.trace_ch2[:100].mean(), -1, -1]
-        row['baselines'] = baselines
+        row['baseline'] = baselines
         row['std_dev'] = [msg.trace_ch1[:100].std(),
                           msg.trace_ch2[:100].std(), -1, -1]
         row['n_peaks'] = 4 * [-999]
-        row['pulseheights'] = [msg.trace_ch1.max() - baseline[0],
-                               msg.trace_ch2.max() - baseline[1], -1, -1]
+        row['pulseheights'] = [msg.trace_ch1.max() - baselines[0],
+                               msg.trace_ch2.max() - baselines[1], -1, -1]
         row['integrals'] = 4 * [-999]
         row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        self.blobs.append(msg.trace_ch1)
-        self.blobs.append(msg.trace_ch2)
+        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch1])))
+        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch2])))
         row['event_rate'] = -1
 
         row.append()
