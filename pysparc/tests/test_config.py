@@ -1,4 +1,5 @@
 import unittest
+import weakref
 
 from mock import patch, sentinel, Mock, MagicMock, mock_open, call
 
@@ -11,8 +12,10 @@ class ConfigTest(unittest.TestCase):
         self.mock_device = Mock()
         self.config = pysparc.config.Config(self.mock_device)
 
-    def test_init_stores_device(self):
-        self.assertEqual(self.config._device, self.mock_device)
+    def test_init_stores_weakref_to_device(self):
+        # Keep a weak reference to the device, so the garbage collector
+        # can clean up when a device class instance is deleted.
+        self.assertEqual(self.config._device, weakref.ref(self.mock_device))
 
     @patch.object(pysparc.config.Config, 'get_member')
     def test_get_range_from_calls_get_member(self, mock_get_member):

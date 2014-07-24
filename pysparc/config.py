@@ -1,6 +1,7 @@
 import struct
 import logging
 from ConfigParser import ConfigParser
+import weakref
 
 from atom.api import Atom, observe, Range, Value
 
@@ -37,7 +38,9 @@ class Config(Atom):
 
     def __init__(self, device):
         super(Config, self).__init__()
-        self._device = device
+        # Keep a weak reference to the device, so the garbage collector
+        # can clean up when a device class instance is deleted.
+        self._device = weakref.ref(device)
 
     @observe('ch1_voltage',
              'ch2_voltage',
@@ -56,11 +59,11 @@ class Config(Atom):
         low, high = self._get_range_from(name)
         setting_value = map_setting(value, low, high, 0x00, 0xff)
         msg = SetControlParameter(name, setting_value)
-        self._device.send_message(msg)
+        self._device().send_message(msg)
 
     def _observe_trigger_condition(self, value):
         msg = SetControlParameter('trigger_condition', value['value'])
-        self._device.send_message(msg)
+        self._device().send_message(msg)
 
     def _get_range_from(self, name):
         """Get the low, high range from an atom Range object.
@@ -81,7 +84,7 @@ class Config(Atom):
         """
         config = ConfigParser()
 
-        section = self._device.description
+        section = self._device().description
         config.add_section(section)
 
         settings = self.members()
@@ -101,7 +104,7 @@ class Config(Atom):
         config = ConfigParser()
         config.read(path)
 
-        section = self._device.description
+        section = self._device().description
         settings = self.members()
         for setting in settings:
             if setting != '_device':

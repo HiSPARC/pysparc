@@ -1,4 +1,5 @@
 import unittest
+import weakref
 
 from mock import patch, Mock, sentinel, call
 
@@ -40,7 +41,10 @@ class HiSPARCIIITest(unittest.TestCase):
 
     @patch.object(hardware.HiSPARCIII, 'close')
     def test_destructor_calls_close(self, mock_close):
-        self.hisparc.__del__()
+        # reset top-level config mock to make sure no references to the
+        # HiSPARCIII class instance are kept around.
+        self.mock_Config.reset_mock()
+        del self.hisparc
         mock_close.assert_called_once_with()
 
     def test_close_closes_device(self):
