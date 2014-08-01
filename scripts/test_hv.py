@@ -1,6 +1,8 @@
 import logging
 import os
 import zlib
+import time
+import sys
 
 import tables
 
@@ -63,12 +65,34 @@ class Main(object):
                 one_second_enabled=True))
 
         try:
+            t0 = 0
+            t_msg = time.time()
             while True:
+                t = time.time()
+                if t - t0 > 60:
+                    sys.stdout.write(time.ctime())
+                    t0 = t
+
+                t1 = time.time()
                 msg = self.device.read_message()
+                t2 = time.time()
+                if t2 - t1 > .020:
+                    # read took too long
+                    sys.stdout.write('!')
                 if msg is not None:
+                    t_msg = t
                     logging.info("Data received: %s", msg)
-                if isinstance(msg, messages.MeasuredDataMessage):
-                    self.store_event(msg)
+                    if isinstance(msg, messages.MeasuredDataMessage):
+                        #self.store_event(msg)
+                        sys.stdout.write('H')
+                    elif isinstance(msg, messages.OneSecondMessage):
+                        sys.stdout.write('S')
+                else:
+                    time.sleep(.016)
+                    sys.stdout.write('.')
+                    if t - t_msg > 60:
+                        sys.stdout.write('NODATA')
+                        raise RuntimeError("No data for 60 seconds!")
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
 
@@ -80,6 +104,8 @@ class Main(object):
         row['ext_timestamp'] = msg.timestamp * int(1e9) + msg.nanoseconds
         row['data_reduction'] = False
         row['trigger_pattern'] = msg.trigger_pattern
+        msg.trace_ch1
+        msg.trace_ch2
         baselines = [msg.trace_ch1[:100].mean(),
                      msg.trace_ch2[:100].mean(), -1, -1]
         row['baseline'] = baselines
@@ -90,8 +116,8 @@ class Main(object):
                                msg.trace_ch2.max() - baselines[1], -1, -1]
         row['integrals'] = 4 * [-999]
         row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch1])))
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch2])))
+        #self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch1])))
+        #self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch2])))
         row['event_rate'] = -1
 
         row.append()
@@ -105,7 +131,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     app = Main()
     app.run()
     app.close()
