@@ -226,20 +226,32 @@ class MeasuredDataMessage(HisparcMessage):
             return self._unpack_raw_trace(raw_trace)
 
     def _unpack_raw_trace(self, raw_trace):
-        """Unpack a raw trace from 2x12-bit sequences"""
+        """Unpack a raw trace from 12-bit sequences.
 
-        trace = []
-        for samples in self._split_raw_trace(raw_trace):
-            first = struct.unpack('>H', samples[:2])[0] >> 4
-            second = struct.unpack('>H', samples[1:])[0] & 0xfff
-            trace.extend([first, second])
-        return np.array(trace)
+        This has to be very fast, since this must run on a Raspberry Pi
+        and still be able to handle lots of events.  It uses some NumPy
+        magic to accomplish this.  Rule #1: DO NOT LOOP.  Really, looping
+        over thousands of samples and calling some function
+        (struct.unpack, for example) is unbearably slow, even without
+        doing anything.  Rule #2: do not create an array from thousands of
+        values (e.g. np.array(result_from_struct_unpack)).  This is very
+        slow. Rule #3: if you really must loop, DO NOT LOOP.  So, this
+        code does not loop, and uses NumPy functions to create an array
+        directly from binary data.  Bit manipulations are done on the
+        entire array.
+        """
+        # convert every byte to a numerical value
+        byte_values = np.fromstring(raw_trace, dtype=np.uint8)
+        # cast to unsigned 16-bit, so there's room for 12-bit values
+        values = byte_values.astype(np.uint16)
 
-    def _split_raw_trace(self, raw_trace):
-        """Split a raw trace in groups of two 12-bit samples"""
-
-        for i in xrange(0, len(raw_trace), 3):
-            yield raw_trace[i:i + 3]
+        # for every 3 bytes:
+        # create array of first 12 bits
+        a1 = (values[::3] << 4) + (values[1::3] >> 4)
+        # create array of last 12 bits
+        a2 = ((values[1::3] & 0x0f) << 8) + values[2::3]
+        # stack them together and flatten to 1D-array
+        return np.dstack((a1, a2)).ravel()
 
 
 class SetControlParameter(HisparcMessage):
