@@ -83,7 +83,7 @@ class Main(object):
                     t_msg = t
                     logging.info("Data received: %s", msg)
                     if isinstance(msg, messages.MeasuredDataMessage):
-                        #self.store_event(msg)
+                        self.store_event(msg)
                         sys.stdout.write('H')
                     elif isinstance(msg, messages.OneSecondMessage):
                         sys.stdout.write('S')
@@ -104,8 +104,6 @@ class Main(object):
         row['ext_timestamp'] = msg.timestamp * int(1e9) + msg.nanoseconds
         row['data_reduction'] = False
         row['trigger_pattern'] = msg.trigger_pattern
-        msg.trace_ch1
-        msg.trace_ch2
         baselines = [msg.trace_ch1[:100].mean(),
                      msg.trace_ch2[:100].mean(), -1, -1]
         row['baseline'] = baselines
