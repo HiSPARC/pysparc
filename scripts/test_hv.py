@@ -114,8 +114,8 @@ class Main(object):
                                msg.trace_ch2.max() - baselines[1], -1, -1]
         row['integrals'] = 4 * [-999]
         row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        #self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch1])))
-        #self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch2])))
+        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch1])))
+        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch2])))
         row['event_rate'] = -1
 
         row.append()
