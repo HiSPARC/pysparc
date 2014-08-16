@@ -61,8 +61,7 @@ class Main(object):
     def run(self):
         # at least two low
         self.device.config.trigger_condition = 0b10
-        self.device.send_message(messages.InitializeMessage(
-                one_second_enabled=True))
+        self.device.config.one_second_enabled = True
 
         try:
             t0 = 0

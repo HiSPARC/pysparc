@@ -4,10 +4,10 @@ from ConfigParser import ConfigParser
 import weakref
 from ast import literal_eval
 
-from atom.api import Atom, observe, Range, Value
+from atom.api import Atom, observe, Range, Value, Bool
 
 from pysparc.util import map_setting
-from pysparc.messages import SetControlParameter
+from pysparc.messages import SetControlParameter, InitializeMessage
 
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ class Config(Atom):
     full_scale = Range(0x00, 0xff, 0x00)
 
     trigger_condition = Range(0x01, 0xff, 0x08)
+    one_second_enabled = Bool(False)
 
     _device = Value()
 
@@ -64,6 +65,10 @@ class Config(Atom):
 
     def _observe_trigger_condition(self, value):
         msg = SetControlParameter('trigger_condition', value['value'])
+        self._device().send_message(msg)
+
+    def _observe_one_second_enabled(self, value):
+        msg = InitializeMessage(one_second_enabled=value['value'])
         self._device().send_message(msg)
 
     def _get_range_from(self, name):
