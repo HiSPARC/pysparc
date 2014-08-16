@@ -70,6 +70,7 @@ class HiSPARCIII(object):
 
         self.send_message(ResetMessage())
         self.send_message(InitializeMessage())
+        self.config.reset_hardware()
 
     def send_message(self, msg):
         """Send a message to the hardware device."""

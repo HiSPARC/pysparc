@@ -82,6 +82,14 @@ class Config(Atom):
         validator, (low, high) = atom.validate_mode
         return low, high
 
+    def reset_hardware(self):
+        """Force writing all config values to device."""
+
+        settings = self.members()
+        for name, setting in settings.iteritems():
+            setting.notify(self, {'name': name, 'type': 'update',
+                                  'value': getattr(self, name)})
+
     def write_config(self, path):
         """Write config settings to file.
 

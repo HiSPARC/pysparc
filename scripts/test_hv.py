@@ -89,9 +89,11 @@ class Main(object):
                 else:
                     time.sleep(.016)
                     sys.stdout.write('.')
-                    if t - t_msg > 60:
-                        sys.stdout.write('NODATA')
-                        raise RuntimeError("No data for 60 seconds!")
+                    if t - t_msg > 20:
+                        sys.stdout.write('NODATA, RESET')
+                        # raise RuntimeError("No data for 60 seconds!")
+                        self.device.reset_hardware()
+                        t_msg = t
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
 
