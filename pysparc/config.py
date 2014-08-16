@@ -2,6 +2,7 @@ import struct
 import logging
 from ConfigParser import ConfigParser
 import weakref
+from ast import literal_eval
 
 from atom.api import Atom, observe, Range, Value
 
@@ -108,4 +109,5 @@ class Config(Atom):
         settings = self.members()
         for setting in settings:
             if setting != '_device':
-                setattr(self, setting, config.getint(section, setting))
+                setting_value = literal_eval(config.get(section, setting))
+                setattr(self, setting, setting_value)
