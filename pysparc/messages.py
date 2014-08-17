@@ -9,6 +9,7 @@ Parse and operate on messages from and to the HiSPARC II / III hardware.
 import struct
 import datetime
 import calendar
+import sys
 
 import numpy as np
 
@@ -59,6 +60,16 @@ class MessageError(Exception):
     pass
 
 
+class StartCodonError(MessageError):
+
+    pass
+
+
+class CorruptMessageError(MessageError):
+
+    pass
+
+
 class HisparcMessage(object):
 
     """HiSPARC Message base/factory class
@@ -83,13 +94,13 @@ class HisparcMessage(object):
     @classmethod
     def validate_message_start(cls, buff):
         if buff[0] != codons['start']:
-            raise MessageError("First byte of buffer is not start codon")
+            raise StartCodonError("First byte of buffer is not start codon")
 
     def validate_codons_and_id(self, header, identifier, end):
         if (header != codons['start'] or end != codons['stop'] or
                 identifier != self.identifier):
-            raise MessageError("Corrupt message detected: %x %x %x" %
-                               (header, identifier, end))
+            raise CorruptMessageError("Corrupt message detected: %x %x %x" %
+                                      (header, identifier, end))
 
     def encode(self):
         if self.identifier is None:
@@ -300,13 +311,57 @@ def HisparcMessageFactory(buff):
     :return: instance of a HisparcMessage subclass
 
     """
-    if len(buff) == 0:
-        return None
+    while True:
+        try:
+            HisparcMessage.validate_message_start(buff)
+        except StartCodonError:
+            sys.stdout.write('@')
+            strip_until_start_codon(buff)
+        except IndexError:
+            return None
+        else:
+            break
 
     for cls in HisparcMessage.__subclasses__():
         if cls.is_message_for(buff):
             try:
                 return cls(buff)
-            except:
+            except CorruptMessageError:
+                sys.stdout.write('#')
+                strip_partial_message(buff)
+                return HisparcMessageFactory(buff)
+            except struct.error:
+                # message is too short, wait for the rest to come in.
                 return None
-    raise NotImplementedError("Message type not implemented")
+
+    # Unknown message type.  This usually happens after a partial or
+    # corrupt message is stripped away until a new start codon is found.
+    # This 'start codon' is probably not an actual start codon, but
+    # somewhere in the middle of a partial message.
+    sys.stdout.write('X')
+    strip_partial_message(buff)
+    return HisparcMessageFactory(buff)
+
+
+def strip_until_start_codon(buff):
+    """Strip bytes from left until start codon is found.
+
+    :param buff: the contents of the usb buffer
+
+    """
+    try:
+        index = buff.index(chr(codons['start']))
+    except ValueError:
+        del buff[:]
+    else:
+        del buff[:index]
+
+
+def strip_partial_message(buff):
+    """Strip partial message from left, until new start codon found.
+
+    :param buff: the contents of the usb buffer
+
+    """
+    del buff[0]
+    return strip_until_start_codon(buff)

@@ -86,6 +86,8 @@ class Main(object):
                         sys.stdout.write('H')
                     elif isinstance(msg, messages.OneSecondMessage):
                         sys.stdout.write('S')
+                    else:
+                        sys.stdout.write('?')
                 else:
                     time.sleep(.016)
                     sys.stdout.write('.')
