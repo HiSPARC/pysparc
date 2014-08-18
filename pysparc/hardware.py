@@ -22,7 +22,7 @@ import config
 logger = logging.getLogger(__name__)
 
 
-READSIZE = 64 * 1024
+READ_SIZE = 1024 * 62
 
 
 class HiSPARCIII(object):
@@ -88,7 +88,7 @@ class HiSPARCIII(object):
         appropriate methods.  This method is called by those methods.
 
         """
-        data = self._device.read(ftdi_chip.BUFFER_SIZE)
+        data = self._device.read(READ_SIZE)
         self._buffer.extend(data)
 
     def read_message(self):
