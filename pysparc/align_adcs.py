@@ -90,8 +90,8 @@ class AlignADCs(object):
                                      target_value):
         set_offset_func(guess)
         mean_adc_value = self._get_mean_adc_value()
-        logger.info("Alignment step (guess, mean): %d, %d" %
-                    (guess, mean_adc_value))
+        logger.debug("Alignment step (guess, mean): %d, %d" %
+                     (guess, mean_adc_value))
         return target_value - mean_adc_value
 
     def _measure_opt_value_at_individual_settings(self, settings_func,
@@ -100,8 +100,8 @@ class AlignADCs(object):
         msg = self.hardware.flush_and_get_measured_data_message()
         mean_adc_values = (msg.adc_ch1_pos.mean(), msg.adc_ch1_neg.mean(),
                            msg.adc_ch2_pos.mean(), msg.adc_ch2_neg.mean())
-        logger.info("Alignment step (guesses, means):\n\t%s, %s" %
-                    (guesses, [int(round(u)) for u in mean_adc_values]))
+        logger.debug("Alignment step (guesses, means):\n\t%s, %s" %
+                     (guesses, [int(round(u)) for u in mean_adc_values]))
         return [target_value - u for u in mean_adc_values]
 
     def _set_full_scale(self, value):
