@@ -13,6 +13,8 @@ import logging
 
 import numpy as np
 
+from lazy import lazy
+
 
 logger = logging.getLogger(__name__)
 
@@ -207,26 +209,35 @@ class MeasuredDataMessage(HisparcMessage):
         return 'Event message: %s %d %d' % (self.datetime, ph1, ph2)
 
 
-    def __getattr__(self, name):
-        """Create missing attributes on demand"""
+    @lazy
+    def trace_ch1(self):
+        """Signal trace of channel 1."""
+        return self._get_trace(ch=1)
 
-        if name == 'trace_ch1':
-            self.trace_ch1 = self._get_trace(ch=1)
-            return self.trace_ch1
-        elif name == 'trace_ch2':
-            self.trace_ch2 = self._get_trace(ch=2)
-            return self.trace_ch2
-        elif name == 'adc_ch1_pos':
-            return self.trace_ch1[::2]
-        elif name == 'adc_ch1_neg':
-            return self.trace_ch1[1::2]
-        elif name == 'adc_ch2_pos':
-            return self.trace_ch2[::2]
-        elif name == 'adc_ch2_neg':
-            return self.trace_ch2[1::2]
-        else:
-            raise AttributeError(
-                "MeasuredDataMessage instance has no attribute '%s'" % name)
+    @lazy
+    def trace_ch2(self):
+        """Signal trace of channel 2."""
+        return self._get_trace(ch=2)
+
+    @lazy
+    def adc_ch1_pos(self):
+        """Signal trace of channel 1 (only positive slope ADC)"""
+        return self.trace_ch1[::2]
+
+    @lazy
+    def adc_ch1_neg(self):
+        """Signal trace of channel 1 (only negative slope ADC)"""
+        return self.trace_ch1[1::2]
+
+    @lazy
+    def adc_ch2_pos(self):
+        """Signal trace of channel 2 (only positive slope ADC)"""
+        return self.trace_ch2[::2]
+
+    @lazy
+    def adc_ch2_neg(self):
+        """Signal trace of channel 2 (only negative slope ADC)"""
+        return self.trace_ch2[1::2]
 
     def _get_trace(self, ch):
         """Get a trace for a given channel"""
