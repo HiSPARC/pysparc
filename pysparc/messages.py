@@ -9,9 +9,12 @@ Parse and operate on messages from and to the HiSPARC II / III hardware.
 import struct
 import datetime
 import calendar
-import sys
+import logging
 
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 codons = {'start': 0x99, 'stop': 0x66}
@@ -315,7 +318,7 @@ def HisparcMessageFactory(buff):
         try:
             HisparcMessage.validate_message_start(buff)
         except StartCodonError:
-            sys.stdout.write('@')
+            logger.debug("Start codon error, stripping buffer.")
             strip_until_start_codon(buff)
         except IndexError:
             return None
@@ -327,24 +330,34 @@ def HisparcMessageFactory(buff):
             try:
                 return cls(buff)
             except CorruptMessageError:
-                sys.stdout.write('#')
+                logger.debug("Corrupt message, stripping buffer.")
                 strip_partial_message(buff)
                 return HisparcMessageFactory(buff)
             except struct.error:
                 # message is too short, wait for the rest to come in.
+                logger.debug("Message is too short, wait for more data.")
                 return None
+            except ValueError:
+                # some value in a message could not be converted.
+                # Probably a corrupt message
+                logger.debug("ValueError, so probably a corrupt message; stripping buffer.")
+                strip_partial_message(buff)
+                return HisparcMessageFactory(buff)
 
     # Unknown message type.  This usually happens after a partial or
     # corrupt message is stripped away until a new start codon is found.
     # This 'start codon' is probably not an actual start codon, but
     # somewhere in the middle of a partial message.
-    sys.stdout.write('X')
+    logger.debug("Unknown message type (probably corrupt), stripping buffer.")
     strip_partial_message(buff)
     return HisparcMessageFactory(buff)
 
 
 def strip_until_start_codon(buff):
     """Strip bytes from left until start codon is found.
+
+    This method assumes that the data at the start of the buffer is
+    actually somewhere in the middle of a message.
 
     :param buff: the contents of the usb buffer
 
@@ -359,6 +372,10 @@ def strip_until_start_codon(buff):
 
 def strip_partial_message(buff):
     """Strip partial message from left, until new start codon found.
+
+    This method assumes that there is a message in the buffer, but that
+    it is only a partial message.  Strip data until a new message appears
+    to begin.
 
     :param buff: the contents of the usb buffer
 

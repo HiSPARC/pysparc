@@ -2,7 +2,6 @@ import logging
 import os
 import zlib
 import time
-import sys
 
 import tables
 
@@ -48,39 +47,26 @@ class Main(object):
         self.device.config.trigger_condition = 0b10
         self.device.config.one_second_enabled = True
 
+        logging.info("Taking data.")
+        # Give hardware at least 20 seconds to startup
+        t_msg = time.time() + 20
         try:
-            t0 = 0
-            t_msg = time.time()
             while True:
                 t = time.time()
-                if t - t0 > 60:
-                    sys.stdout.write(time.ctime())
-                    t0 = t
-
-                t1 = time.time()
                 msg = self.device.read_message()
-                t2 = time.time()
-                if t2 - t1 > .020:
-                    # read took too long
-                    sys.stdout.write('!')
                 if msg is not None:
                     t_msg = t
-                    logging.info("Data received: %s", msg)
+                    logging.debug("Data received: %s", msg)
                     if isinstance(msg, messages.MeasuredDataMessage):
                         self.store_event(msg)
-                        sys.stdout.write('H')
-                    elif isinstance(msg, messages.OneSecondMessage):
-                        sys.stdout.write('S')
-                    else:
-                        sys.stdout.write('?')
                 else:
+                    # regretfully required on linux systems
                     time.sleep(.016)
-                    sys.stdout.write('.')
-                    if t - t_msg > 20:
-                        sys.stdout.write('NODATA, RESET')
-                        # raise RuntimeError("No data for 60 seconds!")
+                    if t - t_msg > 5:
+                        logging.warning("Hardware is silent, resetting.")
                         self.device.reset_hardware()
-                        t_msg = t
+                        # Give hardware at least 20 seconds to startup
+                        t_msg = t + 20
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
 
@@ -117,7 +103,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.DEBUG)
     app = Main()
     app.run()
     app.close()
