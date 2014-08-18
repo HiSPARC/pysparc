@@ -9,26 +9,11 @@ import tables
 from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
 from pysparc import messages
+from pysparc import storage
 
 
 CONFIGFILE = os.path.expanduser('~/.pysparc')
 DATAFILE = 'hisparc.h5'
-
-
-class HisparcEvent(tables.IsDescription):
-    event_id = tables.UInt32Col(pos=0)
-    timestamp = tables.Time32Col(pos=1)
-    nanoseconds = tables.UInt32Col(pos=2)
-    ext_timestamp = tables.UInt64Col(pos=3)
-    data_reduction = tables.BoolCol(pos=4)
-    trigger_pattern = tables.UInt32Col(pos=5)
-    baseline = tables.Int16Col(shape=4, dflt=-1, pos=6)
-    std_dev = tables.Int16Col(shape=4, dflt=-1, pos=7)
-    n_peaks = tables.Int16Col(shape=4, dflt=-1, pos=8)
-    pulseheights = tables.Int16Col(shape=4, dflt=-1, pos=9)
-    integrals = tables.Int32Col(shape=4, dflt=-1, pos=10)
-    traces = tables.Int32Col(shape=4, dflt=-1, pos=11)
-    event_rate = tables.Float32Col(pos=12)
 
 
 class Main(object):
@@ -54,7 +39,7 @@ class Main(object):
             raise RuntimeError("Sorry, I will not overwrite data.  Aborting.")
         else:
             self.events = self.datafile.createTable(
-                '/', 'hisparc', HisparcEvent)
+                '/', 'hisparc', storage.HisparcEvent)
             self.blobs = self.datafile.createVLArray(
                 '/', 'blobs', tables.VLStringAtom())
 
