@@ -9,6 +9,7 @@ from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
 from pysparc import messages
 from pysparc import storage
+from pysparc.events import Stew
 
 
 CONFIGFILE = os.path.expanduser('~/.pysparc')
@@ -47,18 +48,23 @@ class Main(object):
         self.device.config.trigger_condition = 0b10
         self.device.config.one_second_enabled = True
 
+        stew = Stew()
+
         logging.info("Taking data.")
         # Give hardware at least 20 seconds to startup
         t_msg = time.time() + 20
+        t_log = time.time() - .5
         try:
             while True:
                 t = time.time()
                 msg = self.device.read_message()
                 if msg is not None:
                     t_msg = t
-                    logging.debug("Data received: %s", msg)
+                    # logging.debug("Data received: %s", msg)
                     if isinstance(msg, messages.MeasuredDataMessage):
-                        self.store_event(msg)
+                        stew.add_event_message(msg)
+                    elif isinstance(msg, messages.OneSecondMessage):
+                        stew.add_one_second_message(msg)
                 else:
                     # regretfully required on linux systems
                     time.sleep(.016)
@@ -67,6 +73,16 @@ class Main(object):
                         self.device.reset_hardware()
                         # Give hardware at least 20 seconds to startup
                         t_msg = t + 20
+                stew.stir()
+                events = stew.serve_events()
+                for event in events:
+                    self.store_event(event)
+
+                if t - t_log >= 1:
+                    logging.debug("Stew size: %d %d",
+                                 len(stew._one_second_messages),
+                                 len(stew._event_messages))
+                    t_log += 1
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
 
