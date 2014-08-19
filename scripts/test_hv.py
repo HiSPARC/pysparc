@@ -65,6 +65,7 @@ class Main(object):
                         stew.add_event_message(msg)
                     elif isinstance(msg, messages.OneSecondMessage):
                         stew.add_one_second_message(msg)
+                        logging.debug("One-second received: %d", msg.timestamp)
                 else:
                     # regretfully required on linux systems
                     time.sleep(.016)
@@ -73,16 +74,19 @@ class Main(object):
                         self.device.reset_hardware()
                         # Give hardware at least 20 seconds to startup
                         t_msg = t + 20
-                stew.stir()
-                events = stew.serve_events()
-                for event in events:
-                    self.store_event(event)
 
                 if t - t_log >= 1:
                     logging.debug("Stew size: %d %d",
                                  len(stew._one_second_messages),
                                  len(stew._event_messages))
                     t_log += 1
+
+                    stew.stir()
+                    events = stew.serve_events()
+                    for event in events:
+                        self.store_event(event)
+                    stew.drain()
+
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
 

@@ -4,6 +4,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# After 10 s, messages are no longer fresh
+FRESHNESS_TIME = 10
+
+
 class MissingOneSecondMessage(Exception):
 
     pass
@@ -17,14 +21,19 @@ class Stew(object):
         self._event_messages = {}
         self._one_second_messages = {}
         self._events = []
+        self._latest_timestamp = 0
 
     def add_one_second_message(self, msg):
         """Add a one-second message to the stew.
+
+        The timestamp is used to keep track of the freshness of messages.
 
         :param msg: one-second message
 
         """
         timestamp = msg.timestamp
+        if timestamp > self._latest_timestamp:
+            self._latest_timestamp = timestamp
         self._one_second_messages[timestamp] = msg
 
     def add_event_message(self, msg):
@@ -33,31 +42,26 @@ class Stew(object):
         :param msg: event message
 
         """
-        timestamp = msg.timestamp
-        self._event_messages[timestamp] = msg
+        self._event_messages[msg.ext_timestamp] = msg
 
     def stir(self):
         """Stir stew to mix ingredients.
 
         For all pending event messages, the necessary one-second messages
         are looked up and the synchronization and quantization errors are
-        used to adjust the exact trigger time. Resulting events are ready
-        to be served.
+        used to adjust the exact trigger time. If all the necessary
+        ingredients are in the stew,  resulting events are ready to be
+        served.
 
         """
-        to_be_removed = []
-
-        for timestamp, msg in self._event_messages.iteritems():
+        for key, msg in self._event_messages.items():
             try:
                 event = self.cook_event_msg(msg)
             except MissingOneSecondMessage:
-                logging.debug("One-second message missing: %s", timestamp)
+                pass
             else:
                 self._events.append(event)
-                to_be_removed.append(timestamp)
-
-        for key in to_be_removed:
-            del self._event_messages[key]
+                del self._event_messages[key]
 
     def cook_event_msg(self, msg):
         """Cook an event message by correcting the trigger time.
@@ -70,8 +74,24 @@ class Stew(object):
         :returns: event
 
         """
-        raise MissingOneSecondMessage
+        t0_msg = self._get_one_second_message(msg.timestamp)
+        t1_msg = self._get_one_second_message(msg.timestamp + 1)
+        t2_msg = self._get_one_second_message(msg.timestamp + 2)
+        # WIP
+        logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         return msg
+
+    def _get_one_second_message(self, timestamp):
+        """Return one-second message or raise MissingOneSecondMessage.
+
+        :param timestamp: timestamp of the one-second message
+
+        """
+        try:
+            return self._one_second_messages[timestamp]
+        except KeyError:
+            raise MissingOneSecondMessage(
+                "One-second message not (yet) received.")
 
     def serve_events(self):
         """Serve cooked events.
@@ -85,3 +105,21 @@ class Stew(object):
         events = self._events
         self._events = []
         return events
+
+    def drain(self):
+        """Drain stale event and one-second messages from stew.
+
+        Event and one-second messages which are no longer fresh (ie. their
+        timestamp is a long time in the past) are removed from the stew.
+
+        """
+        for timestamp, msg in self._one_second_messages.items():
+            if self._latest_timestamp - timestamp > FRESHNESS_TIME:
+                logger.debug("Draining one-second message: %d", timestamp)
+                del self._one_second_messages[timestamp]
+
+        for key, msg in self._event_messages.items():
+            timestamp = msg.timestamp
+            if self._latest_timestamp - timestamp > FRESHNESS_TIME:
+                logger.debug("Perished; draining event message: %d", timestamp)
+                del self._event_messages[key]

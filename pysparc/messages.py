@@ -60,6 +60,9 @@ command_ids = {'soft_reset': 0xff,
                }
 
 
+NANOSECONDS_PER_SECOND = int(1e9)
+
+
 class MessageError(Exception):
 
     pass
@@ -249,6 +252,12 @@ class MeasuredDataMessage(HisparcMessage):
             idx_stop = idx_start + self.trace_length
             raw_trace = self.raw_traces[idx_start:idx_stop]
             return self._unpack_raw_trace(raw_trace)
+
+    @lazy
+    def ext_timestamp(self):
+        """Extended timestamp (trigger time in nanoseconds)"""
+
+        return self.timestamp * NANOSECONDS_PER_SECOND + self.nanoseconds
 
     def _unpack_raw_trace(self, raw_trace):
         """Unpack a raw trace from 12-bit sequences.
