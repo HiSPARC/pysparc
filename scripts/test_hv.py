@@ -16,6 +16,14 @@ CONFIGFILE = os.path.expanduser('~/.pysparc')
 DATAFILE = 'hisparc.h5'
 
 
+def timeit(func, *args, **kwargs):
+    t0 = time.time()
+    ret = func(*args, **kwargs)
+    t1 = time.time()
+    logging.debug("%s took %.2f s", func.func_name, t1 - t0)
+    return ret
+
+
 class Main(object):
 
     def __init__(self):
@@ -57,14 +65,14 @@ class Main(object):
         try:
             while True:
                 t = time.time()
-                msg = self.device.read_message()
+                msg = timeit(self.device.read_message)
                 if msg is not None:
                     t_msg = t
                     # logging.debug("Data received: %s", msg)
                     if isinstance(msg, messages.MeasuredDataMessage):
-                        stew.add_event_message(msg)
+                        timeit(stew.add_event_message, msg)
                     elif isinstance(msg, messages.OneSecondMessage):
-                        stew.add_one_second_message(msg)
+                        timeit(stew.add_one_second_message, msg)
                         logging.debug("One-second received: %d", msg.timestamp)
                 else:
                     # regretfully required on linux systems
@@ -79,14 +87,17 @@ class Main(object):
                     logging.info("Event rate: %.1f Hz", stew.event_rate())
                     t_log += 1
 
-                    stew.stir()
-                    events = stew.serve_events()
-                    for event in events:
-                        self.store_event(event)
-                    stew.drain()
+                    timeit(stew.stir)
+                    events = timeit(stew.serve_events)
+                    timeit(self.store_events, events)
+                    timeit(stew.drain)
 
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
+
+    def store_events(self, events):
+        for event in events:
+            self.store_event(event)
 
     def store_event(self, msg):
         row = self.events.row
@@ -121,7 +132,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     app = Main()
     app.run()
     app.close()
