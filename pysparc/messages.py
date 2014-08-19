@@ -46,6 +46,9 @@ msg_ids = {'measured_data': 0xa0,
            'ch2_threshold_low': 0x22,
            'ch2_threshold_high': 0x23,
            'trigger_condition': 0x30,
+           'pre_coincidence_time': 0x31,
+           'coincidence_time': 0x32,
+           'post_coincidence_time': 0x33,
            'spare_bytes': 0x35,
            }
 

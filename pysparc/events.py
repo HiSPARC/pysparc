@@ -157,7 +157,7 @@ class Stew(object):
         for key, msg in self._event_messages.items():
             timestamp = msg.timestamp
             if self._latest_timestamp - timestamp > FRESHNESS_TIME:
-                logger.debug("Perished; draining event message: %d", timestamp)
+                logger.warning("Perished; draining event message: %d", timestamp)
                 del self._event_messages[key]
 
         for timestamp in self._event_rates.keys():

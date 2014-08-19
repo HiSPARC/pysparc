@@ -1,6 +1,6 @@
 import struct
 import logging
-from ConfigParser import ConfigParser
+import ConfigParser
 import weakref
 from ast import literal_eval
 
@@ -36,6 +36,10 @@ class Config(Atom):
     trigger_condition = Range(0x01, 0xff, 0x08)
     one_second_enabled = Bool(False)
 
+    pre_coincidence_time = Range(0, 2000, 1000)
+    coincidence_time = Range(0, 5000, 2000)
+    post_coincidence_time = Range(0, 10000, 2000)
+
     _device = Value()
 
     def __init__(self, device):
@@ -56,11 +60,22 @@ class Config(Atom):
              'ch2_gain_negative',
              'common_offset',
              'full_scale')
-    def _write_setting_to_device(self, setting):
+    def _write_byte_setting_to_device(self, setting):
         name, value = setting['name'], setting['value']
         low, high = self._get_range_from(name)
         setting_value = map_setting(value, low, high, 0x00, 0xff)
         msg = SetControlParameter(name, setting_value)
+        self._device().send_message(msg)
+
+    @observe('pre_coincidence_time',
+             'coincidence_time',
+             'post_coincidence_time')
+    def _write_time_setting_to_device(self, setting):
+        name, value = setting['name'], setting['value']
+        low, high = self._get_range_from(name)
+        # time settings are in 5 ns increments
+        setting_value = map_setting(value, low, high, low / 5, high / 5)
+        msg = SetControlParameter(name, setting_value, nbytes=2)
         self._device().send_message(msg)
 
     def _observe_trigger_condition(self, value):
@@ -96,7 +111,7 @@ class Config(Atom):
         :param path: path to config file
 
         """
-        config = ConfigParser()
+        config = ConfigParser.ConfigParser()
 
         section = self._device().description
         config.add_section(section)
@@ -115,12 +130,17 @@ class Config(Atom):
         :param path: path to config file
 
         """
-        config = ConfigParser()
+        config = ConfigParser.ConfigParser()
         config.read(path)
 
         section = self._device().description
         settings = self.members()
         for setting in settings:
             if setting != '_device':
-                setting_value = literal_eval(config.get(section, setting))
-                setattr(self, setting, setting_value)
+                try:
+                    setting_value = literal_eval(config.get(section, setting))
+                except ConfigParser.NoOptionError:
+                    # Not found in config file
+                    pass
+                else:
+                    setattr(self, setting, setting_value)

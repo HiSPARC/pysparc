@@ -76,9 +76,6 @@ class Main(object):
                         t_msg = t + 20
 
                 if t - t_log >= 1:
-                    logging.debug("Stew size: %d %d",
-                                 len(stew._one_second_messages),
-                                 len(stew._event_messages))
                     logging.info("Event rate: %.1f Hz", stew.event_rate())
                     t_log += 1
 
@@ -124,7 +121,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     app = Main()
     app.run()
     app.close()
