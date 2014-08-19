@@ -34,6 +34,7 @@ class Stew(object):
         timestamp = msg.timestamp
         delta_t = timestamp - self._latest_timestamp
 
+        # Keep track of latest timestamp and log problems
         if delta_t > 0:
             if delta_t > 1:
                 if self._latest_timestamp:
@@ -46,6 +47,8 @@ class Stew(object):
             logger.warning("One-second messages are out of order.")
         else:
             logger.error("Seriously strange problem with one-second messages!")
+
+        # store message
         self._one_second_messages[timestamp] = msg
 
     def add_event_message(self, msg):
