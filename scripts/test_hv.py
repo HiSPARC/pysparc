@@ -79,6 +79,7 @@ class Main(object):
                     logging.debug("Stew size: %d %d",
                                  len(stew._one_second_messages),
                                  len(stew._event_messages))
+                    logging.info("Event rate: %.1f Hz", stew.event_rate())
                     t_log += 1
 
                     stew.stir()

@@ -1,3 +1,6 @@
+from __future__ import division
+
+import collections
 import logging
 
 
@@ -6,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 # After 10 s, messages are no longer fresh
 FRESHNESS_TIME = 10
+# Number of seconds over which to average event rate
+EVENTRATE_TIME = 60
 
 
 class MissingOneSecondMessage(Exception):
@@ -22,6 +27,7 @@ class Stew(object):
         self._one_second_messages = {}
         self._events = []
         self._latest_timestamp = 0
+        self._event_rates = collections.defaultdict(lambda: 0)
 
     def add_one_second_message(self, msg):
         """Add a one-second message to the stew.
@@ -58,6 +64,7 @@ class Stew(object):
 
         """
         self._event_messages[msg.ext_timestamp] = msg
+        self._event_rates[msg.timestamp] += 1
 
     def stir(self):
         """Stir stew to mix ingredients.
@@ -121,6 +128,20 @@ class Stew(object):
         self._events = []
         return events
 
+    def event_rate(self):
+        """Return event rate, averaged over EVENTRATE_TIME seconds."""
+
+        try:
+            number_of_events = sum(self._event_rates.values())
+            timestamps = self._event_rates.keys()
+            time = max(timestamps) - min(timestamps)
+            event_rate = number_of_events / time
+            return event_rate
+        except (ValueError, ZeroDivisionError):
+            # probably there are no events received yet in more than one
+            # second
+            return 0.0
+
     def drain(self):
         """Drain stale event and one-second messages from stew.
 
@@ -128,7 +149,7 @@ class Stew(object):
         timestamp is a long time in the past) are removed from the stew.
 
         """
-        for timestamp, msg in self._one_second_messages.items():
+        for timestamp in self._one_second_messages.keys():
             if self._latest_timestamp - timestamp > FRESHNESS_TIME:
                 logger.debug("Draining one-second message: %d", timestamp)
                 del self._one_second_messages[timestamp]
@@ -138,3 +159,8 @@ class Stew(object):
             if self._latest_timestamp - timestamp > FRESHNESS_TIME:
                 logger.debug("Perished; draining event message: %d", timestamp)
                 del self._event_messages[key]
+
+        for timestamp in self._event_rates.keys():
+            if self._latest_timestamp - timestamp > EVENTRATE_TIME:
+                logger.debug("Draining stale event rate value: %d", timestamp)
+                del self._event_rates[timestamp]
