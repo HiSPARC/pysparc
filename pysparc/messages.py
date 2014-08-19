@@ -144,13 +144,14 @@ class OneSecondMessage(HisparcMessage):
             struct.unpack_from(self.msg_format, str_buff)
 
         self.validate_codons_and_id(header, identifier, end)
-        del buff[:msg_length]
 
         self.datetime = datetime.datetime(self.gps_year, self.gps_month,
                                           self.gps_day, self.gps_hours,
                                           self.gps_minutes,
                                           self.gps_seconds)
         self.timestamp = calendar.timegm(self.datetime.utctimetuple())
+
+        del buff[:msg_length]
 
     def __str__(self):
         return 'One second message: %s %d %d %d %d' % (self.datetime,
@@ -193,7 +194,6 @@ class MeasuredDataMessage(HisparcMessage):
         self.raw_traces, end = struct.unpack_from(msg_tail_format, str_buff)
 
         self.validate_codons_and_id(header, identifier, end)
-        del buff[:total_length]
 
         self.trace_length = trace_length
         self.datetime = datetime.datetime(self.gps_year, self.gps_month,
@@ -201,6 +201,8 @@ class MeasuredDataMessage(HisparcMessage):
                                           self.gps_minutes,
                                           self.gps_seconds)
         self.timestamp = calendar.timegm(self.datetime.utctimetuple())
+
+        del buff[:total_length]
 
     def __str__(self):
         bl1 = self.trace_ch1[:100].mean()
