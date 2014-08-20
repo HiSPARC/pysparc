@@ -99,7 +99,7 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
         self.mock_device = Mock()
         self.section = self.mock_device.description
         self.config = pysparc.config.Config(self.mock_device)
-        patcher1 = patch('pysparc.config.ConfigParser')
+        patcher1 = patch('pysparc.config.ConfigParser.ConfigParser')
         self.mock_open = mock_open()
         patcher2 = patch('pysparc.config.open', self.mock_open, create=True)
         patcher2.start()
@@ -132,22 +132,24 @@ class ReadWriteConfigToFileTest(unittest.TestCase):
         assert device_call not in self.mock_configparser.mock_calls
 
     @patch.object(pysparc.config.Config, '__setattr__')
-    def test_read_config_reads_config_from_file_first(self, mock_setattr):
+    @patch.object(pysparc.config, 'literal_eval')
+    def test_read_config_reads_config_from_file_first(self, mock_eval, mock_setattr):
         self.config.read_config(sentinel.filename)
         self.mock_configparser.read.assert_called_once_with(sentinel.filename)
         first_call = self.mock_configparser.mock_calls[0]
         self.assertEqual(first_call, call.read(sentinel.filename))
 
     @patch.object(pysparc.config.Config, '__setattr__')
-    def test_read_config_gets_all_members_except_device(self, mock_setattr):
-        value = self.mock_configparser.getint.return_value
+    @patch.object(pysparc.config, 'literal_eval')
+    def test_read_config_gets_all_members_except_device(self, mock_eval, mock_setattr):
+        eval_value = mock_eval.return_value
 
         self.config.read_config(Mock())
         for member in self.config.members():
             if member != '_device':
-                self.mock_configparser.getint.assert_any_call(
+                self.mock_configparser.get.assert_any_call(
                     self.section, member)
-                mock_setattr.assert_any_call(member, value)
+                mock_setattr.assert_any_call(member, eval_value)
         device_call = call.getint(self.section, '_device')
         assert device_call not in self.mock_configparser.mock_calls
 
@@ -174,22 +176,22 @@ class WriteSettingTest(unittest.TestCase):
         self.patcher2.stop()
         self.patcher3.stop()
 
-    def test_write_setting_to_device_calls_get_range_from(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_calls_get_range_from(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         self.mock_get_range_from.assert_called_once_with(sentinel.name)
 
-    def test_write_setting_to_device_calls_map_setting(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_calls_map_setting(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         self.mock_map_setting.assert_called_once_with(sentinel.value,
             sentinel.low, sentinel.high, 0x00, 0xff)
 
-    def test_write_setting_to_device_creates_message(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_creates_message(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         self.mock_Message.assert_called_once_with(sentinel.name,
                                                   sentinel.setting_value)
 
-    def test_write_setting_to_device_writes_to_device(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_writes_to_device(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         msg = self.mock_Message.return_value
         self.mock_device.send_message.assert_called_once_with(msg)
 
