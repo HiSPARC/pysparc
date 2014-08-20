@@ -3,6 +3,8 @@ from __future__ import division
 import collections
 import logging
 
+from lazy import lazy
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,7 @@ class Stew(object):
         t2_msg = self._get_one_second_message(msg.timestamp + 2)
         # WIP
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
-        return msg
+        return Event(msg)
 
     def _get_one_second_message(self, timestamp):
         """Return one-second message or raise MissingOneSecondMessage.
@@ -167,3 +169,49 @@ class Stew(object):
             if self._latest_timestamp - timestamp > EVENTRATE_TIME:
                 logger.debug("Draining stale event rate value: %d", timestamp)
                 del self._event_rates[timestamp]
+
+
+class Event(object):
+
+    """A HiSPARC event, with preliminary analysis."""
+
+    def __init__(self, msg, event_rate=-1):
+        self._msg = msg
+
+        self.timestamp = msg.timestamp
+        self.nanoseconds = msg.nanoseconds
+        self.ext_timestamp = msg.timestamp * int(1e9) + msg.nanoseconds
+        self.data_reduction = False
+        self.trigger_pattern = msg.trigger_pattern
+        self.event_rate = event_rate
+
+        # Not yet implemented
+        self.n_peaks = 4 * [-999]
+        self.integrals = 4 * [-999]
+
+    @lazy
+    def trace_ch1(self):
+        return self._msg.trace_ch1
+
+    @lazy
+    def trace_ch2(self):
+        return self._msg.trace_ch2
+
+    @lazy
+    def baselines(self):
+        """Mean value of the first 100 samples of the trace."""
+
+        return [self.trace_ch1[:100].mean(), self.trace_ch2[:100].mean(), -1, -1]
+
+    @lazy
+    def std_dev(self):
+        """Standard deviation of the first 100 samples of the trace."""
+
+        return [self.trace_ch1[:100].std(), self.trace_ch2[:100].std(), -1, -1]
+
+    @lazy
+    def pulseheights(self):
+        """Maximum peak to baseline value in trace."""
+
+        return [self.trace_ch1.max() - self.baselines[0],
+                self.trace_ch2.max() - self.baselines[1], -1, -1]

@@ -98,28 +98,25 @@ class Main(object):
     def store_events(self, events):
         for event in events:
             self.store_event(event)
+        logging.debug("Stored %d events.", len(events))
 
-    def store_event(self, msg):
+    def store_event(self, event):
         row = self.events.row
         row['event_id'] = len(self.events)
-        row['timestamp'] = msg.timestamp
-        row['nanoseconds'] = msg.nanoseconds
-        row['ext_timestamp'] = msg.timestamp * int(1e9) + msg.nanoseconds
-        row['data_reduction'] = False
-        row['trigger_pattern'] = msg.trigger_pattern
-        baselines = [msg.trace_ch1[:100].mean(),
-                     msg.trace_ch2[:100].mean(), -1, -1]
-        row['baseline'] = baselines
-        row['std_dev'] = [msg.trace_ch1[:100].std(),
-                          msg.trace_ch2[:100].std(), -1, -1]
-        row['n_peaks'] = 4 * [-999]
-        row['pulseheights'] = [msg.trace_ch1.max() - baselines[0],
-                               msg.trace_ch2.max() - baselines[1], -1, -1]
-        row['integrals'] = 4 * [-999]
+        row['timestamp'] = event.timestamp
+        row['nanoseconds'] = event.nanoseconds
+        row['ext_timestamp'] = event.ext_timestamp
+        row['data_reduction'] = event.data_reduction
+        row['trigger_pattern'] = event.trigger_pattern
+        row['baseline'] = event.baselines
+        row['std_dev'] = event.std_dev
+        row['n_peaks'] = event.n_peaks
+        row['pulseheights'] = event.pulseheights
+        row['integrals'] = event.integrals
         row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch1])))
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in msg.trace_ch2])))
-        row['event_rate'] = -1
+        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in event.trace_ch1])))
+        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in event.trace_ch2])))
+        row['event_rate'] = event.event_rate
 
         row.append()
         self.events.flush()
@@ -132,7 +129,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     app = Main()
     app.run()
     app.close()
