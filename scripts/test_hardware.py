@@ -3,6 +3,7 @@ from __future__ import division
 import logging
 import time
 import os
+from ConfigParser import ConfigParser
 
 from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
@@ -28,7 +29,9 @@ def main():
             logging.info("Alignment took %.1f s", t1 - t0)
         else:
             logging.info("Reading config from file")
-            hardware.config.read_config(CONFIGFILE)
+            config = ConfigParser()
+            config.read(CONFIGFILE)
+            hardware.config.read_config(config)
 
         hardware.config.trigger_condition = 0x80
         while True:
@@ -57,7 +60,10 @@ def main():
         hardware.close()
         hardware.config.set_notifications_enabled(False)
         logging.info("Writing config to file")
-        hardware.config.write_config(CONFIGFILE)
+        config = ConfigParser()
+        hardware.config.write_config(config)
+        with open(CONFIGFILE, 'w') as f:
+            config.write(f)
         print
         print "All configuration settings:"
         print

@@ -2,6 +2,7 @@ import logging
 import os
 import zlib
 import time
+import ConfigParser
 
 import tables
 
@@ -27,6 +28,7 @@ def timeit(func, *args, **kwargs):
 class Main(object):
 
     def __init__(self):
+        self.config = ConfigParser.ConfigParser()
         self.device = HiSPARCIII()
         self.initialize_device()
         self.initialize_local_storage()
@@ -36,10 +38,11 @@ class Main(object):
             logging.info("No config file found.  Aligning ADCs.")
             align_adcs = AlignADCs(self.device)
             align_adcs.align()
-	    self.device.config.write_config(CONFIGFILE)
+            self.write_config()
         else:
             logging.info("Reading config from file")
-            self.device.config.read_config(CONFIGFILE)
+            self.config.read(CONFIGFILE)
+            self.device.config.read_config(self.config)
 
     def initialize_local_storage(self):
         self.datafile = tables.openFile(DATAFILE, 'a')
@@ -121,9 +124,14 @@ class Main(object):
         row.append()
         self.events.flush()
 
+    def write_config(self):
+        self.device.config.write_config(self.config)
+        with open(CONFIGFILE, 'w') as f:
+            self.config.write(f)
+
     def close(self):
         logging.info("Writing config to file")
-        self.device.config.write_config(CONFIGFILE)
+        self.write_config()
         self.device.close()
         self.datafile.close()
 
