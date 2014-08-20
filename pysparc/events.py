@@ -63,8 +63,11 @@ class Stew(object):
         :param msg: event message
 
         """
-        self._event_messages[msg.ext_timestamp] = msg
-        self._event_rates[msg.timestamp] += 1
+        if not self._one_second_messages:
+            logger.debug("No one-second messages yet, ignoring event.")
+        else:
+            self._event_messages[msg.ext_timestamp] = msg
+            self._event_rates[msg.timestamp] += 1
 
     def stir(self):
         """Stir stew to mix ingredients.
