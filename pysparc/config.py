@@ -105,14 +105,12 @@ class Config(Atom):
             setting.notify(self, {'name': name, 'type': 'update',
                                   'value': getattr(self, name)})
 
-    def write_config(self, path):
-        """Write config settings to file.
+    def write_config(self, config):
+        """Write config settings to existing config object.
 
-        :param path: path to config file
+        :param config: config object
 
         """
-        config = ConfigParser.ConfigParser()
-
         section = self._device().description
         config.add_section(section)
 
@@ -121,18 +119,12 @@ class Config(Atom):
             if setting != '_device':
                 config.set(section, setting, getattr(self, setting))
 
-        with open(path, 'w') as f:
-            config.write(f)
+    def read_config(self, config):
+        """Read config settings from existing config object.
 
-    def read_config(self, path):
-        """Read config settings from file.
-
-        :param path: path to config file
+        :param config: config object
 
         """
-        config = ConfigParser.ConfigParser()
-        config.read(path)
-
         section = self._device().description
         settings = self.members()
         for setting in settings:
