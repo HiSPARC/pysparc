@@ -98,7 +98,7 @@ class HiSPARCIIITest(unittest.TestCase):
 
     def test_read_into_buffer_reads_from_device(self):
         self.hisparc.read_into_buffer()
-        self.mock_device.read.assert_called_once_with(ftdi_chip.BUFFER_SIZE)
+        self.mock_device.read.assert_called_once_with(hardware.READ_SIZE)
 
     def test_read_into_buffer_reads_into_buffer(self):
         mock_buffer = Mock()
