@@ -14,6 +14,9 @@ FRESHNESS_TIME = 10
 # Number of seconds over which to average event rate
 EVENTRATE_TIME = 60
 
+SYNCHRONIZATION_BIT = 1 << 31
+NANOSECONDS_PER_SECOND = int(1e9)
+
 
 class MissingOneSecondMessage(Exception):
 
@@ -104,7 +107,24 @@ class Stew(object):
         t0_msg = self._get_one_second_message(msg.timestamp)
         t1_msg = self._get_one_second_message(msg.timestamp + 1)
         t2_msg = self._get_one_second_message(msg.timestamp + 2)
-        # WIP
+
+        CTD = msg.count_ticks_PPS
+        CTP = t1_msg.count_ticks_PPS
+        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS & SYNCHRONIZATION_BIT) else 0
+        quantization_error1 = t1_msg.quantization_error * 1e9
+        quantization_error2 = t2_msg.quantization_error * 1e9
+
+        # This may be larger than one second due to synchronization error!
+        trigger_offset = int(synchronization_error + quantization_error1
+                             + (CTD / CTP)
+                             * (1e9 - quantization_error1 + quantization_error2))
+        ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
+
+        # Correct timestamp
+        msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
+        msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
+        msg.ext_timestamp = ext_timestamp
+
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         return Event(msg)
 

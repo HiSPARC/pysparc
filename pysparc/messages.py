@@ -130,7 +130,7 @@ class HisparcMessage(object):
 class OneSecondMessage(HisparcMessage):
 
     identifier = msg_ids['one_second']
-    msg_format = '>2B2BH3B2I4H61s1B'
+    msg_format = '>2B2BH3BIf4H61s1B'
 
     def __init__(self, buff):
         self.parse_message(buff)
@@ -181,7 +181,7 @@ class MeasuredDataMessage(HisparcMessage):
          self.pre_coincidence_time, self.coincidence_time,
          self.post_coincidence_time, self.gps_day, self.gps_month,
          self.gps_year, self.gps_hours, self.gps_minutes,
-         self.gps_seconds, self.nanoseconds) = \
+         self.gps_seconds, self.count_ticks_PPS) = \
             struct.unpack_from(self.msg_format, str_buff)
 
         event_length = (self.pre_coincidence_time + self.coincidence_time +
@@ -204,6 +204,7 @@ class MeasuredDataMessage(HisparcMessage):
                                           self.gps_minutes,
                                           self.gps_seconds)
         self.timestamp = calendar.timegm(self.datetime.utctimetuple())
+        self.nanoseconds = self.count_ticks_PPS * 5
 
         del buff[:total_length]
 
