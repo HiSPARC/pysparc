@@ -112,7 +112,8 @@ class Config(Atom):
 
         """
         section = self._device().description
-        config.add_section(section)
+        if not config.has_section(section):
+            config.add_section(section)
 
         settings = self.members()
         for setting in sorted(settings):

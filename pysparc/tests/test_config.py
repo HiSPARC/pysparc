@@ -100,8 +100,17 @@ class ReadWriteConfigTest(unittest.TestCase):
         self.section = self.mock_device.description
         self.config = pysparc.config.Config(self.mock_device)
 
-    def test_write_config_creates_section_with_description(self):
+    def test_write_config_creates_section_with_description_if_not_exists(self):
         mock_configparser = Mock()
+
+        # At first, the section does not exist, test that that is checked
+        mock_configparser.has_section.return_value = False
+        self.config.write_config(mock_configparser)
+        mock_configparser.has_section.assert_called_once_with(self.section)
+
+        # Now, the section already exists, test to make sure really only
+        # created once
+        mock_configparser.has_section.return_value = True
         self.config.write_config(mock_configparser)
         mock_configparser.add_section.assert_called_once_with(
             self.section)
