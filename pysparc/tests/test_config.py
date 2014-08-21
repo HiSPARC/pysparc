@@ -5,8 +5,6 @@ from mock import patch, sentinel, Mock, MagicMock, mock_open, call, ANY
 
 import pysparc.config
 
-import IPython
-
 
 class ConfigTest(unittest.TestCase):
 
