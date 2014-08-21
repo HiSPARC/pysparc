@@ -3,6 +3,7 @@ from __future__ import division
 import collections
 import logging
 
+import numpy as np
 from lazy import lazy
 
 
@@ -16,6 +17,8 @@ EVENTRATE_TIME = 60
 
 SYNCHRONIZATION_BIT = 1 << 31
 NANOSECONDS_PER_SECOND = int(1e9)
+
+INTEGRAL_THRESHOLD = 25
 
 
 class MissingOneSecondMessage(Exception):
@@ -207,7 +210,6 @@ class Event(object):
 
         # Not yet implemented
         self.n_peaks = 4 * [-999]
-        self.integrals = 4 * [-999]
 
     @lazy
     def trace_ch1(self):
@@ -221,13 +223,15 @@ class Event(object):
     def baselines(self):
         """Mean value of the first 100 samples of the trace."""
 
-        return [self.trace_ch1[:100].mean(), self.trace_ch2[:100].mean(), -1, -1]
+        baselines = [int(round(t[:100].mean())) for t in self.trace_ch1, self.trace_ch2]
+        return baselines + [-1, -1]
 
     @lazy
     def std_dev(self):
         """Standard deviation of the first 100 samples of the trace."""
 
-        return [self.trace_ch1[:100].std(), self.trace_ch2[:100].std(), -1, -1]
+        std_dev = [int(round(t[:100].std())) for t in self.trace_ch1, self.trace_ch2]
+        return std_dev + [-1, -1]
 
     @lazy
     def pulseheights(self):
@@ -235,3 +239,18 @@ class Event(object):
 
         return [self.trace_ch1.max() - self.baselines[0],
                 self.trace_ch2.max() - self.baselines[1], -1, -1]
+
+    @lazy
+    def integrals(self):
+        """Integral of trace for all values over threshold.
+
+        The threshold is defined by INTEGRAL_THRESHOLD.
+
+        """
+        traces = np.vstack([self.trace_ch1, self.trace_ch2])
+        baselines = np.array([self.baselines[:2]])
+
+        traces -= baselines.T
+
+        integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
+        return integrals + [-1, -1]

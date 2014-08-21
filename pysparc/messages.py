@@ -282,8 +282,9 @@ class MeasuredDataMessage(HisparcMessage):
         """
         # convert every byte to a numerical value
         byte_values = np.fromstring(raw_trace, dtype=np.uint8)
-        # cast to unsigned 16-bit, so there's room for 12-bit values
-        values = byte_values.astype(np.uint16)
+        # cast to *signed* 16-bit, so there's room for 12-bit values, and
+        # baseline subtraction gives negative values
+        values = byte_values.astype(np.int16)
 
         # for every 3 bytes:
         # create array of first 12 bits
