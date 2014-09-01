@@ -99,7 +99,7 @@ class Stew(object):
     def cook_event_msg(self, msg):
         """Cook an event message by correcting the trigger time.
 
-        Analyzing serveral one-second messages, the qunatization errors
+        Analyzing serveral one-second messages, the quantization errors
         can be used to correct the trigger time.
 
         :param msg: event message
