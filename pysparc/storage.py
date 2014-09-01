@@ -15,6 +15,7 @@ Contents
 """
 
 
+import base64
 import cPickle as pickle
 import hashlib
 import logging
@@ -213,7 +214,8 @@ class NikhefDataStore(object):
     def __init__(self, station_id, password):
         """Initialize the datastore.
 
-        Each station has a unique station number / password combination.  Provide this during initialization.
+        Each station has a unique station number / password combination.
+        Provide this during initialization.
 
         """
         self.station_id = station_id
@@ -225,7 +227,65 @@ class NikhefDataStore(object):
         Override this method.
 
         """
-        self._upload_data(event)
+        data = self._create_event_container(event)
+        self._upload_data(data)
+
+    def _create_event_container(self, event):
+        """Encapsulate an event in a container for the datastore.
+
+        This hurts.  But it is necessary for historical reasons.
+
+        :param event: HiSPARC event object.
+        :returns: container for the event data.
+
+        """
+        header = {'eventtype_uploadcode': 'CIC',
+                  'datetime': event.datetime,
+                  'nanoseconds': event.nanoseconds}
+
+        datalist = []
+        self._add_value_to_datalist(datalist, 'RED', event.data_reduction)
+        self._add_value_to_datalist(datalist, 'EVENTRATE', event.event_rate)
+        self._add_value_to_datalist(datalist, 'TRIGPATTERN', event.trigger_pattern)
+        self._add_values_to_datalist(datalist, 'BL', event.baselines)
+        self._add_values_to_datalist(datalist, 'STDDEV', event.std_dev)
+        self._add_values_to_datalist(datalist, 'NP', event.n_peaks)
+        self._add_values_to_datalist(datalist, 'PH', event.pulseheights)
+        self._add_values_to_datalist(datalist, 'IN', event.integrals)
+
+        # FIXME: no slave support
+        trace_ch1 = base64.b64encode(zlib.compress(','.join([str(int(u)) for u in event.trace_ch1])))
+        trace_ch2 = base64.b64encode(zlib.compress(','.join([str(int(u)) for u in event.trace_ch2])))
+        self._add_values_to_datalist(datalist, 'TR', [trace_ch1, trace_ch2])
+
+        event_list = [{'header': header, 'datalist': datalist}]
+        return event_list
+
+    def _add_value_to_datalist(self, datalist, upload_code, value):
+        """Add an event value to the datalist.
+
+        :param datalist: datalist object (for upload).
+        :param upload_code: the upload code (eg. 'TRIGPATTERN').
+        :param value: the value to store in the datalist.
+
+        """
+        datalist.append({'data_uploadcode': upload_code,
+                         'data': value})
+
+    def _add_values_to_datalist(self, datalist, upload_code, values):
+        """Add multiple event values to datalist.
+
+        Takes a list of values and a partial upload code (e.g. 'PH') and
+        adds them to the datalist as 'PH1', 'PH2', etc.
+
+        :param datalist: datalist object (for upload).
+        :param upload_code: the partial upload code (eg. 'PH').
+        :param values: list of values to store in the datalist.
+
+        """
+        for idx, value in enumerate(values, 1):
+            self._add_value_to_datalist(datalist, upload_code + str(idx),
+                                        value)
 
     def _upload_data(self, data):
         """Upload event data to server.

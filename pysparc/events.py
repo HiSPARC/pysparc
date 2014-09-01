@@ -201,6 +201,7 @@ class Event(object):
     def __init__(self, msg, event_rate=-1):
         self._msg = msg
 
+        self.datetime = msg.datetime
         self.timestamp = msg.timestamp
         self.nanoseconds = msg.nanoseconds
         self.ext_timestamp = msg.timestamp * int(1e9) + msg.nanoseconds
