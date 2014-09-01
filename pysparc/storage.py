@@ -1,4 +1,18 @@
-"""Classes related to storage of events."""
+"""Classes related to storage of events.
+
+Contents
+--------
+
+:class:`StorageManager`
+    Transparently store events in one or multiple data stores.
+:class:`HisparcEvent`
+    HiSPARC event table description.
+:class:`BaseDataStore`
+    Base class for storage of HiSPARC events.
+:class:`TablesDataStore`
+    Datastore for HiSPARC events.
+
+"""
 
 
 import re
@@ -7,7 +21,17 @@ import zlib
 import tables
 
 
+class StorageManager(object):
+
+    """Transparently store events in one or multiple data stores."""
+
+    pass
+
+
 class HisparcEvent(tables.IsDescription):
+
+    """HiSPARC event table description."""
+
     event_id = tables.UInt32Col(pos=0)
     timestamp = tables.Time32Col(pos=1)
     nanoseconds = tables.UInt32Col(pos=2)
