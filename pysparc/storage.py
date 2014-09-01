@@ -245,7 +245,9 @@ class NikhefDataStore(object):
         except (ProtocolError, HTTPError) as exc:
             raise UploadError(str(exc))
         else:
-            logger.info("Response from server: %s", r.text)
+            logger.debug("Response from server: %s", r.text)
+            if r.text != '100':
+                raise UploadError("Server responded with error code %s" % r.text)
 
     def close(self):
         """Close the datastore."""
