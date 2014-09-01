@@ -23,12 +23,30 @@ import zlib
 
 import tables
 import requests
+from requests.packages.urllib3.exceptions import ProtocolError
+from requests import HTTPError
 
 
 logger = logging.getLogger(__name__)
 
 
 DATASTORE_URL = "http://frome.nikhef.nl/hisparc/upload"
+
+
+class StorageError(Exception):
+
+    """Base error class."""
+
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class UploadError(StorageError):
+
+    """Error uploading events."""
+
+    def __str__(self):
+        return "Error uploading events (%s)" % self.msg
 
 
 class StorageManager(object):
@@ -221,8 +239,13 @@ class NikhefDataStore(object):
         payload = {'station_id': self.station_id,
                    'password': self.password, 'data': pickled_data,
                    'checksum': checksum}
-        r = requests.post(DATASTORE_URL, data=payload)
-        logger.info("Response from server: %s", r.text)
+        try:
+            r = requests.post(DATASTORE_URL, data=payload)
+            r.raise_for_status()
+        except (ProtocolError, HTTPError) as exc:
+            raise UploadError(str(exc))
+        else:
+            logger.info("Response from server: %s", r.text)
 
     def close(self):
         """Close the datastore."""
