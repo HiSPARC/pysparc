@@ -1,10 +1,7 @@
 import logging
 import os
-import zlib
 import time
 import ConfigParser
-
-import tables
 
 from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
@@ -31,7 +28,7 @@ class Main(object):
         self.config = ConfigParser.ConfigParser()
         self.device = HiSPARCIII()
         self.initialize_device()
-        self.initialize_local_storage()
+        self.datastore = storage.TablesDataStore(DATAFILE)
 
     def initialize_device(self):
         if not os.path.isfile(CONFIGFILE):
@@ -43,16 +40,6 @@ class Main(object):
             logging.info("Reading config from file")
             self.config.read(CONFIGFILE)
             self.device.config.read_config(self.config)
-
-    def initialize_local_storage(self):
-        self.datafile = tables.openFile(DATAFILE, 'a')
-        if '/hisparc' in self.datafile:
-            raise RuntimeError("Sorry, I will not overwrite data.  Aborting.")
-        else:
-            self.events = self.datafile.createTable(
-                '/', 'hisparc', storage.HisparcEvent)
-            self.blobs = self.datafile.createVLArray(
-                '/', 'blobs', tables.VLStringAtom())
 
     def run(self):
         # at least two low
@@ -100,29 +87,8 @@ class Main(object):
 
     def store_events(self, events):
         for event in events:
-            self.store_event(event)
+            self.datastore.store_event(event)
         logging.debug("Stored %d events.", len(events))
-
-    def store_event(self, event):
-        row = self.events.row
-        row['event_id'] = len(self.events)
-        row['timestamp'] = event.timestamp
-        row['nanoseconds'] = event.nanoseconds
-        row['ext_timestamp'] = event.ext_timestamp
-        row['data_reduction'] = event.data_reduction
-        row['trigger_pattern'] = event.trigger_pattern
-        row['baseline'] = event.baselines
-        row['std_dev'] = event.std_dev
-        row['n_peaks'] = event.n_peaks
-        row['pulseheights'] = event.pulseheights
-        row['integrals'] = event.integrals
-        row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in event.trace_ch1])))
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in event.trace_ch2])))
-        row['event_rate'] = event.event_rate
-
-        row.append()
-        self.events.flush()
 
     def write_config(self):
         self.device.config.write_config(self.config)
@@ -133,7 +99,7 @@ class Main(object):
         logging.info("Writing config to file")
         self.write_config()
         self.device.close()
-        self.datafile.close()
+        self.datastore.close()
 
 
 if __name__ == '__main__':
