@@ -15,10 +15,20 @@ Contents
 """
 
 
+import cPickle as pickle
+import hashlib
+import logging
 import re
 import zlib
 
 import tables
+import requests
+
+
+logger = logging.getLogger(__name__)
+
+
+DATASTORE_URL = "http://frome.nikhef.nl/hisparc/upload"
 
 
 class StorageManager(object):
@@ -170,3 +180,51 @@ class TablesDataStore(BaseDataStore):
         self.group = self.data.createGroup('/', group)
         self.data.createTable(self.group, 'events', HisparcEvent)
         self.data.createVLArray(self.group, 'blobs', tables.VLStringAtom())
+
+
+class NikhefDataStore(object):
+
+    """Send events over HTTP to the datastore at Nikhef.
+
+    A call to :meth:`store_event` will send the event to the datastore at
+    Nikhef, using the convoluted datastructure which was created for the
+    old eventwarehouse, and still survives to this day.
+
+    """
+
+    def __init__(self, station_id, password):
+        """Initialize the datastore.
+
+        Each station has a unique station number / password combination.  Provide this during initialization.
+
+        """
+        self.station_id = station_id
+        self.password = password
+
+    def store_event(self, event):
+        """Store an event.
+
+        Override this method.
+
+        """
+        self._upload_data(event)
+
+    def _upload_data(self, data):
+        """Upload event data to server.
+
+        :param data: container for the event data.
+
+        """
+        pickled_data = pickle.dumps(data)
+        checksum = hashlib.md5(pickled_data).hexdigest()
+
+        payload = {'station_id': self.station_id,
+                   'password': self.password, 'data': pickled_data,
+                   'checksum': checksum}
+        r = requests.post(DATASTORE_URL, data=payload)
+        logger.info("Response from server: %s", r.text)
+
+    def close(self):
+        """Close the datastore."""
+
+        pass
