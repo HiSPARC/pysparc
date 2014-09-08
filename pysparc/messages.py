@@ -295,6 +295,48 @@ class MeasuredDataMessage(HisparcMessage):
         return np.dstack((a1, a2)).ravel()
 
 
+class GetControlParameterList(HisparcMessage):
+
+    identifier = msg_ids['all_controls']
+
+    @classmethod
+    def is_message_for(cls, buff):
+        """This message is only for sending!"""
+
+        return False
+
+
+class ControlParameterList(HisparcMessage):
+
+    identifier = msg_ids['all_controls']
+    msg_format = ">2B16B4HB3HB4x2B2BH3B3df3s"
+
+    def __init__(self, buff):
+        self.parse_message(buff)
+
+    def parse_message(self, buff):
+        msg_length = struct.calcsize(self.msg_format)
+        str_buff = str(buff[:msg_length])
+
+        (header, identifier, self.ch1_offset_positive, self.ch1_offset_negative,
+         self.ch2_offset_positive, self.ch2_offset_negative, self.ch1_gain_positive,
+         self.ch1_gain_negative, self.ch2_gain_positive, self.ch2_gain_negative,
+         self.common_offset, self.full_scale, self.ch1_integrator_time,
+         self.ch2_integrator_time, self.comparator_low, self.comparator_high,
+         self.ch1_voltage, self.ch2_voltage, self.ch1_threshold_low, self.ch1_threshold_high,
+         self.ch2_threshold_low, self.ch2_threshold_high, self.trigger_condition,
+         self.pre_coincidence_time, self.coincidence_time, self.post_coincidence_time,
+         self.status, self.ch1_current, self.ch2_current,
+         self.gps_day, self.gps_month, self.gps_year,
+         self.gps_hours, self.gps_minutes, self.gps_seconds,
+         self.gps_longitude, self.gps_latitude, self.gps_altitude,
+         self.temperature, self._version) = struct.unpack(self.msg_format, str_buff)
+
+        version, = struct.unpack('>L', '\00' + self._version)
+        self.firmware_version = version >> 16
+        self.serial_number = version & 0b1111111111
+
+
 class SetControlParameter(HisparcMessage):
 
     def __init__(self, parameter, value, nbytes=1):
