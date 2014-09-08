@@ -28,8 +28,8 @@ class Main(object):
         self.config = ConfigParser.ConfigParser()
         self.device = HiSPARCIII()
         self.initialize_device()
-        # self.datastore = storage.TablesDataStore(DATAFILE)
-        self.datastore = storage.NikhefDataStore(599, 'pysparc')
+        self.datastore = storage.TablesDataStore(DATAFILE)
+        #self.datastore = storage.NikhefDataStore(599, 'pysparc')
 
     def initialize_device(self):
         if not os.path.isfile(CONFIGFILE):
