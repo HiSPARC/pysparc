@@ -63,6 +63,9 @@ class HiSPARCIII(object):
 
     def __init__(self):
         self._burn_firmware()
+        # device doesn't like to be reopened immediately after burning
+        # firmware.
+        time.sleep(.5)
 
         # open device's second interface (DAQ)
         self._device = FtdiChip(self.description, interface_select=2)
