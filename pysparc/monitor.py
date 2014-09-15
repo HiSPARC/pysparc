@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 MONITOR_URL = 'http://vpn.hisparc.nl/cgi-bin/cmd.cgi'
+STATUS_MSG = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOWN'}
 OK = 0
 WARNING = 1
 CRITICAL = 2
@@ -120,3 +121,6 @@ class Monitor(object):
         except (ProtocolError, HTTPError) as exc:
             logger.warning("Unable to upload status for service %s (%s)",
                            service, exc)
+        else:
+            logger.info("Send status for service %s (%s)", service,
+                        STATUS_MSG[status])

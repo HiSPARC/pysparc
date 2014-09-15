@@ -5,9 +5,8 @@ import ConfigParser
 
 from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
-from pysparc import messages
-from pysparc import storage
 from pysparc.events import Stew
+from pysparc import messages, storage, monitor
 
 
 CONFIGFILE = os.path.expanduser('~/.pysparc')
@@ -30,6 +29,7 @@ class Main(object):
         self.initialize_device()
         self.datastore = storage.TablesDataStore(DATAFILE)
         #self.datastore = storage.NikhefDataStore(599, 'pysparc')
+        self.monitor = monitor.Monitor('hostname')
 
     def initialize_device(self):
         if not os.path.isfile(CONFIGFILE):
@@ -53,6 +53,7 @@ class Main(object):
         # Give hardware at least 20 seconds to startup
         t_msg = time.time() + 20
         t_log = time.time() - .5
+        t_status = time.time()
         try:
             while True:
                 t = time.time()
@@ -82,6 +83,14 @@ class Main(object):
                     events = timeit(stew.serve_events)
                     timeit(self.store_events, events)
                     timeit(stew.drain)
+
+                # Periodically send status messages to the monitor,
+                # currently Nagios
+                if t - t_status >= 60:
+                    t_status += 60
+                    self.monitor.send_uptime()
+                    self.monitor.send_cpu_load()
+                    self.monitor.send_trigger_rate(stew.event_rate())
 
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
