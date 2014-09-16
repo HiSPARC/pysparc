@@ -44,7 +44,7 @@ class Monitor(object):
         """Send the system uptime to the monitor."""
 
         uptime = self._get_uptime()
-        self._send_status_for_service('Uptime', OK, uptime)
+        self._send_status_for_service('Uptime Pi', OK, uptime)
 
     def _get_uptime(self):
         """Return the system uptime."""
@@ -87,7 +87,7 @@ class Monitor(object):
 
         msg = '%.2f (1 min), %.2f (5 min), %.2f (15 min)' % \
             (avg1, avg5, avg15)
-        self._send_status_for_service('CPU Load', status, msg)
+        self._send_status_for_service('CPU Load Pi', status, msg)
 
     def _get_cpu_load(self):
         """Return the system CPU load."""
