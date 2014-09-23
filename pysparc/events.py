@@ -162,7 +162,7 @@ class Stew(object):
         try:
             number_of_events = sum(self._event_rates.values())
             timestamps = self._event_rates.keys()
-            time = max(timestamps) - min(timestamps)
+            time = EVENTRATE_TIME
             event_rate = number_of_events / time
             return event_rate
         except (ValueError, ZeroDivisionError):
