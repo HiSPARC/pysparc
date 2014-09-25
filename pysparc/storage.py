@@ -3,14 +3,25 @@
 Contents
 --------
 
+:class:`StorageError`
+    Base error class.
+:class:`UploadError`
+    Error uploading events.
+:class:`IntegrityError`
+    Some data is corrupted.
+
 :class:`StorageManager`
     Transparently store events in one or multiple data stores.
+:class:`StorageWorker`
+    Keep track of events to be stored in a particular datastore.
 :class:`HisparcEvent`
     HiSPARC event table description.
 :class:`BaseDataStore`
     Base class for storage of HiSPARC events.
 :class:`TablesDataStore`
     Datastore for HiSPARC events.
+:class:`NikhefDataStore`
+    Send events over HTTP to the datastore at Nikhef.
 
 """
 
@@ -50,11 +61,86 @@ class UploadError(StorageError):
         return "Error uploading events (%s)" % self.msg
 
 
+class IntegrityError(StorageError):
+
+    """Some data is corrupted."""
+
+    pass
+
+
 class StorageManager(object):
 
     """Transparently store events in one or multiple data stores."""
 
     pass
+
+
+class StorageWorker(object):
+
+    """Keep track of events to be stored in a particular datastore."""
+
+    def __init__(self, datastore, kvstore, queue):
+        """Instantiate the class.
+
+        :param datastore: DataStore instance which will actually store
+            the events.
+        :param kvstore: Redis-compatible key-value store which contains
+            queue and the events to be stored.
+        :param queue: name of the key in the kvstore which contains the
+            queue of events to be stored.
+
+        """
+        self.datastore = datastore
+        self.kvstore = kvstore
+        self.queue = queue
+
+    def store_event(self):
+        """Store an event from the queue in the datastore."""
+
+        event, key = self.get_event_from_queue()
+        if event:
+            try:
+                self.datastore.store_event(event)
+            except StorageError:
+                pass
+            except Exception as e:
+                raise StorageError(str(e))
+            else:
+                self.remove_event_from_queue(key)
+
+    def get_event_from_queue(self):
+        """Get first event from queue.
+
+        The first key in the queue is used to look up the event.  The key
+        itself is returned for reference.
+
+        :returns: event, key
+
+        """
+        key = self.kvstore.lindex(self.queue, 0)
+        pickled_event = self.kvstore.hget(key, 'event')
+        event = pickle.loads(pickled_event)
+        return event, key
+
+    def remove_event_from_queue(self, expected_key):
+        """Remove event from queue and decrease upload counter.
+
+        :param expected_key: the expected key to be removed.
+
+        The first element in the queue is removed and compared to the
+        expected key.  If they are not equal, an IntegrityError is raised.
+
+        If the upload counter for the event is zero, remove the event
+        from the key-value store.
+
+        """
+        removed_key = self.kvstore.lpop(self.queue)
+        if removed_key != expected_key:
+            raise IntegrityError("Key removed from queue is not the expected key.")
+
+        count = self.kvstore.hincrby(expected_key, 'count', -1)
+        if count == 0:
+            self.kvstore.delete(expected_key)
 
 
 class HisparcEvent(tables.IsDescription):
