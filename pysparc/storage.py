@@ -37,6 +37,7 @@ import tables
 import requests
 from requests.packages.urllib3.exceptions import ProtocolError
 from requests import HTTPError
+import redis
 
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,9 @@ class StorageError(Exception):
 
     def __init__(self, msg):
         self.msg = msg
+
+    def __str__(self):
+        return "Error storing events (%s)" % self.msg
 
 
 class UploadError(StorageError):
@@ -72,7 +76,44 @@ class StorageManager(object):
 
     """Transparently store events in one or multiple data stores."""
 
-    pass
+    def __init__(self):
+        self.workers = []
+        self.kvstore = redis.StrictRedis()
+
+    def add_datastore(self, datastore, queue):
+        """Add a datastore to store new events.
+
+        :param datastore: a :class:`BaseDataStore` or derived class instance
+        :param queue: a unique name for the queue
+
+        New events will also be stored in the supplied datastore.  A
+        unique name for a queue makes it possible to abort a run, change an
+        upload URL and restart by specifying the same name for the new
+        datastore instance.  Any pending events for the old URL will then
+        be send to the new URL.
+
+        """
+        worker = StorageWorker(datastore, self.kvstore, queue)
+        self.workers.append((queue, worker))
+
+    def store_event(self, event):
+        """Add event to queues for storage.
+
+        :param event: a :class:`HisparcEvent` instance.
+
+        The event will be stored in the key-value store and its key
+        is added to all queues.  The upload counter is also incremented
+        accordingly.
+
+        """
+
+        key = 'event_%d' % event.ext_timestamp
+        pickled_event = pickle.dumps(event)
+        self.kvstore.hmset(key, 'event', pickled_event, 'count', 0)
+
+        for queue, worker in self.workers:
+            self.kvstore.rpush(queue, key)
+            self.kvstore.hincrby(key, 'count', 1)
 
 
 class StorageWorker(object):
@@ -101,8 +142,8 @@ class StorageWorker(object):
         if event:
             try:
                 self.datastore.store_event(event)
-            except StorageError:
-                pass
+            except StorageError as e:
+                logger.error(str(e))
             except Exception as e:
                 raise StorageError(str(e))
             else:
