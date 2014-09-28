@@ -54,8 +54,8 @@ class StorageManagerStoreEventTest(unittest.TestCase):
         self.manager.store_event(event)
 
         self.mock_pickle_dumps.assert_called_once_with(event)
-        self.mock_kvstore.hmset.assert_called_once_with(key, 'event', sentinel.pickled_event,
-                                                        'count', 0)
+        self.mock_kvstore.hmset.assert_called_once_with(
+            key, {'event': sentinel.pickled_event, 'count': 0})
 
     def test_store_event_adds_event_key_to_queues(self):
         event = Mock(name='event')
@@ -150,6 +150,13 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
 
     def test_queue_attribute(self):
         self.assertIs(self.mock_queue, self.worker.queue)
+
+    def test_get_event_from_queue_returns_None_if_queue_empty(self):
+        self.mock_kvstore.llen.return_value = 0
+
+        self.worker.get_event_from_queue()
+
+        self.mock_kvstore.llen.assert_called_once_with(self.mock_queue)
 
     @patch('cPickle.loads')
     def test_get_event_from_queue(self, mock_pickle_loads):

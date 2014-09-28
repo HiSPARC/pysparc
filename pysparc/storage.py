@@ -109,7 +109,7 @@ class StorageManager(object):
 
         key = 'event_%d' % event.ext_timestamp
         pickled_event = pickle.dumps(event)
-        self.kvstore.hmset(key, 'event', pickled_event, 'count', 0)
+        self.kvstore.hmset(key, {'event': pickled_event, 'count': 0})
 
         for queue, worker in self.workers:
             self.kvstore.rpush(queue, key)
@@ -158,10 +158,14 @@ class StorageWorker(object):
         :returns: event, key
 
         """
-        key = self.kvstore.lindex(self.queue, 0)
-        pickled_event = self.kvstore.hget(key, 'event')
-        event = pickle.loads(pickled_event)
-        return event, key
+        num_events = self.kvstore.llen(self.queue)
+        if not num_events:
+            return None, None
+        else:
+            key = self.kvstore.lindex(self.queue, 0)
+            pickled_event = self.kvstore.hget(key, 'event')
+            event = pickle.loads(pickled_event)
+            return event, key
 
     def remove_event_from_queue(self, expected_key):
         """Remove event from queue and decrease upload counter.
