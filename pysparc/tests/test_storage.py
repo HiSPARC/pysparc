@@ -1,5 +1,6 @@
 import unittest
 import cPickle as pickle
+import threading
 
 from mock import Mock, patch, sentinel, call
 
@@ -202,6 +203,59 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
         self.mock_kvstore.lpop.return_value = sentinel.other_key
 
         self.assertRaises(storage.IntegrityError, self.worker.remove_event_from_queue, sentinel.key)
+
+    @unittest.skip("WIP")
+    def test_get_key_from_queue(self):
+        self.fail("WIP")
+
+    @unittest.skip("WIP")
+    def test_store_event_by_key(self):
+        self.fail("WIP")
+
+
+class StorageWorkerThreadingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.worker = storage.StorageWorker(Mock(), Mock(), Mock())
+
+    def test_StorageWorker_subclasses_Thread(self):
+        self.assertIsInstance(self.worker, threading.Thread)
+
+
+class StorageWorkerSingleRunTest(unittest.TestCase):
+
+    def setUp(self):
+        patcher1 = patch.object(storage.StorageWorker, 'get_key_from_queue')
+        patcher2 = patch.object(storage.StorageWorker, 'store_event_by_key')
+        patcher3 = patch('time.sleep')
+        self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
+        self.addCleanup(patcher3.stop)
+        self.mock_get_key_from_queue = patcher1.start()
+        self.mock_store_event_by_key = patcher2.start()
+        self.mock_sleep = patcher3.start()
+
+        self.worker = storage.StorageWorker(Mock(), Mock(), Mock())
+
+    def test_run_calls_get_key_from_queue(self):
+        self.worker.single_run()
+        self.mock_get_key_from_queue.assert_called_once_with()
+
+    def test_run_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
+        self.mock_get_key_from_queue.return_value = sentinel.key
+
+        self.worker.single_run()
+
+        self.mock_store_event_by_key.assert_called_once_with(sentinel.key)
+        self.assertFalse(self.mock_sleep.called)
+
+    def test_run_sleeps_if_not_key_and_doesnt_store(self):
+        self.mock_get_key_from_queue.return_value = None
+
+        self.worker.single_run()
+
+        self.assertFalse(self.mock_store_event_by_key.called)
+        self.mock_sleep.assert_called_once_with(storage.SLEEP_INTERVAL)
 
 
 if __name__ == '__main__':

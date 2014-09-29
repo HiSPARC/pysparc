@@ -25,13 +25,14 @@ Contents
 
 """
 
-
 import base64
 import cPickle as pickle
 import hashlib
 import logging
 import re
 import zlib
+import threading
+import time
 
 import tables
 import requests
@@ -44,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 DATASTORE_URL = "http://frome.nikhef.nl/hisparc/upload"
+SLEEP_INTERVAL = .4
 
 
 class StorageError(Exception):
@@ -116,7 +118,7 @@ class StorageManager(object):
             self.kvstore.hincrby(key, 'count', 1)
 
 
-class StorageWorker(object):
+class StorageWorker(threading.Thread):
 
     """Keep track of events to be stored in a particular datastore."""
 
@@ -135,6 +137,28 @@ class StorageWorker(object):
         self.kvstore = kvstore
         self.queue = queue
 
+    def run(self):
+        """Event loop for this worker thread.
+
+        This method is called when the thread is started, and the thread
+        will be killed once this method returns.
+
+        """
+        pass
+
+    def single_run(self):
+        """Do a single queue run.
+
+        Check if there are events in the queue. If so, store one event.
+        If not, sleep for a little while before returning.
+
+        """
+        key = self.get_key_from_queue()
+        if key:
+            self.store_event_by_key(key)
+        else:
+            time.sleep(SLEEP_INTERVAL)
+
     def store_event(self):
         """Store an event from the queue in the datastore."""
 
@@ -148,6 +172,19 @@ class StorageWorker(object):
                 raise StorageError(str(e))
             else:
                 self.remove_event_from_queue(key)
+
+    def get_key_from_queue(self):
+        """Get first key from queue."""
+
+        pass
+
+    def store_event_by_key(self, key):
+        """Store event referenced by key.
+
+        :param key: key of the event to lookup in the key-value store
+
+        """
+        pass
 
     def get_event_from_queue(self):
         """Get first event from queue.
