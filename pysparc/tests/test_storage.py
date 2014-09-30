@@ -86,20 +86,16 @@ class StorageManagerStoreEventTest(unittest.TestCase):
 class StorageWorkerStoreEventTest(unittest.TestCase):
 
     def setUp(self):
-        patcher1 = patch.object(storage.StorageWorker, 'get_event_from_queue')
-        patcher2 = patch.object(storage.StorageWorker, 'remove_event_from_queue')
-        patcher3 = patch.object(storage.StorageWorker, 'get_event_by_key')
-        patcher4 = patch.object(storage, 'logger')
+        patcher1 = patch.object(storage.StorageWorker, 'remove_event_from_queue')
+        patcher2 = patch.object(storage.StorageWorker, 'get_event_by_key')
+        patcher3 = patch.object(storage, 'logger')
         self.addCleanup(patcher1.stop)
         self.addCleanup(patcher2.stop)
         self.addCleanup(patcher3.stop)
-        self.addCleanup(patcher4.stop)
 
-        self.mock_get_event = patcher1.start()
-        self.mock_get_event.return_value = sentinel.event, sentinel.key
-        self.mock_remove_event = patcher2.start()
-        self.mock_get_event_by_key = patcher3.start()
-        self.mock_logger = patcher4.start()
+        self.mock_remove_event = patcher1.start()
+        self.mock_get_event_by_key = patcher2.start()
+        self.mock_logger = patcher3.start()
 
         self.mock_datastore = Mock()
         self.worker = storage.StorageWorker(self.mock_datastore,
@@ -107,37 +103,6 @@ class StorageWorkerStoreEventTest(unittest.TestCase):
 
     def test_datastore_attribute(self):
         self.assertIs(self.mock_datastore, self.worker.datastore)
-
-    def test_store_event_calls_get_event_from_queue(self):
-        self.worker.store_event()
-        self.mock_get_event.assert_called_once_with()
-
-    def test_store_event_calls_datastore_if_event(self):
-        self.mock_get_event.return_value = None, None
-        self.worker.store_event()
-        self.assertFalse(self.mock_datastore.store_event.called)
-
-        self.mock_get_event.return_value = sentinel.event, sentinel.key
-        self.worker.store_event()
-        self.mock_datastore.store_event.assert_called_once_with(sentinel.event)
-
-    def test_store_event_catches_and_logs_StorageError_but_not_all(self):
-        exception = storage.StorageError("Foo")
-        self.mock_datastore.store_event.side_effect = exception
-        self.worker.store_event()
-        self.mock_logger.error.assert_called_once_with(str(exception))
-
-        self.mock_datastore.store_event.side_effect = Exception()
-        self.assertRaises(storage.StorageError, self.worker.store_event)
-
-    def test_store_event_calls_remove_event_only_if_no_exception(self):
-        self.mock_datastore.store_event.side_effect = storage.StorageError("Foo")
-        self.worker.store_event()
-        self.assertFalse(self.mock_remove_event.called)
-
-        self.mock_datastore.store_event.side_effect = None
-        self.worker.store_event()
-        self.mock_remove_event.assert_called_once_with(sentinel.key)
 
     def test_store_event_by_key(self):
         self.mock_get_event_by_key.return_value = sentinel.event
@@ -303,6 +268,18 @@ class StorageWorkerSingleRunTest(unittest.TestCase):
 
         self.assertFalse(self.mock_store_event_by_key.called)
         self.mock_sleep.assert_called_once_with(storage.SLEEP_INTERVAL)
+
+    def test_store_event_calls_get_key_from_queue(self):
+        self.worker.store_event()
+        self.mock_get_key_from_queue.assert_called_once_with()
+
+    def test_store_event_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
+        self.mock_get_key_from_queue.return_value = sentinel.key
+
+        self.worker.store_event()
+
+        self.mock_store_event_by_key.assert_called_once_with(sentinel.key)
+        self.assertFalse(self.mock_sleep.called)
 
 
 if __name__ == '__main__':

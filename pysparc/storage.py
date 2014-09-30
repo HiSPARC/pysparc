@@ -162,16 +162,9 @@ class StorageWorker(threading.Thread):
     def store_event(self):
         """Store an event from the queue in the datastore."""
 
-        event, key = self.get_event_from_queue()
-        if event:
-            try:
-                self.datastore.store_event(event)
-            except StorageError as e:
-                logger.error(str(e))
-            except Exception as e:
-                raise StorageError(str(e))
-            else:
-                self.remove_event_from_queue(key)
+        key = self.get_key_from_queue()
+        if key:
+            self.store_event_by_key(key)
 
     def get_key_from_queue(self):
         """Get first key from queue."""
