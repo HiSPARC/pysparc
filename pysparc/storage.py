@@ -176,15 +176,38 @@ class StorageWorker(threading.Thread):
     def get_key_from_queue(self):
         """Get first key from queue."""
 
-        pass
+        return self.kvstore.lindex(self.queue, 0)
+
+    def get_event_by_key(self, key):
+        """Get an event from the key-value store referenced by key.
+
+        :param key: key of the event to look up in the key-value store.
+
+        """
+        pickled_event = self.kvstore.hget(key, 'event')
+        return pickle.loads(pickled_event)
 
     def store_event_by_key(self, key):
         """Store event referenced by key.
 
-        :param key: key of the event to lookup in the key-value store
+        :param key: key of the event to look up in the key-value store.
+
+        If the event is succesfully stored, remove it from the queue.
+
+        Catch StorageErrors and log them as errors.  Catch all other
+        exceptions, but reraise them as StorageErrors, with the original
+        exception as string argument.
 
         """
-        pass
+        event = self.get_event_by_key(key)
+        try:
+            self.datastore.store_event(event)
+        except StorageError as e:
+            logger.error(str(e))
+        except Exception as e:
+            raise StorageError(str(e))
+        else:
+            self.remove_event_from_queue(key)
 
     def get_event_from_queue(self):
         """Get first event from queue.

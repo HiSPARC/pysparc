@@ -1,1 +1,2 @@
 - add timeout to HTTP requests
+- clean up StorageWorker (threaded uses other methods than non-threaded)
