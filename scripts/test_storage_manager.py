@@ -69,7 +69,7 @@ def main():
     created_timestamps = []
 
     t0 = time.time()
-    while time.time() - t0 < 20:
+    while time.time() - t0 < 10:
         ts = create_event()
         if ts:
             created_timestamps.append(ts)
@@ -77,7 +77,7 @@ def main():
 
     t0 = time.time()
     print "Storing backlog!!!"
-    while time.time() - t0 < 20:
+    while time.time() - t0 < 10:
         workers_store_event()
     st1 = datastore1._stored_timestamps
     st2 = datastore2._stored_timestamps

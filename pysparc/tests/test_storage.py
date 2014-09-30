@@ -148,32 +148,6 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
     def test_queue_attribute(self):
         self.assertIs(self.mock_queue, self.worker.queue)
 
-    def test_get_event_from_queue_returns_None_if_queue_empty(self):
-        self.mock_kvstore.llen.return_value = 0
-
-        self.worker.get_event_from_queue()
-
-        self.mock_kvstore.llen.assert_called_once_with(self.mock_queue)
-
-    @patch('cPickle.loads')
-    def test_get_event_from_queue(self, mock_pickle_loads):
-        pickled_event = sentinel.pickled_event
-        self.mock_kvstore.lindex.return_value = sentinel.key
-        self.mock_kvstore.hget.return_value = pickled_event
-        mock_pickle_loads.return_value = sentinel.event
-
-        event, key = self.worker.get_event_from_queue()
-
-        # get first event key from queue
-        self.mock_kvstore.lindex.assert_called_once_with(self.mock_queue, 0)
-        # get 'event' from event key (is pickled event)
-        self.mock_kvstore.hget.assert_called_once_with(sentinel.key, 'event')
-        # unpickle event
-        mock_pickle_loads.assert_called_once_with(pickled_event)
-        # check return values
-        self.assertIs(key, sentinel.key)
-        self.assertIs(event, sentinel.event)
-
     def test_remove_event_from_queue_removes_from_queue_and_decr_counter(self):
         self.mock_kvstore.lpop.return_value = sentinel.key
 

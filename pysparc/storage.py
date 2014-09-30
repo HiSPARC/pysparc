@@ -202,24 +202,6 @@ class StorageWorker(threading.Thread):
         else:
             self.remove_event_from_queue(key)
 
-    def get_event_from_queue(self):
-        """Get first event from queue.
-
-        The first key in the queue is used to look up the event.  The key
-        itself is returned for reference.
-
-        :returns: event, key
-
-        """
-        num_events = self.kvstore.llen(self.queue)
-        if not num_events:
-            return None, None
-        else:
-            key = self.kvstore.lindex(self.queue, 0)
-            pickled_event = self.kvstore.hget(key, 'event')
-            event = pickle.loads(pickled_event)
-            return event, key
-
     def remove_event_from_queue(self, expected_key):
         """Remove event from queue and decrease upload counter.
 
