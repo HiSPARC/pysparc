@@ -250,10 +250,55 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
 class StorageWorkerThreadingTest(unittest.TestCase):
 
     def setUp(self):
-        self.worker = storage.StorageWorker(Mock(), Mock(), Mock())
+        patcher1 = patch.object(storage.StorageWorker, 'store_event_or_sleep')
+        self.addCleanup(patcher1.stop)
+        self.mock_store = patcher1.start()
+        self.mock_store.side_effect = [None]
+        self.mock_signal = Mock()
+        self.mock_signal.is_set.return_value = False
+
+        self.worker = storage.StorageWorker(Mock(), Mock(), Mock(),
+                                            self.mock_signal)
 
     def test_StorageWorker_subclasses_Thread(self):
         self.assertIsInstance(self.worker, threading.Thread)
+
+    def test_StorageWorker_shutdown_signal_attribute(self):
+        self.assertIs(self.worker._must_shutdown, self.mock_signal)
+
+    def test_run_calls_store_event_or_sleep_in_loop(self):
+        N = 10
+        self.mock_store.side_effect = N * [None]
+
+        # a StopIteration means the test finished 10 succesfull calls
+        self.assertRaises(StopIteration, self.worker.run)
+
+        # check correct call, and call count
+        self.mock_store.assert_called_with()
+        self.assertEqual(self.mock_store.call_count, N + 1)
+
+    def test_run_returns_if_shutdown_signal_is_set(self):
+        self.mock_signal.is_set.return_value = True
+        try:
+            self.worker.run()
+        except StopIteration:
+            self.fail('Did not shutdown')
+        self.assertFalse(self.mock_store.called)
+
+    def test_run_returns_after_shutdown_signal(self):
+        self.mock_store.side_effect = self.side_effect_with_shutdown()
+
+        try:
+            self.worker.run()
+        except StopIteration:
+            self.fail('Did not shutdown')
+
+    def side_effect_with_shutdown(self):
+        for i in range(5):
+            yield None
+        self.mock_signal.is_set.return_value = True
+        for i in range(5):
+            yield None
 
 
 if __name__ == '__main__':

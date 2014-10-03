@@ -122,7 +122,7 @@ class StorageWorker(threading.Thread):
 
     """Keep track of events to be stored in a particular datastore."""
 
-    def __init__(self, datastore, kvstore, queue):
+    def __init__(self, datastore, kvstore, queue, shutdown_signal=None):
         """Instantiate the class.
 
         :param datastore: DataStore instance which will actually store
@@ -131,11 +131,14 @@ class StorageWorker(threading.Thread):
             queue and the events to be stored.
         :param queue: name of the key in the kvstore which contains the
             queue of events to be stored.
+        :param shutdown_signal: signal to initiate a shutdown of all
+            threads
 
         """
         self.datastore = datastore
         self.kvstore = kvstore
         self.queue = queue
+        self._must_shutdown = shutdown_signal
 
     def run(self):
         """Event loop for this worker thread.
@@ -144,7 +147,8 @@ class StorageWorker(threading.Thread):
         will be killed once this method returns.
 
         """
-        pass
+        while not self._must_shutdown.is_set():
+            self.store_event_or_sleep()
 
     def store_event_or_sleep(self):
         """Store an event from the queue, or sleep.
