@@ -223,22 +223,22 @@ class StorageWorkerSingleRunTest(unittest.TestCase):
 
         self.worker = storage.StorageWorker(Mock(), Mock(), Mock())
 
-    def test_single_run_calls_get_key_from_queue(self):
-        self.worker.single_run()
+    def test_store_event_or_sleep_calls_get_key_from_queue(self):
+        self.worker.store_event_or_sleep()
         self.mock_get_key_from_queue.assert_called_once_with()
 
-    def test_single_run_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
+    def test_store_event_or_sleep_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
         self.mock_get_key_from_queue.return_value = sentinel.key
 
-        self.worker.single_run()
+        self.worker.store_event_or_sleep()
 
         self.mock_store_event_by_key.assert_called_once_with(sentinel.key)
         self.assertFalse(self.mock_sleep.called)
 
-    def test_single_run_sleeps_if_not_key_and_doesnt_store(self):
+    def test_store_event_or_sleep_sleeps_if_not_key_and_doesnt_store(self):
         self.mock_get_key_from_queue.return_value = None
 
-        self.worker.single_run()
+        self.worker.store_event_or_sleep()
 
         self.assertFalse(self.mock_store_event_by_key.called)
         self.mock_sleep.assert_called_once_with(storage.SLEEP_INTERVAL)

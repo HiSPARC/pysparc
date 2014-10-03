@@ -146,11 +146,12 @@ class StorageWorker(threading.Thread):
         """
         pass
 
-    def single_run(self):
-        """Do a single queue run.
+    def store_event_or_sleep(self):
+        """Store an event from the queue, or sleep.
 
         Check if there are events in the queue. If so, store one event.
-        If not, sleep for a little while before returning.
+        If not, sleep for a little while (SLEEP_INTERVAL) before
+        returning.
 
         """
         key = self.get_key_from_queue()
