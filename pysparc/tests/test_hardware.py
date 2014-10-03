@@ -10,8 +10,10 @@ class HiSPARCIIITest(unittest.TestCase):
 
     @patch('pysparc.hardware.FtdiChip')
     @patch('pysparc.hardware.config.Config')
+    @patch.object(hardware.HiSPARCIII, '_burn_firmware')
     @patch.object(hardware.HiSPARCIII, 'reset_hardware')
-    def setUp(self, mock_reset, mock_Config, mock_Device):
+    @patch('time.sleep')
+    def setUp(self, mock_time, mock_reset, mock_burn, mock_Config, mock_Device):
         self.mock_Config = mock_Config
         self.mock_config = mock_Config.return_value
         self.mock_Device = mock_Device
