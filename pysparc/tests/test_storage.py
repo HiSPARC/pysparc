@@ -86,6 +86,54 @@ class StorageManagerStoreEventTest(unittest.TestCase):
 class StorageWorkerStoreEventTest(unittest.TestCase):
 
     def setUp(self):
+        patcher1 = patch.object(storage.StorageWorker, 'get_key_from_queue')
+        patcher2 = patch.object(storage.StorageWorker, 'store_event_by_key')
+        patcher3 = patch('time.sleep')
+        self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
+        self.addCleanup(patcher3.stop)
+        self.mock_get_key_from_queue = patcher1.start()
+        self.mock_store_event_by_key = patcher2.start()
+        self.mock_sleep = patcher3.start()
+
+        self.worker = storage.StorageWorker(Mock(), Mock(), Mock())
+
+    def test_store_event_or_sleep_calls_get_key_from_queue(self):
+        self.worker.store_event_or_sleep()
+        self.mock_get_key_from_queue.assert_called_once_with()
+
+    def test_store_event_or_sleep_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
+        self.mock_get_key_from_queue.return_value = sentinel.key
+
+        self.worker.store_event_or_sleep()
+
+        self.mock_store_event_by_key.assert_called_once_with(sentinel.key)
+        self.assertFalse(self.mock_sleep.called)
+
+    def test_store_event_or_sleep_sleeps_if_not_key_and_doesnt_store(self):
+        self.mock_get_key_from_queue.return_value = None
+
+        self.worker.store_event_or_sleep()
+
+        self.assertFalse(self.mock_store_event_by_key.called)
+        self.mock_sleep.assert_called_once_with(storage.SLEEP_INTERVAL)
+
+    def test_store_event_calls_get_key_from_queue(self):
+        self.worker.store_event()
+        self.mock_get_key_from_queue.assert_called_once_with()
+
+    def test_store_event_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
+        self.mock_get_key_from_queue.return_value = sentinel.key
+
+        self.worker.store_event()
+
+        self.mock_store_event_by_key.assert_called_once_with(sentinel.key)
+        self.assertFalse(self.mock_sleep.called)
+
+
+class StorageWorkerStoreEventByKeyTest(unittest.TestCase):
+
+    def setUp(self):
         patcher1 = patch.object(storage.StorageWorker, 'remove_event_from_queue')
         patcher2 = patch.object(storage.StorageWorker, 'get_event_by_key')
         patcher3 = patch.object(storage, 'logger')
@@ -206,54 +254,6 @@ class StorageWorkerThreadingTest(unittest.TestCase):
 
     def test_StorageWorker_subclasses_Thread(self):
         self.assertIsInstance(self.worker, threading.Thread)
-
-
-class StorageWorkerSingleRunTest(unittest.TestCase):
-
-    def setUp(self):
-        patcher1 = patch.object(storage.StorageWorker, 'get_key_from_queue')
-        patcher2 = patch.object(storage.StorageWorker, 'store_event_by_key')
-        patcher3 = patch('time.sleep')
-        self.addCleanup(patcher1.stop)
-        self.addCleanup(patcher2.stop)
-        self.addCleanup(patcher3.stop)
-        self.mock_get_key_from_queue = patcher1.start()
-        self.mock_store_event_by_key = patcher2.start()
-        self.mock_sleep = patcher3.start()
-
-        self.worker = storage.StorageWorker(Mock(), Mock(), Mock())
-
-    def test_store_event_or_sleep_calls_get_key_from_queue(self):
-        self.worker.store_event_or_sleep()
-        self.mock_get_key_from_queue.assert_called_once_with()
-
-    def test_store_event_or_sleep_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
-        self.mock_get_key_from_queue.return_value = sentinel.key
-
-        self.worker.store_event_or_sleep()
-
-        self.mock_store_event_by_key.assert_called_once_with(sentinel.key)
-        self.assertFalse(self.mock_sleep.called)
-
-    def test_store_event_or_sleep_sleeps_if_not_key_and_doesnt_store(self):
-        self.mock_get_key_from_queue.return_value = None
-
-        self.worker.store_event_or_sleep()
-
-        self.assertFalse(self.mock_store_event_by_key.called)
-        self.mock_sleep.assert_called_once_with(storage.SLEEP_INTERVAL)
-
-    def test_store_event_calls_get_key_from_queue(self):
-        self.worker.store_event()
-        self.mock_get_key_from_queue.assert_called_once_with()
-
-    def test_store_event_calls_store_event_by_key_if_key_and_doesnt_sleep(self):
-        self.mock_get_key_from_queue.return_value = sentinel.key
-
-        self.worker.store_event()
-
-        self.mock_store_event_by_key.assert_called_once_with(sentinel.key)
-        self.assertFalse(self.mock_sleep.called)
 
 
 if __name__ == '__main__':
