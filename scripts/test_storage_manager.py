@@ -89,4 +89,10 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig()
-    main()
+
+    try:
+        main()
+    except:
+        raise
+    finally:
+        manager.close()
