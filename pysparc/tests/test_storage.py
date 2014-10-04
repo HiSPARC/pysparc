@@ -20,8 +20,10 @@ class StorageManagerTest(unittest.TestCase):
         mock_KVStore.return_value = Mock(name="kvstore")
         self.mock_kvstore = mock_KVStore.return_value
         self.mock_Worker = patcher2.start()
+        self.mock_worker = self.mock_Worker.return_value
         mock_Event = patcher3.start()
-        mock_Event.return_value = sentinel.signal
+        self.mock_signal = Mock(name="signal")
+        mock_Event.return_value = self.mock_signal
 
         self.manager = storage.StorageManager()
 
@@ -32,7 +34,7 @@ class StorageManagerTest(unittest.TestCase):
         self.assertIs(self.manager.kvstore, self.mock_kvstore)
 
     def test_must_shutdown_attribute(self):
-        self.assertIs(self.manager._must_shutdown, sentinel.signal)
+        self.assertIs(self.manager._must_shutdown, self.mock_signal)
 
     def test_add_datastore_sets_workers_attribute(self):
         mock_worker = self.mock_Worker.return_value
@@ -44,7 +46,29 @@ class StorageManagerTest(unittest.TestCase):
 
     def test_add_datastore_creates_worker(self):
         self.manager.add_datastore(sentinel.datastore, sentinel.queue)
-        self.mock_Worker.assert_called_once_with(sentinel.datastore, self.mock_kvstore, sentinel.queue)
+        self.mock_Worker.assert_called_once_with(sentinel.datastore,
+                                                 self.mock_kvstore,
+                                                 sentinel.queue,
+                                                 self.mock_signal)
+
+    def test_add_datastore_starts_thread(self):
+        self.manager.add_datastore(sentinel.datastore, sentinel.queue)
+        self.mock_worker.start.assert_called_once_with()
+
+    def test_close_sets_shutdown_signal(self):
+        self.manager.close()
+        self.mock_signal.set.assert_called_once_with()
+
+    def test_close_joins_all_threads(self):
+        mock_worker1 = Mock()
+        mock_worker2 = Mock()
+        self.manager.workers = [(Mock(), mock_worker1),
+                                (Mock(), mock_worker2)]
+
+        self.manager.close()
+
+        mock_worker1.join.assert_called_once_with()
+        mock_worker2.join.assert_called_once_with()
 
 
 class StorageManagerStoreEventTest(unittest.TestCase):

@@ -83,6 +83,17 @@ class StorageManager(object):
         self.kvstore = redis.StrictRedis()
         self._must_shutdown = threading.Event()
 
+    def close(self):
+        """Shutdown storage manager and all workers.
+
+        This method sets the shutdown signal to signal all threads to
+        terminate.  All threads are joined before returning.
+
+        """
+        self._must_shutdown.set()
+        for queue, worker in self.workers:
+            worker.join()
+
     def add_datastore(self, datastore, queue):
         """Add a datastore to store new events.
 
@@ -96,8 +107,10 @@ class StorageManager(object):
         be send to the new URL.
 
         """
-        worker = StorageWorker(datastore, self.kvstore, queue)
+        worker = StorageWorker(datastore, self.kvstore, queue,
+                               self._must_shutdown)
         self.workers.append((queue, worker))
+        worker.start()
 
     def store_event(self, event):
         """Add event to queues for storage.
