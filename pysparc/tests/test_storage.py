@@ -10,10 +10,18 @@ from pysparc import storage
 class StorageManagerTest(unittest.TestCase):
 
     def setUp(self):
-        patcher = patch('redis.StrictRedis')
-        self.addCleanup(patcher.stop)
-        mock_KVStore = patcher.start()
+        patcher1 = patch('redis.StrictRedis')
+        patcher2 = patch('pysparc.storage.StorageWorker')
+        patcher3 = patch('threading.Event')
+        self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
+        self.addCleanup(patcher3.stop)
+        mock_KVStore = patcher1.start()
+        mock_KVStore.return_value = Mock(name="kvstore")
         self.mock_kvstore = mock_KVStore.return_value
+        self.mock_Worker = patcher2.start()
+        mock_Event = patcher3.start()
+        mock_Event.return_value = sentinel.signal
 
         self.manager = storage.StorageManager()
 
@@ -23,14 +31,20 @@ class StorageManagerTest(unittest.TestCase):
     def test_kvstore_attribute(self):
         self.assertIs(self.manager.kvstore, self.mock_kvstore)
 
-    @patch('pysparc.storage.StorageWorker')
-    def test_add_datastore(self, mock_Worker):
-        mock_worker = mock_Worker.return_value
+    def test_must_shutdown_attribute(self):
+        self.assertIs(self.manager._must_shutdown, sentinel.signal)
+
+    def test_add_datastore_sets_workers_attribute(self):
+        mock_worker = self.mock_Worker.return_value
         mock_datastore = Mock()
 
         self.manager.add_datastore(mock_datastore, sentinel.queue)
 
         self.assertIn((sentinel.queue, mock_worker), self.manager.workers)
+
+    def test_add_datastore_creates_worker(self):
+        self.manager.add_datastore(sentinel.datastore, sentinel.queue)
+        self.mock_Worker.assert_called_once_with(sentinel.datastore, self.mock_kvstore, sentinel.queue)
 
 
 class StorageManagerStoreEventTest(unittest.TestCase):
@@ -81,6 +95,26 @@ class StorageManagerStoreEventTest(unittest.TestCase):
 
         expected = 5 * [call(key, 'count', 1)]
         self.assertEqual(self.mock_kvstore.hincrby.call_args_list, expected)
+
+
+class StorageWorkerTest(unittest.TestCase):
+    def setUp(self):
+        self.worker = storage.StorageWorker(sentinel.datastore,
+                                            sentinel.kvstore,
+                                            sentinel.queue,
+                                            sentinel.signal)
+
+    def test_datastore_attribute(self):
+        self.assertIs(self.worker.datastore, sentinel.datastore)
+
+    def test_kvstore_attribute(self):
+        self.assertIs(self.worker.kvstore, sentinel.kvstore)
+
+    def test_queue_attribute(self):
+        self.assertIs(self.worker.queue, sentinel.queue)
+
+    def test_StorageWorker_shutdown_signal_attribute(self):
+        self.assertIs(self.worker._must_shutdown, sentinel.signal)
 
 
 class StorageWorkerStoreEventTest(unittest.TestCase):
@@ -149,9 +183,6 @@ class StorageWorkerStoreEventByKeyTest(unittest.TestCase):
         self.worker = storage.StorageWorker(self.mock_datastore,
                                             Mock(), Mock())
 
-    def test_datastore_attribute(self):
-        self.assertIs(self.mock_datastore, self.worker.datastore)
-
     def test_store_event_by_key(self):
         self.mock_get_event_by_key.return_value = sentinel.event
 
@@ -189,12 +220,6 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
         self.worker = storage.StorageWorker(Mock(),
                                             self.mock_kvstore,
                                             self.mock_queue)
-
-    def test_kvstore_attribute(self):
-        self.assertIs(self.mock_kvstore, self.worker.kvstore)
-
-    def test_queue_attribute(self):
-        self.assertIs(self.mock_queue, self.worker.queue)
 
     def test_remove_event_from_queue_removes_from_queue_and_decr_counter(self):
         self.mock_kvstore.lpop.return_value = sentinel.key
@@ -262,9 +287,6 @@ class StorageWorkerThreadingTest(unittest.TestCase):
 
     def test_StorageWorker_subclasses_Thread(self):
         self.assertIsInstance(self.worker, threading.Thread)
-
-    def test_StorageWorker_shutdown_signal_attribute(self):
-        self.assertIs(self.worker._must_shutdown, self.mock_signal)
 
     def test_run_calls_store_event_or_sleep_in_loop(self):
         N = 10

@@ -81,6 +81,7 @@ class StorageManager(object):
     def __init__(self):
         self.workers = []
         self.kvstore = redis.StrictRedis()
+        self._must_shutdown = threading.Event()
 
     def add_datastore(self, datastore, queue):
         """Add a datastore to store new events.
