@@ -149,6 +149,8 @@ class StorageWorker(threading.Thread):
             threads
 
         """
+        super(StorageWorker, self).__init__()
+        
         self.datastore = datastore
         self.kvstore = kvstore
         self.queue = queue
