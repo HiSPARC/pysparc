@@ -31,7 +31,7 @@ class FakeDataStore(storage.BaseDataStore):
         time.sleep(random.uniform(0, .5))
         if random.random() < .1:
             # Ohoh, problem!
-            time.sleep(random.uniform(2, 5))
+            time.sleep(random.uniform(.5, 1))
             raise storage.StorageError("Random foo exception!")
         else:
             # Yes, succesful!
@@ -49,13 +49,6 @@ def create_event():
         return None
 
 
-def workers_store_event():
-    for queue, worker in manager.workers:
-        if random.random() < .5:
-            print queue, "Store event."
-            worker.store_event()
-
-
 def main():
     global manager
 
@@ -69,16 +62,15 @@ def main():
     created_timestamps = []
 
     t0 = time.time()
-    while time.time() - t0 < 10:
+    while time.time() - t0 < 2:
         ts = create_event()
         if ts:
             created_timestamps.append(ts)
-        workers_store_event()
 
     t0 = time.time()
     print "Storing backlog!!!"
-    while time.time() - t0 < 10:
-        workers_store_event()
+    time.sleep(10)
+    
     st1 = datastore1._stored_timestamps
     st2 = datastore2._stored_timestamps
     print len(set(st1)), len(set(st2)), set(st1) == set(st2)
