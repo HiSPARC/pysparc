@@ -27,9 +27,12 @@ class Main(object):
         self.config = ConfigParser.ConfigParser()
         self.device = HiSPARCIII()
         self.initialize_device()
-        self.datastore = storage.TablesDataStore(DATAFILE)
-        #self.datastore = storage.NikhefDataStore(599, 'pysparc')
-        self.monitor = monitor.Monitor('hostname')
+        self.datastore1 = storage.TablesDataStore(DATAFILE)
+        #self.datastore2 = storage.NikhefDataStore(99, 'test')
+        self.storage_manager = storage.StorageManager()
+        self.storage_manager.add_datastore(self.datastore1, 'queue_file')
+        #self.storage_manager.add_datastore(self.datastore2, 'queue_nikhef')
+        self.monitor = monitor.Monitor('station99')
 
     def initialize_device(self):
         if not os.path.isfile(CONFIGFILE):
@@ -97,7 +100,10 @@ class Main(object):
 
     def store_events(self, events):
         for event in events:
-            self.datastore.store_event(event)
+            try:
+                self.storage_manager.store_event(event)
+            except Exception as e:
+                logging.warning(str(e))
         logging.debug("Stored %d events.", len(events))
 
     def write_config(self):
@@ -109,7 +115,9 @@ class Main(object):
         logging.info("Writing config to file")
         self.write_config()
         self.device.close()
-        self.datastore.close()
+        self.storage_manager.close()
+        self.datastore1.close()
+        #self.datastore2.close()
 
 
 if __name__ == '__main__':
