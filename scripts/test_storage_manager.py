@@ -38,6 +38,26 @@ class FakeDataStore(storage.BaseDataStore):
             self._stored_timestamps.append(event.ext_timestamp)
 
 
+class FakeTablesDataStore(storage.TablesDataStore):
+
+    def __init__(self, path):
+        super(FakeTablesDataStore, self).__init__(path)
+        self._stored_timestamps = []
+
+    def store_event(self, event):
+        time.sleep(random.uniform(0, .5))
+        if random.random() < .1:
+            # Ohoh, problem!
+            time.sleep(random.uniform(.5, 1))
+            raise storage.StorageError("Random foo exception!")
+        else:
+            # Yes, succesful!
+            self._stored_timestamps.append(event.ext_timestamp)
+            row = self.events.row
+            row.append()
+            self.events.flush()
+
+
 def create_event():
     if random.random() < .5:
         print "Event created."
@@ -53,7 +73,7 @@ def main():
     global manager
 
     datastore1 = FakeDataStore()
-    datastore2 = FakeDataStore()
+    datastore2 = FakeTablesDataStore('data.h5')
 
     manager = storage.StorageManager()
     manager.add_datastore(datastore1, 'queue1')
@@ -70,7 +90,7 @@ def main():
     t0 = time.time()
     print "Storing backlog!!!"
     time.sleep(10)
-    
+
     st1 = datastore1._stored_timestamps
     st2 = datastore2._stored_timestamps
     print len(set(st1)), len(set(st2)), set(st1) == set(st2)
