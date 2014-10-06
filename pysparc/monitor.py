@@ -27,6 +27,8 @@ WARNING = 1
 CRITICAL = 2
 UNKNOWN = 3
 
+CPU_THRESHOLD = 1.5
+
 
 class Monitor(object):
 
@@ -75,10 +77,10 @@ class Monitor(object):
 
         # warning if only 5 min average high, critical if 15 min average
         # *also* high.  If 1 min average low, than all is OK again.
-        if avg1 < 1.:
+        if avg1 < CPU_THRESHOLD:
             status = OK
-        elif avg5 > 1.:
-            if avg15 > 1.:
+        elif avg5 > CPU_THRESHOLD:
+            if avg15 > CPU_THRESHOLD:
                 status = CRITICAL
             else:
                 status = WARNING
