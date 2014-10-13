@@ -191,6 +191,7 @@ class HiSPARCIII(object):
     def send_message(self, msg):
         """Send a message to the hardware device."""
 
+        logger.debug("Sending message: %s", msg)
         self._device.write(msg.encode())
 
     def read_into_buffer(self):

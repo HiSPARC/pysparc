@@ -359,12 +359,23 @@ class InitializeMessage(HisparcMessage):
     def __init__(self, one_second_enabled=False):
         super(InitializeMessage, self).__init__()
 
+        self._one_second_enabled = one_second_enabled
+
         # bit 0 enables two-way communication
         data = 1
         if one_second_enabled:
             # bit 1 enables one-second messages from electronics
             data |= 0b10
         self.data = [data]
+
+    def __str__(self):
+        if self._one_second_enabled:
+            status = 'ENABLED'
+        else:
+            status = 'DISABLED'
+        msg = "Initialize hardware message (one-second messages %s)" % \
+              status
+        return msg
 
 
 class ResetMessage(HisparcMessage):
