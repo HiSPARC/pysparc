@@ -13,14 +13,6 @@ CONFIGFILE = os.path.expanduser('~/.pysparc')
 DATAFILE = 'hisparc.h5'
 
 
-def timeit(func, *args, **kwargs):
-    t0 = time.time()
-    ret = func(*args, **kwargs)
-    t1 = time.time()
-    logging.debug("%s took %.2f s", func.func_name, t1 - t0)
-    return ret
-
-
 class Main(object):
 
     def __init__(self):
@@ -60,14 +52,14 @@ class Main(object):
         try:
             while True:
                 t = time.time()
-                msg = timeit(self.device.read_message)
+                msg = self.device.read_message()
                 if msg is not None:
                     t_msg = t
                     # logging.debug("Data received: %s", msg)
                     if isinstance(msg, messages.MeasuredDataMessage):
-                        timeit(stew.add_event_message, msg)
+                        stew.add_event_message(msg)
                     elif isinstance(msg, messages.OneSecondMessage):
-                        timeit(stew.add_one_second_message, msg)
+                        stew.add_one_second_message(msg)
                         logging.debug("One-second received: %d", msg.timestamp)
                 else:
                     # regretfully required on linux systems
@@ -82,10 +74,10 @@ class Main(object):
                     logging.info("Event rate: %.1f Hz", stew.event_rate())
                     t_log += 1
 
-                    timeit(stew.stir)
-                    events = timeit(stew.serve_events)
-                    timeit(self.store_events, events)
-                    timeit(stew.drain)
+                    stew.stir()
+                    events = stew.serve_events()
+                    self.store_events(events)
+                    stew.drain()
 
                 # Periodically send status messages to the monitor,
                 # currently Nagios
