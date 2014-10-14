@@ -2,6 +2,7 @@ from __future__ import division
 
 import collections
 import logging
+import zlib
 
 import numpy as np
 from lazy import lazy
@@ -212,46 +213,33 @@ class Event(object):
         # Not yet implemented
         self.n_peaks = 4 * [-999]
 
-    @lazy
-    def trace_ch1(self):
-        return self._msg.trace_ch1
+        ## Formerly lazy attributes
 
-    @lazy
-    def trace_ch2(self):
-        return self._msg.trace_ch2
+        # Traces
+        self.trace_ch1 = self._msg.trace_ch1
+        self.trace_ch2 = self._msg.trace_ch2
 
-    @lazy
-    def baselines(self):
-        """Mean value of the first 100 samples of the trace."""
+        # Compressed traces
+        self.zlib_trace_ch1 = zlib.compress(','.join([str(int(u)) for u in self.trace_ch1]))
+        self.zlib_trace_ch2 = zlib.compress(','.join([str(int(u)) for u in self.trace_ch2]))
 
+        # Mean value of the first 100 samples of the trace
         baselines = [int(round(t[:100].mean())) for t in self.trace_ch1, self.trace_ch2]
-        return baselines + [-1, -1]
+        self.baselines = baselines + [-1, -1]
 
-    @lazy
-    def std_dev(self):
-        """Standard deviation of the first 100 samples of the trace."""
-
+        # Standard deviation of the first 100 samples of the trace
         std_dev = [int(round(t[:100].std())) for t in self.trace_ch1, self.trace_ch2]
-        return std_dev + [-1, -1]
+        self.std_dev = std_dev + [-1, -1]
 
-    @lazy
-    def pulseheights(self):
-        """Maximum peak to baseline value in trace."""
+        # Maximum peak to baseline value in trace
+        self.pulseheights = [self.trace_ch1.max() - self.baselines[0],
+                             self.trace_ch2.max() - self.baselines[1],
+                             -1, -1]
 
-        return [self.trace_ch1.max() - self.baselines[0],
-                self.trace_ch2.max() - self.baselines[1], -1, -1]
-
-    @lazy
-    def integrals(self):
-        """Integral of trace for all values over threshold.
-
-        The threshold is defined by INTEGRAL_THRESHOLD.
-
-        """
+        # Integral of trace for all values over threshold
+        # The threshold is defined by INTEGRAL_THRESHOLD
         traces = np.vstack([self.trace_ch1, self.trace_ch2])
         baselines = np.array([self.baselines[:2]])
-
         traces -= baselines.T
-
         integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
-        return integrals + [-1, -1]
+        self.integrals = integrals + [-1, -1]

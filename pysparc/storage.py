@@ -30,7 +30,6 @@ import cPickle as pickle
 import hashlib
 import logging
 import re
-import zlib
 import threading
 import time
 
@@ -150,7 +149,7 @@ class StorageWorker(threading.Thread):
 
         """
         super(StorageWorker, self).__init__()
-        
+
         self.datastore = datastore
         self.kvstore = kvstore
         self.queue = queue
@@ -349,8 +348,8 @@ class TablesDataStore(BaseDataStore):
         row['pulseheights'] = event.pulseheights
         row['integrals'] = event.integrals
         row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in event.trace_ch1])))
-        self.blobs.append(zlib.compress(','.join([str(int(u)) for u in event.trace_ch2])))
+        self.blobs.append(event.zlib_trace_ch1)
+        self.blobs.append(event.zlib_trace_ch2)
         row['event_rate'] = event.event_rate
 
         row.append()
@@ -441,8 +440,8 @@ class NikhefDataStore(object):
         self._add_values_to_datalist(datalist, 'IN', event.integrals)
 
         # FIXME: no slave support
-        trace_ch1 = base64.b64encode(zlib.compress(','.join([str(int(u)) for u in event.trace_ch1])))
-        trace_ch2 = base64.b64encode(zlib.compress(','.join([str(int(u)) for u in event.trace_ch2])))
+        trace_ch1 = base64.b64encode(event.zlib_trace_ch1)
+        trace_ch2 = base64.b64encode(event.zlib_trace_ch2)
         self._add_values_to_datalist(datalist, 'TR', [trace_ch1, trace_ch2])
 
         event_list = [{'header': header, 'datalist': datalist}]
