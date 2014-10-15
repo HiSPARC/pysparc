@@ -12,6 +12,9 @@ class AlignADCs(object):
         self.config = hardware.config
 
     def align(self):
+        # store original trigger condition
+        original_trigger_condition = self.config.trigger_condition
+
         self._reset_config_for_alignment()
         self.config.trigger_condition = 0x80
         target = 2048
@@ -22,6 +25,9 @@ class AlignADCs(object):
         self._align_full_scale(target)
         self._align_common_offset(target)
         self._align_individual_gains(target)
+
+        # restore original trigger condition
+        self.config.trigger_condition = original_trigger_condition
 
     def _reset_config_for_alignment(self):
         self._set_full_scale(0x80)

@@ -3,13 +3,17 @@ import os
 import time
 import ConfigParser
 
+import pkg_resources
+
 from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
 from pysparc.events import Stew
 from pysparc import messages, storage, monitor
 
 
+SYSTEM_CONFIGFILE = pkg_resources.resource_filename('pysparc', 'config.ini')
 CONFIGFILE = os.path.expanduser('~/.pysparc')
+ALL_CONFIG_FILES = [SYSTEM_CONFIGFILE, CONFIGFILE]
 DATAFILE = 'hisparc.h5'
 
 
@@ -27,21 +31,20 @@ class Main(object):
         self.monitor = monitor.Monitor('station99')
 
     def initialize_device(self):
-        if not os.path.isfile(CONFIGFILE):
-            logging.info("No config file found.  Aligning ADCs.")
+        logging.info("Reading config from file")
+        self.config.read(ALL_CONFIG_FILES)
+
+        logging.info("Initializing device configuration")
+        self.device.config.read_config(self.config)
+
+        if self.config.getboolean('DAQ', 'force_align_adcs'):
+            logging.info("Force aligning ADCs.")
             align_adcs = AlignADCs(self.device)
             align_adcs.align()
+            self.config.set('DAQ', 'force_align_adcs', False)
             self.write_config()
-        else:
-            logging.info("Reading config from file")
-            self.config.read(CONFIGFILE)
-            self.device.config.read_config(self.config)
 
     def run(self):
-        # at least two low
-        self.device.config.trigger_condition = 0b10
-        self.device.config.one_second_enabled = True
-
         stew = Stew()
 
         logging.info("Taking data.")
@@ -104,8 +107,7 @@ class Main(object):
             self.config.write(f)
 
     def close(self):
-        logging.info("Writing config to file")
-        self.write_config()
+        logging.info("Closing down")
         self.device.close()
         self.storage_manager.close()
         self.datastore1.close()
