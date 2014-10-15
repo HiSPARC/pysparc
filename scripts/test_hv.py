@@ -23,12 +23,18 @@ class Main(object):
         self.config = ConfigParser.ConfigParser()
         self.device = HiSPARCIII()
         self.initialize_device()
+
+        station_name = self.config.get('DAQ', 'station_name')
+        station_number = self.config.getint('DAQ', 'station_number')
+        station_password = self.config.get('DAQ', 'station_password')
+
         self.datastore1 = storage.TablesDataStore(DATAFILE)
-        #self.datastore2 = storage.NikhefDataStore(99, 'test')
+        self.datastore2 = storage.NikhefDataStore(station_number,
+                                                  station_password)
         self.storage_manager = storage.StorageManager()
         self.storage_manager.add_datastore(self.datastore1, 'queue_file')
-        #self.storage_manager.add_datastore(self.datastore2, 'queue_nikhef')
-        self.monitor = monitor.Monitor('station99')
+        self.storage_manager.add_datastore(self.datastore2, 'queue_nikhef')
+        self.monitor = monitor.Monitor(station_name)
 
     def initialize_device(self):
         logging.info("Reading config from file")
@@ -111,7 +117,7 @@ class Main(object):
         self.device.close()
         self.storage_manager.close()
         self.datastore1.close()
-        #self.datastore2.close()
+        self.datastore2.close()
 
 
 if __name__ == '__main__':
