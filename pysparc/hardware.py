@@ -3,8 +3,14 @@
 Contents
 --------
 
+:class:`HardwareError`
+    Raised on error with the hardware.
+
 :class:`HiSPARCIII`
     Access HiSPARC III hardware.
+
+:class:`TrimbleGPS`
+    Access Trimble GPS unit inside the HiSPARC hardware.
 
 """
 
@@ -81,7 +87,7 @@ class HiSPARCIII(object):
 
         This was a pain to implement.  Understanding this code entails
         going back and forth between the FTDI and Altera Cyclone manuals,
-        as well as the the HiSPARC schematics.
+        as well as the HiSPARC schematics.
 
         The Cyclone has 16 data bits (page 5 in the manual) of which
         several are general purpose I/O (GPIO).  The connections are up to
@@ -96,7 +102,7 @@ class HiSPARCIII(object):
         Configuration of the FPGA is described on page 9-9 of the Cyclone
         manual. First, pull nCONFIG low (for at least 500 ns).  nSTATUS
         and CONF_DONE are also pulled low by the device.  Then, pull
-        nCONFIG high and the device returns nSTATUS to high.
+        nCONFIG high and the device returns nSTATUS to a high state.
 
         If configuration is succesful, CONF_DONE is high.  If an error occurs,
         nSTATUS is pulled low and CONF_DONE remains low.
@@ -117,7 +123,7 @@ class HiSPARCIII(object):
         Basic information on using MPSSE mode (useful for understanding
         the bitmode, clock settings and writing the data):
 
-        FTDP Application Note AN_135 -- FTDI MPSSE Basics
+        FTDI Application Note AN_135 -- FTDI MPSSE Basics
 
         """
         # open device's first interface (MPSSE)
@@ -142,6 +148,7 @@ class HiSPARCIII(object):
         # pull nCONFIG (low byte bit 0) high
         device.write(bytearray([SET_BITS_HIGH, 1, 1]))
 
+        # write firmware to device
         firmware = pkg_resources.resource_string(__name__, "firmware.rbf")
         for idx in range(0, len(firmware), FPGA_BUFFER_SIZE):
             xbuf = firmware[idx:idx + FPGA_BUFFER_SIZE]
@@ -241,3 +248,10 @@ class HiSPARCIII(object):
             msg = self.read_message()
             if isinstance(msg, MeasuredDataMessage):
                 return msg
+
+
+class TrimbleGPS:
+
+    """Access Trimble GPS unit inside the HiSPARC hardware."""
+
+    pass
