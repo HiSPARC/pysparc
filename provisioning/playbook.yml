@@ -1,0 +1,6 @@
+---
+- hosts: all
+  tasks:
+    - include: common.yml
+    - include: prerequisites.yml
+    - include: pysparc.yml
