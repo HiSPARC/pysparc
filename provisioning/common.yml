@@ -1,0 +1,12 @@
+---
+- name: Update package index
+  apt: update_cache=yes
+  sudo: yes
+
+- name: Install screen
+  apt: name=screen state=present
+  sudo: yes
+
+- name: Install ipython
+  apt: name=ipython state=present
+  sudo: yes
