@@ -1,4 +1,9 @@
 ---
+- hosts: vagrant
+  tasks:
+    - name: Hello
+      shell: whoami
+
 - hosts: all
   tasks:
     - include: common.yml
