@@ -1,8 +1,7 @@
 ---
 - hosts: vagrant
   tasks:
-    - name: Hello
-      shell: whoami
+    - include: vagrant.yml
 
 - hosts: all
   tasks:

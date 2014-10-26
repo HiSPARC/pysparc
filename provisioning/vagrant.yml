@@ -1,0 +1,4 @@
+---
+- name: Create 'hisparc' user
+  user: name=hisparc state=present
+  sudo: yes
