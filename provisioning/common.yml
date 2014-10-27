@@ -1,5 +1,5 @@
 ---
-- name: Make sure hisparc user is in adm group
+- name: Make sure hisparc user is in adm and plugdev groups
   user: name=hisparc groups=adm,sudo,plugdev append=yes
   sudo: yes
 
@@ -13,4 +13,8 @@
 
 - name: Install ipython
   apt: name=ipython state=present
+  sudo: yes
+
+- name: Allow access to FTDI devices
+  copy: src=99-libftdi.rules dest=/etc/udev/rules.d/99-libftdi.rules
   sudo: yes
