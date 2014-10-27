@@ -8,5 +8,11 @@
   sudo: yes
 
 - name: checkout pysparc in /opt/pysparc
-  git: repo=https://github.com/HiSPARC/pysparc.git dest=/opt/pysparc
+  git: repo=https://github.com/HiSPARC/pysparc.git dest=/opt/pysparc version=hisparciii
        update=yes force=no
+  register: result
+
+- name: install pysparc package
+  command: /usr/bin/python setup.py develop chdir=/opt/pysparc
+  sudo: yes
+  when: result|changed
