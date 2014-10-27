@@ -1,0 +1,12 @@
+- name: ensure /opt/pysparc directory exists
+  file: path=/opt/pysparc state=directory
+        owner=hisparc group=hisparc mode=2775
+  sudo: yes
+
+- name: set default group write ACLs on /opt/pysparc
+  acl: name=/opt/pysparc default=yes etype=group permissions=rwx state=present
+  sudo: yes
+
+- name: checkout pysparc in /opt/pysparc
+  git: repo=https://github.com/HiSPARC/pysparc.git dest=/opt/pysparc
+       update=yes force=no
