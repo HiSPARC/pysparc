@@ -1,3 +1,4 @@
 [raspberry_pi]
 
+pysparc1.his ansible_ssh_user=pi
 zaanlands1.his ansible_ssh_user=pi
