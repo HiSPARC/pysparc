@@ -1,0 +1,6 @@
+[raspberry_pi]
+pysparc1.his
+zaanlands1.his
+
+[raspberry_pi:vars]
+ansible_ssh_user=pi
