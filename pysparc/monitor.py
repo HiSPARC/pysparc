@@ -14,7 +14,7 @@ import re
 
 import requests
 from requests.packages.urllib3.exceptions import ProtocolError
-from requests import HTTPError, Timeout
+from requests import HTTPError, Timeout, ConnectionError
 
 
 logger = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ class Monitor(object):
             requests.get(MONITOR_URL, params=payload, timeout=2)
             # Submit the service status
             requests.post(MONITOR_URL, data=payload, timeout=2)
-        except (ProtocolError, HTTPError, Timeout) as exc:
+        except (ProtocolError, HTTPError, Timeout, ConnectionError) as exc:
             logger.warning("Unable to upload status for service %s (%s)",
                            service, exc)
         else:
