@@ -35,8 +35,7 @@ import time
 
 import tables
 import requests
-from requests.packages.urllib3.exceptions import ProtocolError
-from requests import HTTPError, Timeout, ConnectionError
+from requests import ConnectionError
 import redis
 
 
@@ -488,7 +487,7 @@ class NikhefDataStore(object):
         try:
             r = requests.post(DATASTORE_URL, data=payload, timeout=10)
             r.raise_for_status()
-        except (ProtocolError, HTTPError, Timeout, ConnectionError) as exc:
+        except ConnectionError as exc:
             raise UploadError(str(exc))
         else:
             logger.debug("Response from server: %s", r.text)
