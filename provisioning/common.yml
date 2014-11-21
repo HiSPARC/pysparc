@@ -26,3 +26,7 @@
 - name: Install git
   apt: name=git state=present
   sudo: yes
+
+- name: Install supervisor
+  apt: name=supervisor state=present
+  sudo: yes
