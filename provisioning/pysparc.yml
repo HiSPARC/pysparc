@@ -16,3 +16,13 @@
   command: /usr/bin/python setup.py develop chdir=/opt/pysparc
   sudo: yes
   when: result|changed
+
+- name: Configure supervisor to start PySPARC
+  copy: src=supervisord-pysparc.conf dest=/etc/supervisor/conf.d/pysparc.conf
+  sudo: yes
+  register: supervisorconfig
+
+- name: Restart supervisor
+  service: name=supervisor state=restarted
+  sudo: yes
+  when: supervisorconfig|changed
