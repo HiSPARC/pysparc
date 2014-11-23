@@ -361,8 +361,9 @@ class InitializeMessage(HisparcMessage):
 
         self._one_second_enabled = one_second_enabled
 
-        # bit 0 enables two-way communication
-        data = 1
+        # bit 0 enables two-way communication, bit 2 enables gps
+        # programming
+        data = 0b101
         if one_second_enabled:
             # bit 1 enables one-second messages from electronics
             data |= 0b10
