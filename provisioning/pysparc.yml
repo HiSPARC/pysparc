@@ -1,3 +1,4 @@
+---
 - name: ensure /opt/pysparc directory exists
   file: path=/opt/pysparc state=directory
         owner=hisparc group=hisparc mode=2775
@@ -11,18 +12,22 @@
   git: repo=https://github.com/HiSPARC/pysparc.git dest=/opt/pysparc version=hisparciii
        update=yes force=no
   register: result
+  tags: pysparc
 
 - name: install pysparc package
   command: /usr/bin/python setup.py develop chdir=/opt/pysparc
   sudo: yes
   when: result|changed
+  tags: pysparc
 
 - name: Configure supervisor to start PySPARC
   copy: src=supervisord-pysparc.conf dest=/etc/supervisor/conf.d/pysparc.conf
   sudo: yes
   register: supervisorconfig
+  tags: pysparc
 
 - name: Restart supervisor
   service: name=supervisor state=restarted
   sudo: yes
   when: supervisorconfig|changed
+  tags: pysparc
