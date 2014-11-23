@@ -12,6 +12,7 @@
   git: repo=https://github.com/HiSPARC/pysparc.git dest=/opt/pysparc version=hisparciii
        update=yes force=no
   register: result
+  notify: restart pysparc
   tags: pysparc
 
 - name: install pysparc package
@@ -23,11 +24,5 @@
 - name: Configure supervisor to start PySPARC
   copy: src=supervisord-pysparc.conf dest=/etc/supervisor/conf.d/pysparc.conf
   sudo: yes
-  register: supervisorconfig
-  tags: pysparc
-
-- name: Restart supervisor
-  service: name=supervisor state=restarted
-  sudo: yes
-  when: supervisorconfig|changed
+  notify: restart supervisor
   tags: pysparc

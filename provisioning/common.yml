@@ -34,9 +34,4 @@
 - name: Configure supervisor
   copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf
   sudo: yes
-  register: supervisorconfig
-
-- name: Restart supervisor
-  service: name=supervisor state=restarted
-  sudo: yes
-  when: supervisorconfig|changed
+  notify: restart supervisor
