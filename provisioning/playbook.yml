@@ -12,4 +12,5 @@
     - include: common.yml
     - include: prerequisites.yml
     - include: pysparc.yml
+  handlers:
     - include: handlers.yml

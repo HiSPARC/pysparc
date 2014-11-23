@@ -1,7 +1,6 @@
 ---
-  handlers:
-    - name: restart supervisor
-      service: name=supervisor state=restarted
-      sudo: yes
-    - name: restart pysparc
-      supervisorctl: name=pysparc state=restarted
+- name: restart supervisor
+  service: name=supervisor state=restarted
+  sudo: yes
+- name: restart pysparc
+  supervisorctl: name=pysparc state=restarted
