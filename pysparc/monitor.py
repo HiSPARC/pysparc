@@ -26,7 +26,7 @@ WARNING = 1
 CRITICAL = 2
 UNKNOWN = 3
 
-CPU_THRESHOLD = 1.5
+CPU_THRESHOLD = 2.0
 
 
 class Monitor(object):
