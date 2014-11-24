@@ -13,7 +13,7 @@ import subprocess
 import re
 
 import requests
-from requests import ConnectionError, ReadTimeout
+from requests.exceptions import ConnectionError, ReadTimeout
 
 
 logger = logging.getLogger(__name__)
