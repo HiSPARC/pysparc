@@ -13,7 +13,7 @@ import subprocess
 import re
 
 import requests
-from requests.exceptions import ConnectionError, ReadTimeout
+from requests.exceptions import ConnectionError, Timeout
 
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class Monitor(object):
             requests.get(MONITOR_URL, params=payload, timeout=2)
             # Submit the service status
             requests.post(MONITOR_URL, data=payload, timeout=2)
-        except (ConnectionError, ReadTimeout) as exc:
+        except (ConnectionError, Timeout) as exc:
             logger.warning("Unable to upload status for service %s (%s)",
                            service, exc)
         else:
