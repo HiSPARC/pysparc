@@ -5,7 +5,8 @@ import ConfigParser
 
 import pkg_resources
 
-from pysparc.hardware import HiSPARCIII
+from pysparc.hardware import HiSPARCII, HiSPARCIII
+from pysparc.ftdi_chip import DeviceNotFoundError
 from pysparc.align_adcs import AlignADCs
 from pysparc.events import Stew
 from pysparc import messages, storage, monitor
@@ -21,7 +22,10 @@ class Main(object):
 
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
-        self.device = HiSPARCIII()
+        try:
+            self.device = HiSPARCIII()
+        except DeviceNotFoundError:
+            self.device = HiSPARCII()
         self.initialize_device()
 
         station_name = self.config.get('DAQ', 'station_name')
