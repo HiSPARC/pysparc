@@ -7,6 +7,30 @@
   apt: update_cache=yes
   sudo: yes
 
+- name: Install update-notifier-common
+  apt: name=screen state=present
+  sudo: yes
+
+- name: Safe-upgrade packages
+  apt: upgrade=safe
+  sudo: yes
+
+- name: Check if reboot is necessary
+  stat: path=/var/run/reboot-required
+  register: p
+
+# https://support.ansible.com/hc/en-us/articles/201958037-Reboot-a-server-and-wait-for-it-to-come-back
+- name: Reboot if necessary after upgrade
+  command: shutdown -r now "Ansible triggered a reboot"
+  async: 0
+  poll: 0
+  ignore_errors: true
+  when: p.stat.isfile is defined
+  sudo: yes
+
+- name: waiting for server to come back
+  local_action: wait_for host={{ inventory_hostname }} state=started
+
 - name: Install screen
   apt: name=screen state=present
   sudo: yes
