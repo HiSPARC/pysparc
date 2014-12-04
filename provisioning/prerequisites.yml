@@ -20,4 +20,4 @@
     - pylibftdi
     - atom
     - lazy
-    - requests
+    - requests>=2.4.1
