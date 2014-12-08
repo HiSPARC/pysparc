@@ -154,11 +154,11 @@ class InitializeMessageTest(unittest.TestCase):
 
     def test_data_if_one_second_messages_disabled(self):
         msg = pysparc.messages.InitializeMessage(False)
-        self.assertEqual(msg.data, [1])
+        self.assertEqual(msg.data, [0b101])
 
     def test_data_if_one_second_messages_enabled(self):
         msg = pysparc.messages.InitializeMessage(True)
-        self.assertEqual(msg.data, [0b11])
+        self.assertEqual(msg.data, [0b111])
 
 
 class ResetMessageTest(unittest.TestCase):
