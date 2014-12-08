@@ -49,19 +49,27 @@ class Stew(object):
         timestamp = msg.timestamp
         delta_t = timestamp - self._latest_timestamp
 
+        logger.debug("_latest_timestamp %d, timestamp %d, delta_t %d",
+                     self._latest_timestamp, timestamp, delta_t)
+
         # Keep track of latest timestamp and log problems
-        if delta_t > 0:
-            if delta_t > 1:
-                if self._latest_timestamp:
-                    # if not, this was the first message received
-                    for t in range(self._latest_timestamp + 1, timestamp):
-                        logger.warning(
-                            "Probably missing one-second message: %d", t)
-            self._latest_timestamp = timestamp
-        elif delta_t < 0:
+        if delta_t < 0:
+            # out of order, do not set _latest_timestamp
             logger.warning("One-second messages are out of order.")
         else:
-            logger.error("Seriously strange problem with one-second messages!")
+            if self._latest_timestamp == 0:
+                # this was the first message received, skip checks
+                pass
+            elif abs(delta_t) > FRESHNESS_TIME:
+                # recover from very late or very early messages
+                logger.error("One-second messages delta_t very large "
+                             "(%d), trying to recover", delta_t)
+            elif delta_t > 1:
+                for t in range(self._latest_timestamp + 1, timestamp):
+                    logger.warning(
+                        "Probably missing one-second message: %d", t)
+            # store latest timestamp
+            self._latest_timestamp = timestamp
 
         # store message
         self._one_second_messages[timestamp] = msg
