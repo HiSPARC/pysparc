@@ -23,5 +23,6 @@ setup(name='pysparc',
                    'Topic :: Education',
                    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'],
       scripts=['bin/muonlab_with_http_api'],
-      package_data={},
-      install_requires=[])
+      package_data={'pysparc': ['firmware.rbf', 'config.ini']},
+      install_requires=['tables', 'flask', 'redis', 'mock', 'pylibftdi',
+                        'atom', 'lazy', 'requests'])

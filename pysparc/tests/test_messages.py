@@ -19,20 +19,20 @@ class HisparcMessageTest(unittest.TestCase):
         encoded_msg = self.msg.encode()
         self.assertEqual(encoded_msg, None)
 
-    @patch('pysparc.messages.Struct')
+    @patch('pysparc.messages.struct.Struct')
     def test_encode_uses_correct_format_if_no_msg_format(self, mock_Struct):
         self.msg.identifier = sentinel.identifier
         self.msg.encode()
         mock_Struct.assert_called_once_with('>BBB')
 
-    @patch('pysparc.messages.Struct')
+    @patch('pysparc.messages.struct.Struct')
     def test_encode_uses_correct_format_if_msg_format(self, mock_Struct):
         self.msg.identifier = sentinel.identifier
         self.msg.msg_format = 'FOO'
         self.msg.encode()
         mock_Struct.assert_called_once_with('>BBFOOB')
 
-    @patch('pysparc.messages.Struct')
+    @patch('pysparc.messages.struct.Struct')
     @patch.dict('pysparc.messages.codons', {'start': sentinel.start,
                                             'stop': sentinel.stop})
     def test_encode_calls_pack_with_codons(self, mock_Struct):
@@ -154,11 +154,11 @@ class InitializeMessageTest(unittest.TestCase):
 
     def test_data_if_one_second_messages_disabled(self):
         msg = pysparc.messages.InitializeMessage(False)
-        self.assertEqual(msg.data, [1])
+        self.assertEqual(msg.data, [0b101])
 
     def test_data_if_one_second_messages_enabled(self):
         msg = pysparc.messages.InitializeMessage(True)
-        self.assertEqual(msg.data, [0b11])
+        self.assertEqual(msg.data, [0b111])
 
 
 class ResetMessageTest(unittest.TestCase):

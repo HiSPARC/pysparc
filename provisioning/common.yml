@@ -1,0 +1,56 @@
+---
+- name: Make sure hisparc user is in adm and plugdev groups
+  user: name=hisparc groups=adm,sudo,plugdev append=yes
+  sudo: yes
+
+- name: Update package index
+  apt: update_cache=yes
+  sudo: yes
+
+- name: Install update-notifier-common
+  apt: name=screen state=present
+  sudo: yes
+
+- name: Safe-upgrade packages
+  apt: upgrade=safe
+  sudo: yes
+
+- name: Check if reboot is necessary
+  stat: path=/var/run/reboot-required
+  register: p
+
+# if path p is a regular file, trigger reboot
+- name: Flag a reboot if necessary
+  command: /bin/true
+  when: p.stat.isreg is defined
+  notify: reboot
+
+- name: Install screen
+  apt: name=screen state=present
+  sudo: yes
+
+- name: Install ipython
+  apt: name=ipython state=present
+  sudo: yes
+
+- name: Allow access to FTDI devices
+  copy: src=99-libftdi.rules dest=/etc/udev/rules.d/99-libftdi.rules
+  sudo: yes
+  notify: reboot
+
+- name: Install ACL utilities
+  apt: name=acl state=present
+  sudo: yes
+
+- name: Install git
+  apt: name=git state=present
+  sudo: yes
+
+- name: Install supervisor
+  apt: name=supervisor state=present
+  sudo: yes
+
+- name: Configure supervisor
+  copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf
+  sudo: yes
+  notify: restart supervisor

@@ -1,6 +1,7 @@
 import unittest
+import weakref
 
-from mock import patch, sentinel, Mock, MagicMock
+from mock import patch, sentinel, Mock, MagicMock, mock_open, call, ANY
 
 import pysparc.config
 
@@ -11,8 +12,10 @@ class ConfigTest(unittest.TestCase):
         self.mock_device = Mock()
         self.config = pysparc.config.Config(self.mock_device)
 
-    def test_init_stores_device(self):
-        self.assertEqual(self.config._device, self.mock_device)
+    def test_init_stores_weakref_to_device(self):
+        # Keep a weak reference to the device, so the garbage collector
+        # can clean up when a device class instance is deleted.
+        self.assertEqual(self.config._device, weakref.ref(self.mock_device))
 
     @patch.object(pysparc.config.Config, 'get_member')
     def test_get_range_from_calls_get_member(self, mock_get_member):
@@ -90,6 +93,55 @@ class ConfigTest(unittest.TestCase):
         self.mock_device.send_message.assert_called_once_with(msg)
 
 
+class ReadWriteConfigTest(unittest.TestCase):
+
+    def setUp(self):
+        self.mock_device = Mock()
+        self.section = self.mock_device.description
+        self.config = pysparc.config.Config(self.mock_device)
+
+    def test_write_config_creates_section_with_description_if_not_exists(self):
+        mock_configparser = Mock()
+
+        # At first, the section does not exist, test that that is checked
+        mock_configparser.has_section.return_value = False
+        self.config.write_config(mock_configparser)
+        mock_configparser.has_section.assert_called_once_with(self.section)
+
+        # Now, the section already exists, test to make sure really only
+        # created once
+        mock_configparser.has_section.return_value = True
+        self.config.write_config(mock_configparser)
+        mock_configparser.add_section.assert_called_once_with(
+            self.section)
+
+    def test_write_config_sets_all_members_except_device(self):
+        mock_configparser = Mock()
+        self.config.write_config(mock_configparser)
+        for member in self.config.members():
+            if member != '_device':
+                mock_configparser.set.assert_any_call(
+                    self.section, member, getattr(self.config, member))
+        device_call = call.set(self.section, '_device', ANY)
+        assert device_call not in mock_configparser.mock_calls
+
+    @patch.object(pysparc.config.Config, '__setattr__')
+    @patch.object(pysparc.config, 'literal_eval')
+    def test_read_config_gets_all_members_except_device(self, mock_eval, mock_setattr):
+        eval_value = mock_eval.return_value
+
+        mock_configparser = Mock()
+
+        self.config.read_config(mock_configparser)
+        for member in self.config.members():
+            if member != '_device':
+                mock_configparser.get.assert_any_call(
+                    self.section, member)
+                mock_setattr.assert_any_call(member, eval_value)
+        device_call = call.get(self.section, '_device')
+        assert device_call not in mock_configparser.mock_calls
+
+
 class WriteSettingTest(unittest.TestCase):
 
     def setUp(self):
@@ -112,22 +164,22 @@ class WriteSettingTest(unittest.TestCase):
         self.patcher2.stop()
         self.patcher3.stop()
 
-    def test_write_setting_to_device_calls_get_range_from(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_calls_get_range_from(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         self.mock_get_range_from.assert_called_once_with(sentinel.name)
 
-    def test_write_setting_to_device_calls_map_setting(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_calls_map_setting(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         self.mock_map_setting.assert_called_once_with(sentinel.value,
             sentinel.low, sentinel.high, 0x00, 0xff)
 
-    def test_write_setting_to_device_creates_message(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_creates_message(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         self.mock_Message.assert_called_once_with(sentinel.name,
                                                   sentinel.setting_value)
 
-    def test_write_setting_to_device_writes_to_device(self):
-        self.config._write_setting_to_device(self.mock_setting)
+    def test_write_byte_setting_to_device_writes_to_device(self):
+        self.config._write_byte_setting_to_device(self.mock_setting)
         msg = self.mock_Message.return_value
         self.mock_device.send_message.assert_called_once_with(msg)
 

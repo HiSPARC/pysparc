@@ -2,23 +2,36 @@ from __future__ import division
 
 import logging
 import time
+import os
+from ConfigParser import ConfigParser
 
-from pysparc.hardware import Hardware
+from pysparc.hardware import HiSPARCIII
 from pysparc.align_adcs import AlignADCs
 from pysparc import messages
+
+
+CONFIGFILE = 'config.ini'
 
 
 def average(values):
     return sum(values) / len(values)
 
 def main():
-    hardware = Hardware()
-    align_adcs = AlignADCs(hardware)
+    hardware = HiSPARCIII()
+
     try:
-        t0 = time.time()
-        align_adcs.align()
-        t1 = time.time()
-        logging.info("Alignment took %.1f s", t1 - t0)
+        if not os.path.isfile(CONFIGFILE):
+            logging.info("No config file found.  Aligning ADCs.")
+            align_adcs = AlignADCs(hardware)
+            t0 = time.time()
+            align_adcs.align()
+            t1 = time.time()
+            logging.info("Alignment took %.1f s", t1 - t0)
+        else:
+            logging.info("Reading config from file")
+            config = ConfigParser()
+            config.read(CONFIGFILE)
+            hardware.config.read_config(config)
 
         hardware.config.trigger_condition = 0x80
         while True:
@@ -46,6 +59,11 @@ def main():
     finally:
         hardware.close()
         hardware.config.set_notifications_enabled(False)
+        logging.info("Writing config to file")
+        config = ConfigParser()
+        hardware.config.write_config(config)
+        with open(CONFIGFILE, 'w') as f:
+            config.write(f)
         print
         print "All configuration settings:"
         print

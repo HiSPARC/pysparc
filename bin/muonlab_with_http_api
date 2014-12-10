@@ -27,8 +27,8 @@ from flask import Flask, jsonify, redirect, request
 app = Flask(__name__)
 
 from pysparc.muonlab.muonlab_ii import MuonlabII, FakeMuonlabII
-from pysparc.muonlab.ftdi_chip import (DeviceNotFoundError, ReadError,
-                                       ClosedDeviceError)
+from pysparc.ftdi_chip import (DeviceNotFoundError, ReadError,
+                               ClosedDeviceError)
 
 
 class LifeTime(tables.IsDescription):

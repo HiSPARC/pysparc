@@ -1,5 +1,7 @@
 *.pyc
-
+*.h5
 .DS_Store
-
 pysparc.egg-info
+scripts/config.ini
+.remote-sync.json
+.vagrant

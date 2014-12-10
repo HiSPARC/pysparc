@@ -22,7 +22,7 @@ LIFETIME_SCALE = 6.25
 COINCIDENCE_TIMEDELTA_SCALE = 6.25 / 12
 
 
-class MuonlabII:
+class MuonlabII(object):
 
     """Access Muonlab II hardware.
 
@@ -223,7 +223,7 @@ class MuonlabII:
             return []
 
 
-class FakeMuonlabII:
+class FakeMuonlabII(object):
 
     """Access FAKE Muonlab II hardware.
 

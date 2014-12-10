@@ -4,8 +4,6 @@ import sys
 
 import pylibftdi
 
-from array import array as Array
-
 
 SET_BITS_LOW = 0x80
 GET_BITS_LOW = 0x81
@@ -17,12 +15,7 @@ WRITE_BYTES_PVE_LSB = 0x18
 
 
 def write(dev, data):
-    dev.write(Array('B', data).tostring())
-
-def print_low_bits(f):
-    write(f, [GET_BITS_LOW])
-    time.sleep(.01)
-    print 'low: ', [bin(ord(u)) for u in f.read(1)]
+    dev.write(bytearray(data))
 
 def print_high_bits(f):
     write(f, [GET_BITS_HIGH])
@@ -37,14 +30,10 @@ def burn(firmware_file):
     # We'll set the direction explicitly later.
     f.ftdi_fn.ftdi_set_bitmode(0, 0x02)
 
-    # print_low_bits(f)
-
     # Set clock frequency to 30 MHz (0x0000)
     write(f, [TCK_DIVISOR, 0, 0])
     # Disable divide clock frequency by 5
     write(f, [DISABLE_CLK_DIV5])
-
-    # print_low_bits(f)
 
     # bits 0 and 1 are output that is, bits TCK/SK and TDI/DO, clock and
     # data
@@ -69,15 +58,10 @@ def burn(firmware_file):
             LENGTH = len(xbuf) - 1
             LENGTH_L = LENGTH & 0xff
             LENGTH_H = LENGTH >> 8 & 0xff
-            send_buf = [WRITE_BYTES_PVE_LSB] + [LENGTH_L, LENGTH_H] + [ord(u) for u in xbuf]
-            write(f, send_buf)
-
-    #for i in range(10):
-    #    print_high_bits(f)
-    #    f.write([0x8e, 0])
+            write(f, [WRITE_BYTES_PVE_LSB, LENGTH_L, LENGTH_H])
+            write(f, xbuf)
 
     print_high_bits(f)
-    # print_low_bits(f)
 
 
 if len(sys.argv) < 2:

@@ -3,6 +3,7 @@
 :class:`InvertedIntegerOptimization`: inverted integer optimizer
 
 """
+
 from __future__ import division
 
 
@@ -64,7 +65,7 @@ class ParallelInvertedIntegerRootFinder(object):
                                  grouped_xvalues, grouped_fvalues)
 
     def _init_optimizations(self, optimizer_class, grouped_xvalues,
-                             grouped_fvalues):
+                            grouped_fvalues):
         self.optimizations = []
         individual_optimization_xvalues = zip(*grouped_xvalues)
         individual_optimization_fvalues = zip(*grouped_fvalues)
@@ -112,6 +113,7 @@ class LinearInvertedIntegerRootFinder(InvertedIntegerRootFinder):
                 return x, True
             else:
                 return x, False
+
 
 class LinearParallelInvertedIntegerRootFinder(
         ParallelInvertedIntegerRootFinder):

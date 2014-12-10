@@ -174,6 +174,8 @@ class FtdiChip(object):
         attempting to read from a closed device.
 
         :param read_size: number of bytes to read (defaults to READ_SIZE).
+            As per the FTDI documentation, this should be a multiple of 62
+            for best performance.
 
         :returns: string containing the data.
 

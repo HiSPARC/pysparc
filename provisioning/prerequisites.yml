@@ -1,0 +1,23 @@
+---
+- name: Install PySPARC prerequisites (system packages)
+  apt: name={{ item }} state=present
+  sudo: yes
+  with_items:
+    - python-dev
+    - python-setuptools
+    - python-pip
+    - python-tables
+    - python-flask
+    - redis-server
+    - python-redis
+    - libftdi-dev
+
+- name: Install PySPARC prerequisites (python packages)
+  pip: name={{ item }} state=present
+  sudo: yes
+  with_items:
+    - mock
+    - pylibftdi
+    - atom
+    - lazy
+    - requests>=2.4.1

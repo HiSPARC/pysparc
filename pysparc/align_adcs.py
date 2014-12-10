@@ -12,6 +12,9 @@ class AlignADCs(object):
         self.config = hardware.config
 
     def align(self):
+        # store original trigger condition
+        original_trigger_condition = self.config.trigger_condition
+
         self._reset_config_for_alignment()
         self.config.trigger_condition = 0x80
         target = 2048
@@ -22,6 +25,9 @@ class AlignADCs(object):
         self._align_full_scale(target)
         self._align_common_offset(target)
         self._align_individual_gains(target)
+
+        # restore original trigger condition
+        self.config.trigger_condition = original_trigger_condition
 
     def _reset_config_for_alignment(self):
         self._set_full_scale(0x80)
@@ -90,7 +96,7 @@ class AlignADCs(object):
                                      target_value):
         set_offset_func(guess)
         mean_adc_value = self._get_mean_adc_value()
-        logger.info("Alignment step (guess, mean): %d, %d" %
+        logger.debug("Alignment step (guess, mean): %d, %d" %
                      (guess, mean_adc_value))
         return target_value - mean_adc_value
 
@@ -100,7 +106,7 @@ class AlignADCs(object):
         msg = self.hardware.flush_and_get_measured_data_message()
         mean_adc_values = (msg.adc_ch1_pos.mean(), msg.adc_ch1_neg.mean(),
                            msg.adc_ch2_pos.mean(), msg.adc_ch2_neg.mean())
-        logger.info("Alignment step (guesses, means):\n\t%s, %s" %
+        logger.debug("Alignment step (guesses, means):\n\t%s, %s" %
                      (guesses, [int(round(u)) for u in mean_adc_values]))
         return [target_value - u for u in mean_adc_values]
 
