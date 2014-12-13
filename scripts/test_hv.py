@@ -32,11 +32,11 @@ class Main(object):
         station_number = self.config.getint('DAQ', 'station_number')
         station_password = self.config.get('DAQ', 'station_password')
 
-        self.datastore1 = storage.TablesDataStore(DATAFILE)
+        # self.datastore1 = storage.TablesDataStore(DATAFILE)
         self.datastore2 = storage.NikhefDataStore(station_number,
                                                   station_password)
         self.storage_manager = storage.StorageManager()
-        self.storage_manager.add_datastore(self.datastore1, 'queue_file')
+        # self.storage_manager.add_datastore(self.datastore1, 'queue_file')
         self.storage_manager.add_datastore(self.datastore2, 'queue_nikhef')
         self.monitor = monitor.Monitor(station_name)
 
@@ -120,7 +120,7 @@ class Main(object):
         logging.info("Closing down")
         self.device.close()
         self.storage_manager.close()
-        self.datastore1.close()
+        # self.datastore1.close()
         self.datastore2.close()
 
 
