@@ -6,6 +6,33 @@ from mock import patch, Mock, sentinel, call
 from pysparc import hardware, ftdi_chip, messages
 
 
+class MyTest(unittest.TestCase):
+
+    def test_description(self):
+        self.assertEqual(hardware.HiSPARCIII.description,
+                         "HiSPARC III Master")
+
+    @patch.object(hardware.HiSPARCIII, '__init__')
+    @patch.object(hardware.HiSPARCIII, '_burn_firmware')
+    @patch('time.sleep')
+    @patch('pysparc.hardware.FtdiChip')
+    def test_open(self, mock_Device, mock_sleep, mock_burn, mock_init):
+        manager = Mock()
+        manager.attach_mock(mock_burn, 'burn')
+        manager.attach_mock(mock_sleep, 'sleep')
+        manager.attach_mock(mock_Device, 'Device')
+        mock_init.return_value = None
+
+        hisparc = hardware.HiSPARCIII()
+        hisparc.open()
+
+        expected = [call.burn(), call.sleep(.5),
+                    call.Device(hardware.HiSPARCIII.description,
+                                interface_select=2)]
+        self.assertEqual(manager.mock_calls, expected)
+
+
+@unittest.skip("WIP")
 class HiSPARCIIITest(unittest.TestCase):
 
     @patch('pysparc.hardware.FtdiChip')
