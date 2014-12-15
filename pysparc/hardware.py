@@ -57,7 +57,7 @@ class HardwareError(Exception):
         return self.msg
 
 
-class HiSPARCII(object):
+class BaseHardware(object):
 
     """Access HiSPARC II hardware.
 
@@ -162,6 +162,11 @@ class HiSPARCII(object):
             if isinstance(msg, MeasuredDataMessage):
                 return msg
 
+
+class HiSPARCII(BaseHardware):
+
+    pass
+    
 
 class HiSPARCIII(HiSPARCII):
 

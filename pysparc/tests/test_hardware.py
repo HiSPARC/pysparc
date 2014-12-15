@@ -6,7 +6,7 @@ from mock import patch, Mock, sentinel, call
 from pysparc import hardware, ftdi_chip, messages
 
 
-class MyTest(unittest.TestCase):
+class HiSPARCIIITest(unittest.TestCase):
 
     def test_description(self):
         self.assertEqual(hardware.HiSPARCIII.description,
@@ -32,8 +32,7 @@ class MyTest(unittest.TestCase):
         self.assertEqual(manager.mock_calls, expected)
 
 
-@unittest.skip("WIP")
-class HiSPARCIIITest(unittest.TestCase):
+class BaseHardwareTest(unittest.TestCase):
 
     @patch('pysparc.hardware.FtdiChip')
     @patch('pysparc.hardware.config.Config')
