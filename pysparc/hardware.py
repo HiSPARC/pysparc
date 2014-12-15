@@ -124,8 +124,8 @@ class BaseHardware(object):
 
         Call this method to communicate with the device.
 
-        :returns: a :class:`pysparc.messages.HisparcMessage` subclass
-            instance
+        This method should call :meth:`read_into_buffer` and should run
+        the return value through a MessageFactory class.
 
         """
         self.read_into_buffer()

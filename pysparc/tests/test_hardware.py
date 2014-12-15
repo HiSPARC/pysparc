@@ -115,6 +115,9 @@ class BaseHardwareTest(unittest.TestCase):
     def test_device_is_none_before_instantiation(self):
         self.assertIs(hardware.BaseHardware._device, None)
 
+    def test_init_calls_open(self):
+        self.mock_open.assert_called_once_with()
+
     @patch('pysparc.hardware.FtdiChip')
     def test_open_opens_and_saves_device(self, mock_Device):
         mock_device = Mock()
@@ -151,11 +154,12 @@ class BaseHardwareTest(unittest.TestCase):
         self.assertIs(type(self.hisparc._buffer), bytearray)
 
     def test_flush_device_flushes_device(self):
+        self.hisparc._buffer = MagicMock()
         self.hisparc.flush_device()
         self.mock_device.flush.assert_called_once_with()
 
     def test_flush_device_clears_buffer(self):
-        self.hisparc._buffer.extend([0x1, 0x2, 0x3])
+        self.hisparc._buffer = bytearray([0x1, 0x2, 0x3])
         self.hisparc.flush_device()
         self.assertEqual(len(self.hisparc._buffer), 0)
 
@@ -172,6 +176,7 @@ class BaseHardwareTest(unittest.TestCase):
             sentinel.encoded_msg)
 
     def test_read_into_buffer_reads_from_device(self):
+        self.hisparc._buffer = MagicMock()
         self.mock_device.read.return_value = MagicMock()
         self.hisparc.read_into_buffer()
         self.mock_device.read.assert_called_once_with(hardware.READ_SIZE)
