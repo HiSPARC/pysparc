@@ -66,15 +66,13 @@ class BaseHardware(object):
 
     """
 
-    description = "HiSPARC II Master"
+    description = "BaseHardware"
     _device = None
     _buffer = None
 
     def __init__(self):
         self.open()
         self._buffer = bytearray()
-        self.config = config.Config(self)
-        self.reset_hardware()
 
     def __del__(self):
         self.close()
@@ -101,13 +99,6 @@ class BaseHardware(object):
         self._device.flush()
         del self._buffer[:]
 
-    def reset_hardware(self):
-        """Reset the hardware device."""
-
-        self.send_message(ResetMessage())
-        self.send_message(InitializeMessage())
-        self.config.reset_hardware()
-
     def send_message(self, msg):
         """Send a message to the hardware device."""
 
@@ -127,6 +118,37 @@ class BaseHardware(object):
         """
         data = self._device.read(READ_SIZE)
         self._buffer.extend(data)
+
+    def read_message(self):
+        """Read a message from the hardware device.
+
+        Call this method to communicate with the device.
+
+        :returns: a :class:`pysparc.messages.HisparcMessage` subclass
+            instance
+
+        """
+        self.read_into_buffer()
+        raise NotImplementedError()
+        # return HisparcMessageFactory(self._buffer)
+
+
+class HiSPARCII(BaseHardware):
+
+    description = "HiSPARC II Master"
+
+    def __init__(self):
+        self.open()
+        self._buffer = bytearray()
+        self.config = config.Config(self)
+        self.reset_hardware()
+
+    def reset_hardware(self):
+        """Reset the hardware device."""
+
+        self.send_message(ResetMessage())
+        self.send_message(InitializeMessage())
+        self.config.reset_hardware()
 
     def read_message(self):
         """Read a message from the hardware device.
@@ -162,11 +184,6 @@ class BaseHardware(object):
             if isinstance(msg, MeasuredDataMessage):
                 return msg
 
-
-class HiSPARCII(BaseHardware):
-
-    pass
-    
 
 class HiSPARCIII(HiSPARCII):
 
