@@ -138,8 +138,7 @@ class HiSPARCII(BaseHardware):
     description = "HiSPARC II Master"
 
     def __init__(self):
-        self.open()
-        self._buffer = bytearray()
+        super(HiSPARCII, self).__init__()
         self.config = config.Config(self)
         self.reset_hardware()
 
