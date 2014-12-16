@@ -296,8 +296,21 @@ class HiSPARCIII(HiSPARCII):
         device.close()
 
 
-class TrimbleGPS:
+class TrimbleGPS(BaseHardware):
 
     """Access Trimble GPS unit inside the HiSPARC hardware."""
 
-    pass
+    description = "FT232R USB UART"
+
+    def read_message(self):
+        """Read a message from the hardware device.
+
+        Call this method to communicate with the device.
+
+        This method should call :meth:`read_into_buffer` and should run
+        the return value through a MessageFactory class.
+
+        """
+        self.read_into_buffer()
+    #     raise NotImplementedError()
+    #     # return HisparcMessageFactory(self._buffer)

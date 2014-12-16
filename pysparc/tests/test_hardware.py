@@ -211,6 +211,38 @@ class BaseHardwareTest(unittest.TestCase):
         mock_read_into_buffer.assert_called_once_with()
 
 
+class TrimbleGPSTest(unittest.TestCase):
+
+    @patch.object(hardware.TrimbleGPS, '__init__')
+    def setUp(self, mock_init):
+        mock_init.return_value = None
+        self.gps = hardware.TrimbleGPS()
+
+    def test_type_is_basehardware(self):
+        self.assertIsInstance(self.gps, hardware.BaseHardware)
+
+    def test_description(self):
+        self.assertEqual(hardware.TrimbleGPS.description,
+                         "FT232R USB UART")
+
+    @unittest.skip("Not hisparcmessage!")
+    @patch.object(hardware.TrimbleGPS, 'read_into_buffer')
+    @patch('pysparc.hardware.HisparcMessageFactory')
+    def test_read_message(self, mock_factory, mock_read_into_buffer):
+        self.gps.read_message()
+        mock_read_into_buffer.assert_called_once_with()
+
+    # @patch('pysparc.hardware.HisparcMessageFactory')
+    # def test_read_message_calls_message_factory(self, mock_factory):
+    #     self.hisparc.read_message()
+    #     mock_factory.assert_called_once_with(self.hisparc._buffer)
+    #
+    # @patch('pysparc.hardware.HisparcMessageFactory')
+    # def test_read_message_returns_message(self, mock_factory):
+    #     mock_factory.return_value = sentinel.msg
+    #     actual = self.hisparc.read_message()
+    #     self.assertIs(actual, sentinel.msg)
+
 
 if __name__ == '__main__':
     unittest.main()
