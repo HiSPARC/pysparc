@@ -89,7 +89,9 @@ class HisparcMessage(object):
 
     """
     identifier = None
+    start_format = '>BB'
     msg_format = ''
+    end_format = 'B'
 
     def __init__(self):
         self.data = []
@@ -117,7 +119,7 @@ class HisparcMessage(object):
         if self.identifier is None:
             return None
 
-        format = '>BB' + self.msg_format + 'B'
+        format = self.start_format + self.msg_format + self.end_format
         packer = struct.Struct(format)
         data = [codons['start'], self.identifier]
         if self.data:
