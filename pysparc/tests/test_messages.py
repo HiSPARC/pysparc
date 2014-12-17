@@ -12,9 +12,8 @@ class HisparcMessageTest(unittest.TestCase):
 
     def test_attributes(self):
         self.assertEqual(self.msg.identifier, None)
-        self.assertEqual(self.msg.start_format, '>BB')
+        self.assertEqual(self.msg.container_format, '>BB%sB')
         self.assertEqual(self.msg.msg_format, '')
-        self.assertEqual(self.msg.end_format, 'B')
         self.assertEqual(self.msg.data, [])
 
     def test_encode_returns_none_if_identifier_is_none(self):
@@ -23,9 +22,8 @@ class HisparcMessageTest(unittest.TestCase):
 
     @patch('pysparc.messages.struct.Struct')
     def test_encode_uses_correct_format_if_no_msg_format(self, mock_Struct):
-        self.msg.start_format = 'Foo'
+        self.msg.container_format = 'Foo%sbar'
         self.msg.msg_format = ''
-        self.msg.end_format = 'bar'
         self.msg.identifier = sentinel.identifier
         self.msg.encode()
         mock_Struct.assert_called_once_with('Foobar')
@@ -33,9 +31,8 @@ class HisparcMessageTest(unittest.TestCase):
     @patch('pysparc.messages.struct.Struct')
     def test_encode_uses_correct_format_if_msg_format(self, mock_Struct):
         self.msg.identifier = sentinel.identifier
-        self.msg.start_format = 'Foo'
+        self.msg.container_format = 'Foo%sbar'
         self.msg.msg_format = 'baz'
-        self.msg.end_format = 'bar'
         self.msg.encode()
         mock_Struct.assert_called_once_with('Foobazbar')
 
