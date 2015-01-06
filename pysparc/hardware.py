@@ -57,7 +57,7 @@ class HardwareError(Exception):
         return self.msg
 
 
-class HiSPARCII(object):
+class BaseHardware(object):
 
     """Access HiSPARC II hardware.
 
@@ -66,15 +66,13 @@ class HiSPARCII(object):
 
     """
 
-    description = "HiSPARC II Master"
+    description = "BaseHardware"
     _device = None
     _buffer = None
 
     def __init__(self):
         self.open()
         self._buffer = bytearray()
-        self.config = config.Config(self)
-        self.reset_hardware()
 
     def __del__(self):
         self.close()
@@ -101,13 +99,6 @@ class HiSPARCII(object):
         self._device.flush()
         del self._buffer[:]
 
-    def reset_hardware(self):
-        """Reset the hardware device."""
-
-        self.send_message(ResetMessage())
-        self.send_message(InitializeMessage())
-        self.config.reset_hardware()
-
     def send_message(self, msg):
         """Send a message to the hardware device."""
 
@@ -127,6 +118,36 @@ class HiSPARCII(object):
         """
         data = self._device.read(READ_SIZE)
         self._buffer.extend(data)
+
+    def read_message(self):
+        """Read a message from the hardware device.
+
+        Call this method to communicate with the device.
+
+        This method should call :meth:`read_into_buffer` and should run
+        the return value through a MessageFactory class.
+
+        """
+        self.read_into_buffer()
+        raise NotImplementedError()
+        # return HisparcMessageFactory(self._buffer)
+
+
+class HiSPARCII(BaseHardware):
+
+    description = "HiSPARC II Master"
+
+    def __init__(self):
+        super(HiSPARCII, self).__init__()
+        self.config = config.Config(self)
+        self.reset_hardware()
+
+    def reset_hardware(self):
+        """Reset the hardware device."""
+
+        self.send_message(ResetMessage())
+        self.send_message(InitializeMessage())
+        self.config.reset_hardware()
 
     def read_message(self):
         """Read a message from the hardware device.
