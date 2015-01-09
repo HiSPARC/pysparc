@@ -45,3 +45,23 @@ and teaching materials for high school students.  This will focus on the
 muon lifetime experiment. However, there already exists a LabVIEW
 interface and a new LabVIEW interface is in development for driving the
 Muonlab III hardware.
+
+
+Creating the disk image for provisioning a Raspberry Pi
+-------------------------------------------------------
+
+Download the latest raspbian image from
+http://www.raspberrypi.org/downloads/ and rename it to ``pysparc.img``.
+Place the image in the root of this repository, which makes it available
+to the vagrant VM.  Unfortunately, it is not possible to use a Mac to have
+read/write access to the ext4 filesystem in the image.
+
+Enter the VM using::
+
+    $ vagrant ssh
+
+Because the image is a full disk image containing partitions, it is
+slightly nontrivial.  Setting up the disk image involves some work, as
+well.  We've created a script which takes care of everything::
+
+    $ sh /vagrant/provisioning/provision_image.sh
