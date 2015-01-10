@@ -68,3 +68,19 @@ Perform the following steps:
    well.  We've created a script which takes care of everything::
 
       $ sh /vagrant/provisioning/provision_image.sh
+
+
+Writing the disk image
+----------------------
+
+Shell::
+
+   $ diskutil list
+   /dev/disk1
+      #:                       TYPE NAME                    SIZE       IDENTIFIER
+      0:     FDisk_partition_scheme                        *8.0 GB     disk1
+      1:             Windows_FAT_32 boot                    58.7 MB    disk1s1
+      2:                      Linux                         3.2 GB     disk1s2
+   $ diskutil unmountdisk disk1
+   $ sudo dd if=pysparc.img of=/dev/rdisk1 bs=1m
+   $ diskutil eject disk1
