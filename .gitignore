@@ -6,3 +6,4 @@ scripts/config.ini
 .remote-sync.json
 .vagrant
 pysparc.img
+vpncert.zip
