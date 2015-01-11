@@ -84,3 +84,21 @@ Shell::
    $ diskutil unmountdisk disk1
    $ sudo dd if=pysparc.img of=/dev/rdisk1 bs=1m
    $ diskutil eject disk1
+
+
+Provisioning the new system
+---------------------------
+
+Once the device has booted, it will install OpenVPN, unzip the
+certificates and connect to the HiSPARC VPN network, as ``newpi``.  You
+can simply logon using SSH, download the final certificate, unzip it and
+restart OpenVPN::
+
+   $ cd /etc/openvpn
+   $ sudo unzip <path_to_certificate>
+   <choose overwrite all>
+   $ sudo service openvpn restart
+
+The connection will be immediately dropped, but can be restored by
+connecting using the new hostname.  Add the new host to the Ansible
+inventory file and run the playbook.
