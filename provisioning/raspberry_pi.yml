@@ -19,6 +19,14 @@
   copy: src=rc.local dest=/etc/rc.local
   sudo: yes
 
+- name: Copy SSH public keys (~pi)
+  copy: src=authorized_keys dest=/home/pi/.ssh/authorized_keys
+
+- name: Copy OpenVPN config
+  copy: src=hisparcvpn.conf dest=/etc/openvpn/hisparcvpn.conf
+  sudo: yes
+  notify: restart openvpn
+
 - name: Create 'hisparc' user
   user: name=hisparc state=present
   sudo: yes

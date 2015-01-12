@@ -21,9 +21,6 @@
   when: result|changed
   sudo: yes
 
-- name: Copy SSH public keys (~pi)
-  copy: src=authorized_keys dest=/home/pi/.ssh/authorized_keys
-
 - name: Create ~hisparc/.ssh directory
   file: path=/home/hisparc/.ssh state=directory owner=hisparc
         group=hisparc
@@ -33,11 +30,6 @@
   copy: src=authorized_keys dest=/home/hisparc/.ssh/authorized_keys
         owner=hisparc group=hisparc
   sudo: yes
-
-- name: Copy OpenVPN config
-  copy: src=hisparcvpn.conf dest=/etc/openvpn/hisparcvpn.conf
-  sudo: yes
-  notify: restart openvpn
 
 - name: Make sure hisparc user is in adm and plugdev groups
   user: name=hisparc groups=adm,sudo,plugdev append=yes
