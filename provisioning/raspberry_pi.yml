@@ -15,6 +15,10 @@
   when: result|changed
   sudo: yes
 
+- name: Restore default rc.local
+  copy: src=rc.local dest=/etc/rc.local
+  sudo: yes
+
 - name: Create 'hisparc' user
   user: name=hisparc state=present
   sudo: yes
