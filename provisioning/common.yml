@@ -37,6 +37,7 @@
 - name: Copy OpenVPN config
   copy: src=hisparcvpn.conf dest=/etc/openvpn/hisparcvpn.conf
   sudo: yes
+  notify: restart openvpn
 
 - name: Make sure hisparc user is in adm and plugdev groups
   user: name=hisparc groups=adm,sudo,plugdev append=yes

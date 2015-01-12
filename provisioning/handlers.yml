@@ -1,4 +1,8 @@
 ---
+- name: restart openvpn
+  service: name=openvpn state=restarted
+  sudo: yes
+
 - name: restart supervisor
   service: name=supervisor state=restarted
   sudo: yes
