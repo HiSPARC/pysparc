@@ -1,4 +1,23 @@
 ---
+- name: Check if raspi-config needs to be run
+  stat: path=/etc/profile.d/raspi-config.sh
+  register: p
+  tags: test
+
+- name: Run raspi-config to enlarge partition
+  command: /usr/bin/raspi-config --expand-rootfs
+  when: p.stat.isreg is defined
+  notify: reboot
+  register: result
+  tags: test
+  sudo: yes
+
+- name: Remove raspi-config.sh
+  file: path=/etc/profile.d/raspi-config.sh state=absent
+  when: result|changed
+  tags: test
+  sudo: yes
+
 - name: Create 'hisparc' user
   user: name=hisparc state=present
   sudo: yes
