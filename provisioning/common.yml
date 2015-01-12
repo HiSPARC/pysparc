@@ -1,4 +1,26 @@
 ---
+- name: Set timezone to Europe/Amsterdam
+  lineinfile: dest=/etc/timezone state=present
+              line=Europe/Amsterdam regexp=.*/.*
+  register: result
+  sudo: yes
+
+- name: Configure timezone
+  command: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
+  when: result|changed
+  sudo: yes
+
+- name: Enable en_US.UTF8 locale
+  lineinfile: dest=/etc/locale.gen state=present
+              line='en_US.UTF-8 UTF-8' regexp='en_US.UTF-8 UTF-8'
+  register: result
+  sudo: yes
+
+- name: Configure locales
+  command: /usr/sbin/dpkg-reconfigure -f noninteractive locales
+  when: result|changed
+  sudo: yes
+
 - name: Make sure hisparc user is in adm and plugdev groups
   user: name=hisparc groups=adm,sudo,plugdev append=yes
   sudo: yes
