@@ -34,6 +34,10 @@
         owner=hisparc group=hisparc
   sudo: yes
 
+- name: Copy OpenVPN config
+  copy: src=hisparcvpn.conf dest=/etc/openvpn/hisparcvpn.conf
+  sudo: yes
+
 - name: Make sure hisparc user is in adm and plugdev groups
   user: name=hisparc groups=adm,sudo,plugdev append=yes
   sudo: yes
