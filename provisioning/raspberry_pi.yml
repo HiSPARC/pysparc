@@ -27,6 +27,10 @@
   sudo: yes
   notify: restart openvpn
 
+- name: disable password login for user 'pi'
+  user: name=pi state=present password=!
+  sudo: yes
+
 - name: Create 'hisparc' user
   user: name=hisparc state=present
   sudo: yes
