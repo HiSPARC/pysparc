@@ -82,6 +82,10 @@
   apt: name=supervisor state=present
   sudo: yes
 
+- name: Fix supervisor init script
+  copy: src=supervisor.init dest=/etc/init.d/supervisor
+  sudo: yes
+
 - name: Configure supervisor
   copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf
   sudo: yes
