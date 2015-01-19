@@ -1,15 +1,4 @@
 ---
-- name: restart openvpn
-  service: name=openvpn state=restarted
-  sudo: yes
-
-- name: restart supervisor
-  service: name=supervisor state=restarted
-  sudo: yes
-
-- name: restart pysparc
-  supervisorctl: name=pysparc state=restarted
-
 # https://support.ansible.com/hc/en-us/articles/201958037-Reboot-a-server-and-wait-for-it-to-come-back
 - name: reboot
   command: shutdown -r now "Ansible triggered a reboot"
@@ -22,3 +11,14 @@
 - name: wait for server to come back
   local_action: wait_for host={{ inventory_hostname }} port=22
                 delay=5 state=started
+
+- name: restart openvpn
+  service: name=openvpn state=restarted
+  sudo: yes
+
+- name: restart supervisor
+  service: name=supervisor state=restarted
+  sudo: yes
+
+- name: restart pysparc
+  supervisorctl: name=pysparc state=restarted
