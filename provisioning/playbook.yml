@@ -6,6 +6,8 @@
 - hosts: raspberry_pi
   tasks:
     - include: raspberry_pi.yml
+  handlers:
+    - include: handlers.yml
 
 - hosts: all
   tasks:
