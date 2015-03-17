@@ -57,6 +57,8 @@ Perform the following steps:
    Place the image in the root of this repository, which makes it
    available to the vagrant VM.  Unfortunately, it is not possible to use
    a Mac to have read/write access to the ext4 filesystem in the image.
+   Note that we're not using the image as a VM!  We're using the
+   pre-existing vagrant VM to *access* the image file.
 #. Download the VPN certificate for the host *newpi* and place the
    certificate in the root of this repository as ``vpncert.zip``.
 #. Enter the VM using::
@@ -69,11 +71,13 @@ Perform the following steps:
 
       $ sh /vagrant/provisioning/provision_image.sh
 
+   You can now use this image for multiple installs.
+
 
 Writing the disk image
 ----------------------
 
-Shell::
+In a shell, back on your Mac::
 
    $ diskutil list
    /dev/disk1
@@ -90,7 +94,9 @@ Provisioning the new system
 ---------------------------
 
 Once the device has booted, it will install OpenVPN, unzip the
-certificates and connect to the HiSPARC VPN network, as ``newpi``.  You
+certificates and connect to the HiSPARC VPN network, as ``newpi``. *Make
+sure that you only boot one new device at a time, since otherwise multiple
+devices will connect as* ``newpi`` *, resulting in VPN disconnects.* You
 can simply logon using SSH, download the final certificate, unzip it and
 restart OpenVPN::
 
