@@ -11,6 +11,10 @@ class GPSMessageTest(unittest.TestCase):
         self.msg = gps_messages.GPSMessage()
 
     def test_type_is_HisparcMessage(self):
+        # This test is VERY important. Do NOT change, without adding lots and
+        # lots of tests to make sure everything is still ok. The reason is that
+        # we can skip a lot of tests if we know for sure this is a
+        # HisparcMessage and the tests for *that* class are ok.
         self.assertIsInstance(self.msg, messages.HisparcMessage)
 
     def test_attributes(self):
