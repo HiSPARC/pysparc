@@ -412,7 +412,7 @@ def HisparcMessageFactory(buff):
             try:
                 return cls(buff)
             except CorruptMessageError:
-                logger.debug("Corrupt message, stripping buffer.")
+                logger.warning("Corrupt message, stripping buffer.")
                 strip_partial_message(buff)
                 return HisparcMessageFactory(buff)
             except struct.error:
@@ -422,7 +422,8 @@ def HisparcMessageFactory(buff):
             except ValueError:
                 # some value in a message could not be converted.
                 # Probably a corrupt message
-                logger.debug("ValueError, so probably a corrupt message; stripping buffer.")
+                logger.warning("ValueError, so probably a corrupt message; "
+                               "stripping buffer.")
                 strip_partial_message(buff)
                 return HisparcMessageFactory(buff)
 
