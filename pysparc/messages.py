@@ -405,7 +405,7 @@ def HisparcMessageFactory(buff):
         try:
             HisparcMessage.validate_message_start(buff)
         except StartCodonError:
-            logger.debug("Start codon error, stripping buffer.")
+            logger.warning("Start codon error, stripping buffer.")
             strip_until_start_codon(buff)
         except IndexError:
             return None
