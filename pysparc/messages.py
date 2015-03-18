@@ -218,7 +218,6 @@ class MeasuredDataMessage(HisparcMessage):
 
         return 'Event message: %s %d %d' % (self.datetime, ph1, ph2)
 
-
     @lazy
     def trace_ch1(self):
         """Signal trace of channel 1."""
@@ -319,19 +318,25 @@ class ControlParameterList(HisparcMessage):
         msg_length = struct.calcsize(self.msg_format)
         str_buff = str(buff[:msg_length])
 
-        (header, identifier, self.ch1_offset_positive, self.ch1_offset_negative,
-         self.ch2_offset_positive, self.ch2_offset_negative, self.ch1_gain_positive,
-         self.ch1_gain_negative, self.ch2_gain_positive, self.ch2_gain_negative,
-         self.common_offset, self.full_scale, self.ch1_integrator_time,
-         self.ch2_integrator_time, self.comparator_low, self.comparator_high,
-         self.ch1_voltage, self.ch2_voltage, self.ch1_threshold_low, self.ch1_threshold_high,
-         self.ch2_threshold_low, self.ch2_threshold_high, self.trigger_condition,
-         self.pre_coincidence_time, self.coincidence_time, self.post_coincidence_time,
-         self.status, self.ch1_current, self.ch2_current,
-         self.gps_day, self.gps_month, self.gps_year,
-         self.gps_hours, self.gps_minutes, self.gps_seconds,
-         self.gps_longitude, self.gps_latitude, self.gps_altitude,
-         self.temperature, self._version) = struct.unpack(self.msg_format, str_buff)
+        (header, identifier,
+         self.ch1_offset_positive, self.ch1_offset_negative,
+         self.ch2_offset_positive, self.ch2_offset_negative,
+         self.ch1_gain_positive, self.ch1_gain_negative,
+         self.ch2_gain_positive, self.ch2_gain_negative,
+         self.common_offset, self.full_scale,
+         self.ch1_integrator_time, self.ch2_integrator_time,
+         self.comparator_low, self.comparator_high,
+         self.ch1_voltage, self.ch2_voltage,
+         self.ch1_threshold_low, self.ch1_threshold_high,
+         self.ch2_threshold_low, self.ch2_threshold_high,
+         self.trigger_condition, self.pre_coincidence_time,
+         self.coincidence_time, self.post_coincidence_time, self.status,
+         self.ch1_current, self.ch2_current,
+         self.gps_day, self.gps_month, self.gps_year, self.gps_hours,
+         self.gps_minutes, self.gps_seconds, self.gps_longitude,
+         self.gps_latitude, self.gps_altitude,
+         self.temperature, self._version) \
+            = struct.unpack(self.msg_format, str_buff)
 
         version, = struct.unpack('>L', '\00' + self._version)
         self.firmware_version = version >> 16
