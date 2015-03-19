@@ -17,6 +17,8 @@ class HiSPARCIIITest(unittest.TestCase):
     @patch('time.sleep')
     @patch('pysparc.hardware.FtdiChip')
     def test_open(self, mock_Device, mock_sleep, mock_burn, mock_init):
+        # Using a manager with child mocks allows us to test for the order of
+        # calls (see below). The manager itself is not used.
         manager = Mock()
         manager.attach_mock(mock_burn, 'burn')
         manager.attach_mock(mock_sleep, 'sleep')
