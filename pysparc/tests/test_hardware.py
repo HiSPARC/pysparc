@@ -215,10 +215,22 @@ class BaseHardwareTest(unittest.TestCase):
 
 class TrimbleGPSTest(unittest.TestCase):
 
+    # mock __init__ of the parent class, so we do not depend on that
+    # implementation
     @patch.object(hardware.TrimbleGPS, '__init__')
     def setUp(self, mock_init):
         mock_init.return_value = None
+
         self.gps = hardware.TrimbleGPS()
+        self.gps._buffer = sentinel.buffer
+
+        patcher1 = patch.object(hardware.TrimbleGPS, 'read_into_buffer')
+        patcher2 = patch('pysparc.hardware.GPSMessageFactory')
+        self.mock_read_into_buffer = patcher1.start()
+        self.mock_factory = patcher2.start()
+
+        self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
 
     def test_type_is_basehardware(self):
         self.assertIsInstance(self.gps, hardware.BaseHardware)
@@ -227,22 +239,16 @@ class TrimbleGPSTest(unittest.TestCase):
         self.assertEqual(hardware.TrimbleGPS.description,
                          "FT232R USB UART")
 
-    @patch.object(hardware.TrimbleGPS, 'read_into_buffer')
-    @patch('pysparc.hardware.GPSMessageFactory')
-    def test_read_message(self, mock_factory, mock_read_into_buffer):
+    def test_read_message(self):
         self.gps.read_message()
-        mock_read_into_buffer.assert_called_once_with()
+        self.mock_read_into_buffer.assert_called_once_with()
 
-    @patch.object(hardware.TrimbleGPS, 'read_into_buffer')
-    @patch('pysparc.hardware.GPSMessageFactory')
-    def test_read_message_calls_message_factory(self, mock_factory, mock_read_into_buffer):
+    def test_read_message_calls_message_factory(self):
         self.gps.read_message()
-        mock_factory.assert_called_once_with(self.gps._buffer)
+        self.mock_factory.assert_called_once_with(sentinel.buffer)
 
-    @patch.object(hardware.TrimbleGPS, 'read_into_buffer')
-    @patch('pysparc.hardware.GPSMessageFactory')
-    def test_read_message_returns_message(self, mock_factory, mock_read_into_buffer):
-        mock_factory.return_value = sentinel.msg
+    def test_read_message_returns_message(self):
+        self.mock_factory.return_value = sentinel.msg
         actual = self.gps.read_message()
         self.assertIs(actual, sentinel.msg)
 
