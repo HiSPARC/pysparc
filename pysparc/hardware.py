@@ -25,6 +25,7 @@ import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
                       InitializeMessage, MeasuredDataMessage)
+from gps_messages import GPSMessageFactory
 import config
 
 import pkg_resources
@@ -312,5 +313,4 @@ class TrimbleGPS(BaseHardware):
 
         """
         self.read_into_buffer()
-    #     raise NotImplementedError()
-    #     # return HisparcMessageFactory(self._buffer)
+        return GPSMessageFactory(self._buffer)
