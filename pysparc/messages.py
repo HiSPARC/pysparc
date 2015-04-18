@@ -438,7 +438,7 @@ def HisparcMessageFactory(buff):
             HisparcMessage.validate_message_start(buff)
         except StartCodonError:
             logger.warning("Start codon error, stripping buffer.")
-            strip_until_start_codon(buff)
+            HisparcMessage.strip_until_start_codon(buff)
         except IndexError:
             return None
         else:
@@ -450,7 +450,7 @@ def HisparcMessageFactory(buff):
                 return cls(buff)
             except CorruptMessageError:
                 logger.warning("Corrupt message, stripping buffer.")
-                strip_partial_message(buff)
+                HisparcMessage.strip_partial_message(buff)
                 return HisparcMessageFactory(buff)
             except struct.error:
                 # message is too short, wait for the rest to come in.
@@ -461,7 +461,7 @@ def HisparcMessageFactory(buff):
                 # Probably a corrupt message
                 logger.warning("ValueError, so probably a corrupt message; "
                                "stripping buffer.")
-                strip_partial_message(buff)
+                HisparcMessage.strip_partial_message(buff)
                 return HisparcMessageFactory(buff)
 
     # Unknown message type.  This usually happens after a partial or
@@ -470,5 +470,5 @@ def HisparcMessageFactory(buff):
     # somewhere in the middle of a partial message.
     logger.warning("Unknown message type (probably corrupt), "
                    "stripping buffer.")
-    strip_partial_message(buff)
+    HisparcMessage.strip_partial_message(buff)
     return HisparcMessageFactory(buff)
