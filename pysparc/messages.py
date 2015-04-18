@@ -115,6 +115,37 @@ class HisparcMessage(object):
             raise CorruptMessageError("Corrupt message detected: %x %x %x" %
                                       (header, identifier, end))
 
+    @classmethod
+    def strip_until_start_codon(cls, buff):
+        """Strip bytes from left until start codon is found.
+
+        This method assumes that the data at the start of the buffer is
+        actually somewhere in the middle of a message.
+
+        :param buff: the contents of the usb buffer
+
+        """
+        try:
+            index = buff.index(chr(cls.codons['start']))
+        except ValueError:
+            del buff[:]
+        else:
+            del buff[:index]
+
+    @classmethod
+    def strip_partial_message(cls, buff):
+        """Strip partial message from left, until new start codon found.
+
+        This method assumes that there is a message at the start of the buffer, but
+        that it is only a partial message.  Strip data until a new message appears
+        to begin.
+
+        :param buff: the contents of the usb buffer
+
+        """
+        del buff[0]
+        cls.strip_until_start_codon(buff)
+
     def encode(self):
         if self.identifier is None:
             return None
@@ -441,34 +472,3 @@ def HisparcMessageFactory(buff):
                    "stripping buffer.")
     strip_partial_message(buff)
     return HisparcMessageFactory(buff)
-
-
-def strip_until_start_codon(buff):
-    """Strip bytes from left until start codon is found.
-
-    This method assumes that the data at the start of the buffer is
-    actually somewhere in the middle of a message.
-
-    :param buff: the contents of the usb buffer
-
-    """
-    try:
-        index = buff.index(chr(HisparcMessage.codons['start']))
-    except ValueError:
-        del buff[:]
-    else:
-        del buff[:index]
-
-
-def strip_partial_message(buff):
-    """Strip partial message from left, until new start codon found.
-
-    This method assumes that there is a message at the start of the buffer, but
-    that it is only a partial message.  Strip data until a new message appears
-    to begin.
-
-    :param buff: the contents of the usb buffer
-
-    """
-    del buff[0]
-    strip_until_start_codon(buff)

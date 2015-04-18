@@ -115,16 +115,16 @@ class HisparcMessageTest(unittest.TestCase):
     def test_strip_until_start_codon(self):
         start = self.msg.codons['start']
         buff = bytearray('foobarbaz' + chr(start) + 'baz')
-        pysparc.messages.strip_until_start_codon(buff)
+        pysparc.messages.HisparcMessage.strip_until_start_codon(buff)
         self.assertEqual(buff, chr(start) + 'baz')
 
-        pysparc.messages.strip_until_start_codon(buff)
+        pysparc.messages.HisparcMessage.strip_until_start_codon(buff)
         self.assertEqual(buff, chr(start) + 'baz')
 
-    @patch('pysparc.messages.strip_until_start_codon')
+    @patch('pysparc.messages.HisparcMessage.strip_until_start_codon')
     def test_strip_partial_message(self, mock_strip):
         buff = bytearray('foobar')
-        pysparc.messages.strip_partial_message(buff)
+        pysparc.messages.HisparcMessage.strip_partial_message(buff)
         mock_strip.assert_called_once_with(bytearray('oobar'))
 
 
