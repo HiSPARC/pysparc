@@ -15,6 +15,9 @@ class HisparcMessageTest(unittest.TestCase):
         self.assertEqual(self.msg.container_format, '>BB%sB')
         self.assertEqual(self.msg.msg_format, '')
         self.assertEqual(self.msg.data, [])
+        self.assertIsInstance(self.msg.codons, dict)
+        self.assertIn('start', self.msg.codons)
+        self.assertIn('stop', self.msg.codons)
 
     def test_encode_returns_none_if_identifier_is_none(self):
         encoded_msg = self.msg.encode()
@@ -37,8 +40,8 @@ class HisparcMessageTest(unittest.TestCase):
         mock_Struct.assert_called_once_with('Foobazbar')
 
     @patch('pysparc.messages.struct.Struct')
-    @patch.dict('pysparc.messages.codons', {'start': sentinel.start,
-                                            'stop': sentinel.stop})
+    @patch.dict('pysparc.messages.HisparcMessage.codons',
+                {'start': sentinel.start, 'stop': sentinel.stop})
     def test_encode_calls_pack_with_codons(self, mock_Struct):
         self.msg.identifier = sentinel.identifier
         self.msg.encode()
@@ -91,11 +94,11 @@ class HisparcMessageTest(unittest.TestCase):
             pysparc.messages.HisparcMessage.validate_message_start, [0x00])
 
     def test_validate_message_start_passes_if_match(self):
-        buff = [pysparc.messages.codons['start']]
+        buff = [self.msg.codons['start']]
         pysparc.messages.HisparcMessage.validate_message_start(buff)
 
     def test_validate_codons_and_id(self):
-        codons = pysparc.messages.codons
+        codons = self.msg.codons
         start, identifier, stop = codons['start'], 0x11, codons['stop']
         self.msg.identifier = identifier
         self.assertRaises(pysparc.messages.MessageError,
@@ -108,6 +111,21 @@ class HisparcMessageTest(unittest.TestCase):
                           self.msg.validate_codons_and_id,
                           start, identifier, 0x00)
         self.msg.validate_codons_and_id(start, identifier, stop)
+
+    def test_strip_until_start_codon(self):
+        start = self.msg.codons['start']
+        buff = bytearray('foobarbaz' + chr(start) + 'baz')
+        pysparc.messages.strip_until_start_codon(buff)
+        self.assertEqual(buff, chr(start) + 'baz')
+
+        pysparc.messages.strip_until_start_codon(buff)
+        self.assertEqual(buff, chr(start) + 'baz')
+
+    @patch('pysparc.messages.strip_until_start_codon')
+    def test_strip_partial_message(self, mock_strip):
+        buff = bytearray('foobar')
+        pysparc.messages.strip_partial_message(buff)
+        mock_strip.assert_called_once_with(bytearray('oobar'))
 
 
 class SetControlParameterTest(unittest.TestCase):

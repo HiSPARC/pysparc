@@ -19,8 +19,6 @@ from lazy import lazy
 logger = logging.getLogger(__name__)
 
 
-codons = {'start': 0x99, 'stop': 0x66}
-
 msg_ids = {'measured_data': 0xa0,
            'comparator_data': 0xa2,
            'one_second': 0xa4,
@@ -92,6 +90,9 @@ class HisparcMessage(object):
     container_format = '>BB%sB'
     msg_format = ''
 
+    codons = {'start': 0x99, 'stop': 0x66}
+
+
     def __init__(self):
         self.data = []
 
@@ -105,11 +106,11 @@ class HisparcMessage(object):
 
     @classmethod
     def validate_message_start(cls, buff):
-        if buff[0] != codons['start']:
+        if buff[0] != cls.codons['start']:
             raise StartCodonError("First byte of buffer is not start codon")
 
     def validate_codons_and_id(self, header, identifier, end):
-        if (header != codons['start'] or end != codons['stop'] or
+        if (header != self.codons['start'] or end != self.codons['stop'] or
                 identifier != self.identifier):
             raise CorruptMessageError("Corrupt message detected: %x %x %x" %
                                       (header, identifier, end))
@@ -120,10 +121,10 @@ class HisparcMessage(object):
 
         format = self.container_format % self.msg_format
         packer = struct.Struct(format)
-        data = [codons['start'], self.identifier]
+        data = [self.codons['start'], self.identifier]
         if self.data:
             data += self.data
-        data.append(codons['stop'])
+        data.append(self.codons['stop'])
         msg = packer.pack(*data)
         return msg
 
@@ -452,7 +453,7 @@ def strip_until_start_codon(buff):
 
     """
     try:
-        index = buff.index(chr(codons['start']))
+        index = buff.index(chr(HisparcMessage.codons['start']))
     except ValueError:
         del buff[:]
     else:
@@ -462,12 +463,12 @@ def strip_until_start_codon(buff):
 def strip_partial_message(buff):
     """Strip partial message from left, until new start codon found.
 
-    This method assumes that there is a message in the buffer, but that
-    it is only a partial message.  Strip data until a new message appears
+    This method assumes that there is a message at the start of the buffer, but
+    that it is only a partial message.  Strip data until a new message appears
     to begin.
 
     :param buff: the contents of the usb buffer
 
     """
     del buff[0]
-    return strip_until_start_codon(buff)
+    strip_until_start_codon(buff)
