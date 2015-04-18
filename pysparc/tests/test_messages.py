@@ -86,8 +86,8 @@ class HisparcMessageTest(unittest.TestCase):
             pass
         buff.__getitem__.assert_called_once_with(0)
 
-    def test_validate_message_start_raises_MessageError_if_not_start_codon(self):
-        self.assertRaises(pysparc.messages.MessageError,
+    def test_validate_message_start_raises_StartCodonError_if_not_start_codon(self):
+        self.assertRaises(pysparc.messages.StartCodonError,
             pysparc.messages.HisparcMessage.validate_message_start, [0x00])
 
     def test_validate_message_start_passes_if_match(self):
