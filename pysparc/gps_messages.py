@@ -16,8 +16,6 @@ from messages import (HisparcMessage, MessageError, StartCodonError,
 logger = logging.getLogger(__name__)
 
 
-codons = {'start': 0x10, 'stop': 0x1003}
-
 # msg_ids = {'measured_data': 0xa0,
 #            'comparator_data': 0xa2,
 #            'one_second': 0xa4,
@@ -45,6 +43,7 @@ class GPSMessage(HisparcMessage):
 
     """
     container_format = '>BB%sH'
+    codons = {'start': 0x10, 'stop': 0x1003}
 
 
 def GPSMessageFactory(buff):
@@ -63,7 +62,7 @@ def GPSMessageFactory(buff):
             GPSMessage.validate_message_start(buff)
         except StartCodonError:
             logger.warning("Start codon error, stripping buffer.")
-            strip_until_start_codon(buff)
+            GPSMessage.strip_until_start_codon(buff)
         except IndexError:
             return None
         else:
@@ -75,7 +74,7 @@ def GPSMessageFactory(buff):
                 return cls(buff)
             except CorruptMessageError:
                 logger.warning("Corrupt message, stripping buffer.")
-                strip_partial_message(buff)
+                GPSMessage.strip_partial_message(buff)
                 return GPSMessageFactory(buff)
             except struct.error:
                 # message is too short, wait for the rest to come in.
@@ -86,7 +85,7 @@ def GPSMessageFactory(buff):
                 # Probably a corrupt message
                 logger.warning("ValueError, so probably a corrupt message; "
                                "stripping buffer.")
-                strip_partial_message(buff)
+                GPSMessage.strip_partial_message(buff)
                 return GPSMessageFactory(buff)
 
     # Unknown message type.  This usually happens after a partial or
@@ -95,36 +94,5 @@ def GPSMessageFactory(buff):
     # somewhere in the middle of a partial message.
     logger.warning("Unknown message type (probably corrupt), "
                    "stripping buffer.")
-    strip_partial_message(buff)
+    GPSMessage.strip_partial_message(buff)
     return GPSMessageFactory(buff)
-
-
-def strip_until_start_codon(buff):
-    """Strip bytes from left until start codon is found.
-
-    This method assumes that the data at the start of the buffer is
-    actually somewhere in the middle of a message.
-
-    :param buff: the contents of the usb buffer
-
-    """
-    try:
-        index = buff.index(chr(codons['start']))
-    except ValueError:
-        del buff[:]
-    else:
-        del buff[:index]
-
-
-def strip_partial_message(buff):
-    """Strip partial message from left, until new start codon found.
-
-    This method assumes that there is a message in the buffer, but that
-    it is only a partial message.  Strip data until a new message appears
-    to begin.
-
-    :param buff: the contents of the usb buffer
-
-    """
-    del buff[0]
-    return strip_until_start_codon(buff)
