@@ -9,8 +9,8 @@
   sudo: yes
 
 - name: checkout pysparc in /opt/pysparc
-  git: repo=https://github.com/HiSPARC/pysparc.git dest=/opt/pysparc version=hisparciii
-       update=yes force=no
+  git: repo=https://github.com/HiSPARC/pysparc.git dest=/opt/pysparc
+       version=master update=yes force=no
   register: result
   notify: restart pysparc
   tags: pysparc
