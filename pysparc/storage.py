@@ -197,7 +197,12 @@ class StorageWorker(threading.Thread):
 
         """
         pickled_event = self.kvstore.hget(key, 'event')
-        return pickle.loads(pickled_event)
+        if pickled_event:
+            return pickle.loads(pickled_event)
+        else:
+            # there was a problem fetching the event
+            logger.debug("Key-value store has event key, but no event")
+            return None
 
     def store_event_by_key(self, key):
         """Store event referenced by key.
@@ -212,13 +217,17 @@ class StorageWorker(threading.Thread):
 
         """
         event = self.get_event_by_key(key)
-        try:
-            self.datastore.store_event(event)
-        except StorageError as e:
-            logger.error(str(e))
-        except Exception as e:
-            raise StorageError(str(e))
+        if event:
+            try:
+                self.datastore.store_event(event)
+            except StorageError as e:
+                logger.error(str(e))
+            except Exception as e:
+                raise StorageError(str(e))
+            else:
+                self.remove_event_from_queue(key)
         else:
+            # event was empty, drop it from the queue
             self.remove_event_from_queue(key)
 
     def remove_event_from_queue(self, expected_key):

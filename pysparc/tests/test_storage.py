@@ -235,6 +235,20 @@ class StorageWorkerStoreEventByKeyTest(unittest.TestCase):
         self.worker.store_event_by_key(sentinel.key)
         self.mock_remove_event.assert_called_once_with(sentinel.key)
 
+    def test_store_event_by_key_does_not_store_empty_event(self):
+        self.mock_get_event_by_key.return_value = None
+
+        self.worker.store_event_by_key(sentinel.key)
+
+        self.assertFalse(self.mock_datastore.store_event.called)
+
+    def test_store_event_by_key_drops_empty_event(self):
+        self.mock_get_event_by_key.return_value = None
+
+        self.worker.store_event_by_key(sentinel.key)
+
+        self.mock_remove_event.assert_called_once_with(sentinel.key)
+
 
 class StorageWorkerKVStoreTest(unittest.TestCase):
 
@@ -294,6 +308,17 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
         mock_pickle_loads.assert_called_once_with(pickled_event)
         # check return values
         self.assertIs(event, sentinel.event)
+
+    @patch('cPickle.loads')
+    def test_get_event_by_key_returns_None(self, mock_pickle_loads):
+        # In case of out-of-memory errors, Redis may store the key, but not the
+        # event.
+        self.mock_kvstore.hget.return_value = None
+
+        event = self.worker.get_event_by_key(sentinel.key)
+
+        self.assertFalse(mock_pickle_loads.called)
+        self.assertIsNone(event)
 
 
 class StorageWorkerThreadingTest(unittest.TestCase):
