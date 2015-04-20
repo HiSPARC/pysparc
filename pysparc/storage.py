@@ -228,6 +228,7 @@ class StorageWorker(threading.Thread):
                 self.remove_event_from_queue(key)
         else:
             # event was empty, drop it from the queue
+            logger.warning("Dropping empty event from queue")
             self.remove_event_from_queue(key)
 
     def remove_event_from_queue(self, expected_key):
