@@ -26,3 +26,9 @@
   sudo: yes
   notify: restart supervisor
   tags: pysparc
+
+- name: ensure redis-server is running
+  service: name=redis-server state=started
+  sudo: yes
+  notify: restart pysparc
+  tags: pysparc
