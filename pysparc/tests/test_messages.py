@@ -5,10 +5,10 @@ from mock import patch, sentinel, MagicMock
 import pysparc.messages
 
 
-class HisparcMessageTest(unittest.TestCase):
+class BaseMessageTest(unittest.TestCase):
 
     def setUp(self):
-        self.msg = pysparc.messages.HisparcMessage()
+        self.msg = pysparc.messages.BaseMessage()
 
     def test_attributes(self):
         self.assertEqual(self.msg.identifier, None)
@@ -40,7 +40,7 @@ class HisparcMessageTest(unittest.TestCase):
         mock_Struct.assert_called_once_with('Foobazbar')
 
     @patch('pysparc.messages.struct.Struct')
-    @patch.dict('pysparc.messages.HisparcMessage.codons',
+    @patch.dict('pysparc.messages.BaseMessage.codons',
                 {'start': sentinel.start, 'stop': sentinel.stop})
     def test_encode_calls_pack_with_codons(self, mock_Struct):
         self.msg.identifier = sentinel.identifier
@@ -48,54 +48,54 @@ class HisparcMessageTest(unittest.TestCase):
         expected = [sentinel.start, sentinel.identifier, sentinel.stop]
         mock_Struct.return_value.pack.assert_called_once_with(*expected)
 
-    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
+    @patch.object(pysparc.messages.BaseMessage, 'validate_message_start')
     def test_is_message_for_calls_validate_message_start(self,
             mock_validate_message_start):
         buff = MagicMock()
-        pysparc.messages.HisparcMessage.is_message_for(buff)
+        pysparc.messages.BaseMessage.is_message_for(buff)
         mock_validate_message_start.assert_called_once_with(buff)
 
-    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
+    @patch.object(pysparc.messages.BaseMessage, 'validate_message_start')
     def test_is_message_for_checks_for_identifier(self,
             mock_validate_message_start):
         buff = MagicMock()
         buff.__getitem__.return_value = sentinel.identifier
-        pysparc.messages.HisparcMessage.is_message_for(buff)
+        pysparc.messages.BaseMessage.is_message_for(buff)
         buff.__getitem__.assert_called_once_with(1)
 
-    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
-    @patch.object(pysparc.messages.HisparcMessage, 'identifier')
+    @patch.object(pysparc.messages.BaseMessage, 'validate_message_start')
+    @patch.object(pysparc.messages.BaseMessage, 'identifier')
     def test_is_message_for_if_is_match(self, mock_identifier,
             mock_validate_message_start):
         buff = MagicMock()
         buff.__getitem__.return_value = mock_identifier
-        actual = pysparc.messages.HisparcMessage.is_message_for(buff)
+        actual = pysparc.messages.BaseMessage.is_message_for(buff)
         self.assertEqual(actual, True)
 
-    @patch.object(pysparc.messages.HisparcMessage, 'validate_message_start')
-    @patch.object(pysparc.messages.HisparcMessage, 'identifier')
+    @patch.object(pysparc.messages.BaseMessage, 'validate_message_start')
+    @patch.object(pysparc.messages.BaseMessage, 'identifier')
     def test_is_message_for_if_no_match(self, mock_identifier,
             mock_validate_message_start):
         buff = MagicMock()
         buff.__getitem__.return_value = sentinel.other_identifier
-        actual = pysparc.messages.HisparcMessage.is_message_for(buff)
+        actual = pysparc.messages.BaseMessage.is_message_for(buff)
         self.assertEqual(actual, False)
 
     def test_validate_message_start_checks_first_byte(self):
         buff = MagicMock()
         try:
-            pysparc.messages.HisparcMessage.validate_message_start(buff)
+            pysparc.messages.BaseMessage.validate_message_start(buff)
         except:
             pass
         buff.__getitem__.assert_called_once_with(0)
 
     def test_validate_message_start_raises_StartCodonError_if_not_start_codon(self):
         self.assertRaises(pysparc.messages.StartCodonError,
-            pysparc.messages.HisparcMessage.validate_message_start, [0x00])
+            pysparc.messages.BaseMessage.validate_message_start, [0x00])
 
     def test_validate_message_start_passes_if_match(self):
         buff = [self.msg.codons['start']]
-        pysparc.messages.HisparcMessage.validate_message_start(buff)
+        pysparc.messages.BaseMessage.validate_message_start(buff)
 
     def test_validate_codons_and_id(self):
         codons = self.msg.codons
@@ -115,16 +115,16 @@ class HisparcMessageTest(unittest.TestCase):
     def test_strip_until_start_codon(self):
         start = self.msg.codons['start']
         buff = bytearray('foobarbaz' + chr(start) + 'baz')
-        pysparc.messages.HisparcMessage.strip_until_start_codon(buff)
+        pysparc.messages.BaseMessage.strip_until_start_codon(buff)
         self.assertEqual(buff, chr(start) + 'baz')
 
-        pysparc.messages.HisparcMessage.strip_until_start_codon(buff)
+        pysparc.messages.BaseMessage.strip_until_start_codon(buff)
         self.assertEqual(buff, chr(start) + 'baz')
 
-    @patch('pysparc.messages.HisparcMessage.strip_until_start_codon')
+    @patch('pysparc.messages.BaseMessage.strip_until_start_codon')
     def test_strip_partial_message(self, mock_strip):
         buff = bytearray('foobar')
-        pysparc.messages.HisparcMessage.strip_partial_message(buff)
+        pysparc.messages.BaseMessage.strip_partial_message(buff)
         mock_strip.assert_called_once_with(bytearray('oobar'))
 
 

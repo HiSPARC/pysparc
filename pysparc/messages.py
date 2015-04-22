@@ -79,7 +79,7 @@ class CorruptMessageError(MessageError):
     pass
 
 
-class HisparcMessage(object):
+class BaseMessage(object):
 
     """HiSPARC Message base/factory class
 
@@ -158,6 +158,11 @@ class HisparcMessage(object):
         data.append(self.codons['stop'])
         msg = packer.pack(*data)
         return msg
+
+
+class HisparcMessage(BaseMessage):
+
+    pass
 
 
 class OneSecondMessage(HisparcMessage):
