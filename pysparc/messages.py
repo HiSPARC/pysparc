@@ -159,6 +159,9 @@ class BaseMessage(object):
         msg = packer.pack(*data)
         return msg
 
+    def parse_message(self):
+        raise NotImplementedError()
+
 
 class HisparcMessage(BaseMessage):
 

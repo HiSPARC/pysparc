@@ -127,6 +127,9 @@ class BaseMessageTest(unittest.TestCase):
         pysparc.messages.BaseMessage.strip_partial_message(buff)
         mock_strip.assert_called_once_with(bytearray('oobar'))
 
+    def test_parse_message_raises_NotImplementedError(self):
+        self.assertRaises(NotImplementedError, self.msg.parse_message)
+
 
 class SetControlParameterTest(unittest.TestCase):
 
