@@ -12,12 +12,14 @@ class BaseMessageTest(unittest.TestCase):
 
     def test_attributes(self):
         self.assertEqual(self.msg.identifier, None)
-        self.assertEqual(self.msg.container_format, '>BB%sB')
+        self.assertEqual(self.msg.container_format, '%s')
         self.assertEqual(self.msg.msg_format, '')
         self.assertEqual(self.msg.data, [])
         self.assertIsInstance(self.msg.codons, dict)
         self.assertIn('start', self.msg.codons)
+        self.assertEqual(self.msg.codons['start'], None)
         self.assertIn('stop', self.msg.codons)
+        self.assertEqual(self.msg.codons['stop'], None)
 
     def test_encode_returns_none_if_identifier_is_none(self):
         encoded_msg = self.msg.encode()
@@ -98,28 +100,29 @@ class BaseMessageTest(unittest.TestCase):
         pysparc.messages.BaseMessage.validate_message_start(buff)
 
     def test_validate_codons_and_id(self):
-        codons = self.msg.codons
-        start, identifier, stop = codons['start'], 0x11, codons['stop']
-        self.msg.identifier = identifier
-        self.assertRaises(pysparc.messages.MessageError,
-                          self.msg.validate_codons_and_id,
-                          0x00, identifier, stop)
-        self.assertRaises(pysparc.messages.MessageError,
-                          self.msg.validate_codons_and_id,
-                          start, 0x00, stop)
-        self.assertRaises(pysparc.messages.MessageError,
-                          self.msg.validate_codons_and_id,
-                          start, identifier, 0x00)
-        self.msg.validate_codons_and_id(start, identifier, stop)
+        start, identifier, stop = 0x12, 0x11, 0x34
+        with patch.dict(self.msg.codons, {'start': start, 'stop': stop}):
+            self.msg.identifier = identifier
+            self.assertRaises(pysparc.messages.MessageError,
+                              self.msg.validate_codons_and_id,
+                              0x00, identifier, stop)
+            self.assertRaises(pysparc.messages.MessageError,
+                              self.msg.validate_codons_and_id,
+                              start, 0x00, stop)
+            self.assertRaises(pysparc.messages.MessageError,
+                              self.msg.validate_codons_and_id,
+                              start, identifier, 0x00)
+            self.msg.validate_codons_and_id(start, identifier, stop)
 
     def test_strip_until_start_codon(self):
-        start = self.msg.codons['start']
-        buff = bytearray('foobarbaz' + chr(start) + 'baz')
-        pysparc.messages.BaseMessage.strip_until_start_codon(buff)
-        self.assertEqual(buff, chr(start) + 'baz')
+        start = 0x12
+        with patch.dict(self.msg.codons, {'start': start}):
+            buff = bytearray('foobarbaz' + chr(start) + 'baz')
+            pysparc.messages.BaseMessage.strip_until_start_codon(buff)
+            self.assertEqual(buff, chr(start) + 'baz')
 
-        pysparc.messages.BaseMessage.strip_until_start_codon(buff)
-        self.assertEqual(buff, chr(start) + 'baz')
+            pysparc.messages.BaseMessage.strip_until_start_codon(buff)
+            self.assertEqual(buff, chr(start) + 'baz')
 
     @patch('pysparc.messages.BaseMessage.strip_until_start_codon')
     def test_strip_partial_message(self, mock_strip):
@@ -129,6 +132,19 @@ class BaseMessageTest(unittest.TestCase):
 
     def test_parse_message_raises_NotImplementedError(self):
         self.assertRaises(NotImplementedError, self.msg.parse_message)
+
+
+class HisparcMessageTest(unittest.TestCase):
+
+    def setUp(self):
+        self.msg = pysparc.messages.HisparcMessage()
+
+    def test_attributes(self):
+        self.assertEqual(self.msg.container_format, '>BB%sB')
+        self.assertIn('start', self.msg.codons)
+        self.assertEqual(self.msg.codons['start'], 0x99)
+        self.assertIn('stop', self.msg.codons)
+        self.assertEqual(self.msg.codons['stop'], 0x66)
 
 
 class SetControlParameterTest(unittest.TestCase):

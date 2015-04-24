@@ -87,10 +87,9 @@ class BaseMessage(object):
 
     """
     identifier = None
-    container_format = '>BB%sB'
     msg_format = ''
-
-    codons = {'start': 0x99, 'stop': 0x66}
+    container_format = '%s'
+    codons = {'start': None, 'stop': None}
 
 
     def __init__(self):
@@ -165,7 +164,8 @@ class BaseMessage(object):
 
 class HisparcMessage(BaseMessage):
 
-    pass
+    container_format = '>BB%sB'
+    codons = {'start': 0x99, 'stop': 0x66}
 
 
 class OneSecondMessage(HisparcMessage):
