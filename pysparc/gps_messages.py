@@ -9,7 +9,7 @@ Parse and operate on messages from and to the Trimble GPS hardware.
 import struct
 import logging
 
-from messages import (HisparcMessage, MessageError, StartCodonError,
+from messages import (BaseMessage, MessageError, StartCodonError,
                       CorruptMessageError)
 
 
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 #                }
 
 
-class GPSMessage(HisparcMessage):
+class GPSMessage(BaseMessage):
 
     """GPS Message base/factory class
 
