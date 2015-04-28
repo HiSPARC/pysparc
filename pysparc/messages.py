@@ -174,6 +174,7 @@ class OneSecondMessage(HisparcMessage):
     msg_format = '>2B2BH3BIf4H61s1B'
 
     def __init__(self, buff):
+        super(OneSecondMessage, self).__init__()
         self.parse_message(buff)
 
     def parse_message(self, buff):
@@ -212,6 +213,7 @@ class MeasuredDataMessage(HisparcMessage):
     msg_tail_format = '>%dsB'
 
     def __init__(self, buff):
+        super(MeasuredDataMessage, self).__init__()
         self.parse_message(buff)
 
     def parse_message(self, buff):
@@ -352,6 +354,7 @@ class ControlParameterList(HisparcMessage):
     msg_format = ">2B16B4HB3HB4x2B2BH3B3df3sB"
 
     def __init__(self, buff):
+        super(ControlParameterList, self).__init__()
         self.parse_message(buff)
 
     def parse_message(self, buff):
