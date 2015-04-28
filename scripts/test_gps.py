@@ -1,5 +1,5 @@
-import curses
 import logging
+import time
 
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 
@@ -17,28 +17,18 @@ class Main(object):
         logging.info("Closing down")
         self.device.close()
 
-    def run(self, stdscr):
-        # default terminal colors
-        curses.use_default_colors()
-        # no blinking cursor
-        # curses.curs_set(0)
-        # getch() pauses for one second
-        curses.halfdelay(10)
-
-        while True:
-            stdscr.erase()
-
-            stdscr.addstr("GPS messages since last refresh:\n")
-
-            stdscr.refresh()
-            c = stdscr.getch()
-            if c == ord('q'):
-                break
+    def run(self):
+        try:
+            while True:
+                self.gps.read_message()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logging.info("Keyboard interrupt, shutting down.")
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.INFO)
 
     app = Main()
-    curses.wrapper(app.run)
+    app.run()
     app.close()
