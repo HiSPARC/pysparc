@@ -16,13 +16,11 @@ from messages import (BaseMessage, MessageError, StartCodonError,
 logger = logging.getLogger(__name__)
 
 
-# msg_ids = {'measured_data': 0xa0,
-#            'comparator_data': 0xa2,
-#            'one_second': 0xa4,
-#            'all_controls': 0x55,
-#            'communication_error': 0x88,
-#            'reset': 0xff,
-#            }
+msg_ids = {'report_superpacket': 0x8f}
+
+superpacket_ids = {'primary_timing': 0xab,
+                   'supplemental_timing': 0xac,
+                  }
 
 # error_ids = {'header_not_detected': 0x99,
 #              'identifier_unknown': 0x89,
@@ -44,6 +42,76 @@ class GPSMessage(BaseMessage):
     """
     container_format = '>BB%sH'
     codons = {'start': 0x10, 'stop': 0x1003}
+
+
+class ReportSuperPacket(GPSMessage):
+
+    """TSIP super packet
+
+    The Trimble GPS documentation defines so-called superpackets as an extension
+    to regular TSIP. These superpackets allow a class of packets to share the
+    same identifier. Identifying the precise packet is done using a
+    sub-identifier.
+
+    """
+
+    identifier = msg_ids['report_superpacket']
+    sub_identifier = None
+
+    @classmethod
+    def is_message_for(cls, buff):
+        if len(buff) < 3:
+            return False
+        else:
+            cls.validate_message_start(buff)
+            if buff[1] == cls.identifier and buff[2] == cls.sub_identifier:
+                return True
+            else:
+                return False
+
+
+class PrimaryTimingPacket(ReportSuperPacket):
+
+    sub_identifier = superpacket_ids['primary_timing']
+    msg_format = '>BB17sH'
+
+    def __init__(self, buff):
+        super(PrimaryTimingPacket, self).__init__()
+        self.parse_message(buff)
+
+    def parse_message(self, buff):
+        msg_length = struct.calcsize(self.msg_format)
+        str_buff = str(buff[:msg_length])
+
+        print ','.join([hex(ord(u)) for u in str_buff])
+
+        (header, identifier, msg, end) = \
+            struct.unpack_from(self.msg_format, str_buff)
+
+        self.validate_codons_and_id(header, identifier, end)
+
+        del buff[:msg_length]
+
+
+class SupplementalTimingPacket(ReportSuperPacket):
+
+    sub_identifier = superpacket_ids['supplemental_timing']
+    msg_format = '>BB68sH'
+
+    def __init__(self, buff):
+        super(SupplementalTimingPacket, self).__init__()
+        self.parse_message(buff)
+
+    def parse_message(self, buff):
+        msg_length = struct.calcsize(self.msg_format)
+        str_buff = str(buff[:msg_length])
+
+        (header, identifier, msg, end) = \
+            struct.unpack_from(self.msg_format, str_buff)
+
+        self.validate_codons_and_id(header, identifier, end)
+
+        del buff[:msg_length]
 
 
 def GPSMessageFactory(buff):
@@ -68,7 +136,7 @@ def GPSMessageFactory(buff):
         else:
             break
 
-    for cls in GPSMessage.__subclasses__():
+    for cls in GPSMessage.__subclasses__() + ReportSuperPacket.__subclasses__():
         if cls.is_message_for(buff):
             try:
                 return cls(buff)

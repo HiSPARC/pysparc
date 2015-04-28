@@ -20,7 +20,7 @@ class Main(object):
     def run(self):
         try:
             while True:
-                self.gps.read_message()
+                print self.gps.read_message()
                 time.sleep(1)
         except KeyboardInterrupt:
             logging.info("Keyboard interrupt, shutting down.")
