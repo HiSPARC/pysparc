@@ -337,7 +337,7 @@ class MeasuredDataMessage(HisparcMessage):
 
 class GetControlParameterList(HisparcMessage):
 
-    identifier = msg_ids['all_controls']
+    identifier = command_ids['get_all_controls']
 
     @classmethod
     def is_message_for(cls, buff):
@@ -349,7 +349,7 @@ class GetControlParameterList(HisparcMessage):
 class ControlParameterList(HisparcMessage):
 
     identifier = msg_ids['all_controls']
-    msg_format = ">2B16B4HB3HB4x2B2BH3B3df3s"
+    msg_format = ">2B16B4HB3HB4x2B2BH3B3df3sB"
 
     def __init__(self, buff):
         self.parse_message(buff)
@@ -375,12 +375,16 @@ class ControlParameterList(HisparcMessage):
          self.gps_day, self.gps_month, self.gps_year, self.gps_hours,
          self.gps_minutes, self.gps_seconds, self.gps_longitude,
          self.gps_latitude, self.gps_altitude,
-         self.temperature, self._version) \
+         self.temperature, self._version, end) \
             = struct.unpack(self.msg_format, str_buff)
+
+        self.validate_codons_and_id(header, identifier, end)
 
         version, = struct.unpack('>L', '\00' + self._version)
         self.firmware_version = version >> 16
         self.serial_number = version & 0b1111111111
+
+        del buff[:msg_length]
 
 
 class SetControlParameter(HisparcMessage):
