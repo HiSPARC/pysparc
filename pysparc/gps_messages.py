@@ -92,7 +92,7 @@ def GPSMessageFactory(buff):
     # corrupt message is stripped away until a new start codon is found.
     # This 'start codon' is probably not an actual start codon, but
     # somewhere in the middle of a partial message.
-    logger.warning("Unknown message type (probably corrupt), "
-                   "stripping buffer.")
+    logger.warning("Unknown message type: %x (corrupt?), "
+                   "stripping buffer." % buff[1])
     GPSMessage.strip_partial_message(buff)
     return GPSMessageFactory(buff)
