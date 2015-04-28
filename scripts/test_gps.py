@@ -18,11 +18,17 @@ class Main(object):
         self.device.close()
 
     def run(self, stdscr):
-        curses.curs_set(0)
+        # default terminal colors
+        curses.use_default_colors()
+        # no blinking cursor
+        # curses.curs_set(0)
+        # getch() pauses for one second
         curses.halfdelay(10)
 
         while True:
             stdscr.erase()
+
+            stdscr.addstr("GPS messages since last refresh:\n")
 
             stdscr.refresh()
             c = stdscr.getch()
@@ -31,7 +37,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.WARNING)
 
     app = Main()
     curses.wrapper(app.run)
