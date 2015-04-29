@@ -8,6 +8,9 @@ kajmunk1.his
 pysparc1.his
 pysparc2.his
 
+[jessie]
+pysparc1.his
+
 [pysparc:vars]
 ansible_ssh_user=pi
 
