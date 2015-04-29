@@ -1,5 +1,6 @@
 import logging
 import re
+import struct
 import time
 
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
@@ -26,16 +27,22 @@ class Main(object):
                 # print self.gps.read_message()
                 self.gps.read_into_buffer()
                 idx = None
+                msg = ''
                 for match in pattern.finditer(self.gps._buffer):
                     group = match.group()
                     if (group.count('\x10') % 2 == 1):
                         idx = match.end()
                         break
                 if idx:
-                    msg = self.gps._buffer[:idx]
+                    msg = str(self.gps._buffer[:idx])
                     del self.gps._buffer[:idx]
-                    msg = msg.replace('\x10\x10', '\x10')
-                    print '%r ... %r %d' % (msg[:3], msg[-2:], len(msg))
+                    msg2 = msg.replace('\x10\x10', '\x10')
+
+                if msg[:3] == '\x10\x8f\xab':
+                    print '%r ... %r %d %d %d' % (msg[:3], msg[-2:], len(msg), len(msg2), msg.count('\x10'))
+                    if len(msg) == 21:
+                        tow, week, offset = struct.unpack_from('>LHh', msg[3:])
+                        print tow, week, offset
 
                 # if len(self.gps._buffer) > 4096:
                 #     break
