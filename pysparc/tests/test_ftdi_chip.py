@@ -244,7 +244,7 @@ class FtdiChipTestWithClosedDevice(unittest.TestCase):
         # explicitly set timer, required on some linux systems
         mock_device = mock_Device.return_value
         self.device.open()
-        mock_device.ftdi_fn.ftdi_set_latency_time.assert_called_once_with(16)
+        mock_device.ftdi_fn.ftdi_set_latency_timer.assert_called_once_with(16)
 
     @patch('pysparc.ftdi_chip.pylibftdi.Device')
     @patch.object(ftdi_chip.FtdiChip, 'flush')

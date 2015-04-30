@@ -132,7 +132,7 @@ class FtdiChip(object):
             else:
                 # force default latency timer of 16 ms
                 # on some systems, this reverts to 0 ms if not set explicitly
-                self._device.ftdi_fn.ftdi_set_latency_time(16)
+                self._device.ftdi_fn.ftdi_set_latency_timer(16)
                 self.closed = False
                 self.flush()
         else:
