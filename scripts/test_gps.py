@@ -4,6 +4,7 @@ import struct
 import time
 
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
+from pysparc.ftdi_chip import DeviceNotFoundError
 
 
 class Main(object):
