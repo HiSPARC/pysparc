@@ -108,12 +108,16 @@ class FtdiChip(object):
     _device = None
     closed = True
 
-    def __init__(self, device_description=None, interface_select=0):
+    def __init__(self, device_description=None, interface_select=0,
+                 linesettings=[9600, 0, 1]):
         self._device_description = device_description
         self._interface_select = interface_select
+        self._baudrate = linesettings[0]
+        self._parity = linesettings[1]
+        self._stopbits = linesettings[2]
         self.open()
 
-    def open(self):
+    def open(self, linesettings):
         """Open device.
 
         Raises :class:`DeviceNotFoundError` if the device cannot be found.
@@ -133,6 +137,13 @@ class FtdiChip(object):
                 # force default latency timer of 16 ms
                 # on some systems, this reverts to 0 ms if not set explicitly
                 self._device.ftdi_fn.ftdi_set_latency_timer(16)
+                # line settings = [baudrate, parity, stopbit]
+                #  0 = Parity NONE
+                #  1 = Parity ODD
+                #  2 = Parity EVEN
+                self._device.ftdi_fn.ftdi_set_line_property(self._baudrate,
+                                                            self._parity,
+                                                            self._stopbits)
                 self.closed = False
                 self.flush()
         else:
