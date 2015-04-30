@@ -21,6 +21,7 @@ class DeviceReadTest(unittest.TestCase):
         except pylibftdi.FtdiError:
             self.skipTest("Device not found")
 
+        device.ftdi_fn.ftdi_set_latency_timer(16)
         device.flush()
         t = []
         for i in range(10):
