@@ -25,6 +25,7 @@ import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
                       InitializeMessage, MeasuredDataMessage)
+from gps_messages import GPSMessageFactory
 import config
 
 import pkg_resources
@@ -296,8 +297,26 @@ class HiSPARCIII(HiSPARCII):
         device.close()
 
 
-class TrimbleGPS:
+class TrimbleGPS(BaseHardware):
 
     """Access Trimble GPS unit inside the HiSPARC hardware."""
 
-    pass
+    description = "FT232R USB UART"
+
+    def open(self):
+        """Open the hardware device """
+
+        # Trimble GPS line settings are 9600,O,1 """
+        self._device = FtdiChip(self.description, linesettings=[9600, 0, 1])
+
+    def read_message(self):
+        """Read a message from the hardware device.
+
+        Call this method to communicate with the device.
+
+        This method should call :meth:`read_into_buffer` and should run
+        the return value through a MessageFactory class.
+
+        """
+        self.read_into_buffer()
+        return GPSMessageFactory(self._buffer)

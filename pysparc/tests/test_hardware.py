@@ -17,6 +17,8 @@ class HiSPARCIIITest(unittest.TestCase):
     @patch('time.sleep')
     @patch('pysparc.hardware.FtdiChip')
     def test_open(self, mock_Device, mock_sleep, mock_burn, mock_init):
+        # Using a manager with child mocks allows us to test for the order of
+        # calls (see below). The manager itself is not used.
         manager = Mock()
         manager.attach_mock(mock_burn, 'burn')
         manager.attach_mock(mock_sleep, 'sleep')
@@ -210,6 +212,45 @@ class BaseHardwareTest(unittest.TestCase):
         self.assertRaises(NotImplementedError, self.hisparc.read_message)
         mock_read_into_buffer.assert_called_once_with()
 
+
+class TrimbleGPSTest(unittest.TestCase):
+
+    # mock __init__ of the parent class, so we do not depend on that
+    # implementation
+    @patch.object(hardware.TrimbleGPS, '__init__')
+    def setUp(self, mock_init):
+        mock_init.return_value = None
+
+        self.gps = hardware.TrimbleGPS()
+        self.gps._buffer = sentinel.buffer
+
+        patcher1 = patch.object(hardware.TrimbleGPS, 'read_into_buffer')
+        patcher2 = patch('pysparc.hardware.GPSMessageFactory')
+        self.mock_read_into_buffer = patcher1.start()
+        self.mock_factory = patcher2.start()
+
+        self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
+
+    def test_type_is_basehardware(self):
+        self.assertIsInstance(self.gps, hardware.BaseHardware)
+
+    def test_description(self):
+        self.assertEqual(hardware.TrimbleGPS.description,
+                         "FT232R USB UART")
+
+    def test_read_message(self):
+        self.gps.read_message()
+        self.mock_read_into_buffer.assert_called_once_with()
+
+    def test_read_message_calls_message_factory(self):
+        self.gps.read_message()
+        self.mock_factory.assert_called_once_with(sentinel.buffer)
+
+    def test_read_message_returns_message(self):
+        self.mock_factory.return_value = sentinel.msg
+        actual = self.gps.read_message()
+        self.assertIs(actual, sentinel.msg)
 
 
 if __name__ == '__main__':
