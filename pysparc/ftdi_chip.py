@@ -117,7 +117,7 @@ class FtdiChip(object):
         self._stopbits = linesettings[2]
         self.open()
 
-    def open(self, linesettings):
+    def open(self):
         """Open device.
 
         Raises :class:`DeviceNotFoundError` if the device cannot be found.
