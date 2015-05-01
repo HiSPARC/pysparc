@@ -48,7 +48,6 @@ DISABLE_CLK_DIV5 = 0x8A
 WRITE_BYTES_PVE_LSB = 0x18
 
 
-
 class HardwareError(Exception):
 
     """Raised on error with the hardware."""

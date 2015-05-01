@@ -49,6 +49,7 @@ PARITY_EVEN = 2
 PARITY_MARK = 3
 PARITY_SPACE = 4
 
+
 class Error(Exception):
 
     """Base error class."""
@@ -143,10 +144,7 @@ class FtdiChip(object):
                 # force default latency timer of 16 ms
                 # on some systems, this reverts to 0 ms if not set explicitly
                 self._device.ftdi_fn.ftdi_set_latency_timer(16)
-                # line settings = [baudrate, parity, stopbit]
-                #  0 = Parity NONE
-                #  1 = Parity ODD
-                #  2 = Parity EVEN
+                # Line settings are not automatically set by pylibftdi
                 self._device.ftdi_fn.ftdi_set_line_property(self._baudrate,
                                                             self._parity,
                                                             self._stopbits)
