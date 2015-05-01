@@ -1,0 +1,11 @@
+{
+  "transport": "scp",
+  "hostname": "pysparc1",
+  "port": 22,
+  "username": "hisparc",
+  "useAgent": true,
+  "target": "/opt/pysparc",
+  "ignore": [
+    ".git/**"
+  ]
+}
