@@ -42,6 +42,12 @@ BUFFER_SIZE = 64 * 62
 # Sleep between read/write error retries in seconds
 RW_ERROR_WAIT = .5
 
+# parity for rs232 line settings in libftdi::ftdi_set_line_property
+PARITY_NONE = 0
+PARITY_ODD = 1
+PARITY_EVEN = 2
+PARITY_MARK = 3
+PARITY_SPACE = 4
 
 class Error(Exception):
 
@@ -108,9 +114,13 @@ class FtdiChip(object):
     _device = None
     closed = True
 
-    def __init__(self, device_description=None, interface_select=0):
+    def __init__(self, device_description=None, interface_select=0,
+                 linesettings=[9600, PARITY_NONE, 1]):
         self._device_description = device_description
         self._interface_select = interface_select
+        self._baudrate = linesettings[0]
+        self._parity = linesettings[1]
+        self._stopbits = linesettings[2]
         self.open()
 
     def open(self):
@@ -133,6 +143,13 @@ class FtdiChip(object):
                 # force default latency timer of 16 ms
                 # on some systems, this reverts to 0 ms if not set explicitly
                 self._device.ftdi_fn.ftdi_set_latency_timer(16)
+                # line settings = [baudrate, parity, stopbit]
+                #  0 = Parity NONE
+                #  1 = Parity ODD
+                #  2 = Parity EVEN
+                self._device.ftdi_fn.ftdi_set_line_property(self._baudrate,
+                                                            self._parity,
+                                                            self._stopbits)
                 self.closed = False
                 self.flush()
         else:

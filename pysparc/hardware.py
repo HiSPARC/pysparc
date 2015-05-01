@@ -23,6 +23,7 @@ import random
 
 import ftdi_chip
 from ftdi_chip import FtdiChip
+from ftdi_chip import PARTIY_ODD
 from messages import (HisparcMessageFactory, ResetMessage,
                       InitializeMessage, MeasuredDataMessage)
 from gps_messages import GPSMessageFactory
@@ -45,6 +46,7 @@ GET_BITS_HIGH = 0x83
 TCK_DIVISOR = 0x86
 DISABLE_CLK_DIV5 = 0x8A
 WRITE_BYTES_PVE_LSB = 0x18
+
 
 
 class HardwareError(Exception):
@@ -302,6 +304,13 @@ class TrimbleGPS(BaseHardware):
     """Access Trimble GPS unit inside the HiSPARC hardware."""
 
     description = "FT232R USB UART"
+
+    def open(self):
+        """Open the hardware device """
+
+        # Trimble GPS line settings are 9600,O,1 """
+        self._device = FtdiChip(self.description,
+                                linesettings=[9600, PARTIY_ODD, 1])
 
     def read_message(self):
         """Read a message from the hardware device.
