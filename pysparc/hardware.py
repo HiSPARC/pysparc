@@ -23,7 +23,6 @@ import random
 
 import ftdi_chip
 from ftdi_chip import FtdiChip
-from ftdi_chip import PARTIY_ODD
 from messages import (HisparcMessageFactory, ResetMessage,
                       InitializeMessage, MeasuredDataMessage)
 from gps_messages import GPSMessageFactory
@@ -309,7 +308,7 @@ class TrimbleGPS(BaseHardware):
 
         # Trimble GPS line settings are 9600,O,1 """
         self._device = FtdiChip(self.description,
-                                linesettings=[9600, PARTIY_ODD, 1])
+                                linesettings=[9600, ftdi_chip.PARITY_ODD, 1])
 
     def read_message(self):
         """Read a message from the hardware device.
