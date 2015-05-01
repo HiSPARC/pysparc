@@ -49,6 +49,15 @@ PARITY_EVEN = 2
 PARITY_MARK = 3
 PARITY_SPACE = 4
 
+# bitsize for rs232 line settings in libftdi::ftdi_set_line_property
+BITS_8 = 8
+BITS_7 = 7
+
+# stopbits for rs232 line settings in libftdi::ftdi_set_line_property
+STOP_BIT_1 = 0
+STOP_BIT_15 = 1
+STOP_BIT_2 = 2
+
 
 class Error(Exception):
 
@@ -116,12 +125,13 @@ class FtdiChip(object):
     closed = True
 
     def __init__(self, device_description=None, interface_select=0,
-                 linesettings=[9600, PARITY_NONE, 1]):
+                 linesettings=(9600, BITS_8, PARITY_NONE, STOP_BIT_1)):
         self._device_description = device_description
         self._interface_select = interface_select
         self._baudrate = linesettings[0]
-        self._parity = linesettings[1]
-        self._stopbits = linesettings[2]
+        self._bitsize = linesettings[1]
+        self._parity = linesettings[2]
+        self._stopbits = linesettings[3]
         self.open()
 
     def open(self):
@@ -145,9 +155,10 @@ class FtdiChip(object):
                 # on some systems, this reverts to 0 ms if not set explicitly
                 self._device.ftdi_fn.ftdi_set_latency_timer(16)
                 # Line settings are not automatically set by pylibftdi
-                self._device.ftdi_fn.ftdi_set_line_property(self._baudrate,
-                                                            self._parity,
-                                                            self._stopbits)
+                self._device.ftdi_fn.ftdi_set_baudrate(self._baudrate)
+                self._device.ftdi_fn.ftdi_set_line_property(self._bitsize,
+                                                            self._stopbits,
+                                                            self._parity)
                 self.closed = False
                 self.flush()
         else:
