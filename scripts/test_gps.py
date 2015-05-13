@@ -25,25 +25,28 @@ class Main(object):
 
         try:
             while True:
-                # print self.gps.read_message()
-                self.gps.read_into_buffer()
-                idx = None
-                msg = ''
-                for match in pattern.finditer(self.gps._buffer):
-                    group = match.group()
-                    if (group.count('\x10') % 2 == 1):
-                        idx = match.end()
-                        break
-                if idx:
-                    msg = str(self.gps._buffer[:idx])
-                    del self.gps._buffer[:idx]
-                    msg2 = msg.replace('\x10\x10', '\x10')
+                msg = self.gps.read_message()
+                if msg:
+                    print msg
 
-                if msg[:3] == '\x10\x8f\xab':
-                    print '%r ... %r %d %d %d' % (msg[:3], msg[-2:], len(msg), len(msg2), msg.count('\x10'))
-                    if len(msg) == 21:
-                        tow, week, offset = struct.unpack_from('>LHh', msg[3:])
-                        print tow, week, offset
+                # self.gps.read_into_buffer()
+                # idx = None
+                # msg = ''
+                # for match in pattern.finditer(self.gps._buffer):
+                #     group = match.group()
+                #     if (group.count('\x10') % 2 == 1):
+                #         idx = match.end()
+                #         break
+                # if idx:
+                #     msg = str(self.gps._buffer[:idx])
+                #     del self.gps._buffer[:idx]
+                #     msg2 = msg.replace('\x10\x10', '\x10')
+                #
+                # if msg[:3] == '\x10\x8f\xab':
+                #     print '%r ... %r %d %d %d' % (msg[:3], msg[-2:], len(msg), len(msg2), msg.count('\x10'))
+                #     if len(msg2) == 21:
+                #         tow, week, offset = struct.unpack_from('>LHh', msg[3:])
+                #         print tow, week, offset
 
                 # if len(self.gps._buffer) > 4096:
                 #     break
@@ -55,7 +58,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     app = Main()
     buff = app.run()

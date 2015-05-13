@@ -8,6 +8,7 @@ Parse and operate on messages from and to the Trimble GPS hardware.
 
 import struct
 import logging
+import re
 
 from messages import (BaseMessage, MessageError, StartCodonError,
                       CorruptMessageError)
@@ -21,6 +22,8 @@ msg_ids = {'report_superpacket': 0x8f}
 superpacket_ids = {'primary_timing': 0xab,
                    'supplemental_timing': 0xac,
                   }
+
+pattern = re.compile('\x10+\x03')
 
 # error_ids = {'header_not_detected': 0x99,
 #              'identifier_unknown': 0x89,
@@ -73,24 +76,37 @@ class ReportSuperPacket(GPSMessage):
 class PrimaryTimingPacket(ReportSuperPacket):
 
     sub_identifier = superpacket_ids['primary_timing']
-    msg_format = '>BB17sH'
+    msg_format = '>BBBIHhB5BHH'
 
     def __init__(self, buff):
         super(PrimaryTimingPacket, self).__init__()
         self.parse_message(buff)
 
     def parse_message(self, buff):
-        msg_length = struct.calcsize(self.msg_format)
-        str_buff = str(buff[:msg_length])
+        idx = None
+        for match in pattern.finditer(buff):
+            group = match.group()
+            if (group.count('\x10') % 2 == 1):
+                idx = match.end()
+                break
+        if idx:
+            msg = str(buff[:idx])
+            str_buff = msg.replace('\x10\x10', '\x10')
 
-        print ','.join([hex(ord(u)) for u in str_buff])
-
-        (header, identifier, msg, end) = \
+        (header, identifier, sub_identifier, self.time_of_week,
+         self.week_number, self.utc_offset, self.timing_flag, self.seconds,
+         self.minutes, self.hours, self.day_of_month, self.month, self.year,
+         end) = \
             struct.unpack_from(self.msg_format, str_buff)
 
         self.validate_codons_and_id(header, identifier, end)
 
-        del buff[:msg_length]
+        del buff[:idx]
+
+    def __str__(self):
+        return 'Primary Timing Packet: %d-%d-%d %d:%02d:%02d' % (
+            self.year, self.month, self.day_of_month, self.hours, self.minutes,
+            self.seconds)
 
 
 class SupplementalTimingPacket(ReportSuperPacket):
@@ -103,15 +119,22 @@ class SupplementalTimingPacket(ReportSuperPacket):
         self.parse_message(buff)
 
     def parse_message(self, buff):
-        msg_length = struct.calcsize(self.msg_format)
-        str_buff = str(buff[:msg_length])
+        idx = None
+        for match in pattern.finditer(buff):
+            group = match.group()
+            if (group.count('\x10') % 2 == 1):
+                idx = match.end()
+                break
+        if idx:
+            msg = str(buff[:idx])
+            str_buff = msg.replace('\x10\x10', '\x10')
 
         (header, identifier, msg, end) = \
             struct.unpack_from(self.msg_format, str_buff)
 
         self.validate_codons_and_id(header, identifier, end)
 
-        del buff[:msg_length]
+        del buff[:idx]
 
 
 def GPSMessageFactory(buff):
