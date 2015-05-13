@@ -124,13 +124,9 @@ class FtdiChip(object):
     _device = None
     closed = True
 
-    def __init__(self, device_description=None, interface_select=0,
-                 linesettings=(BITS_8, PARITY_NONE, STOP_BIT_1)):
+    def __init__(self, device_description=None, interface_select=0):
         self._device_description = device_description
         self._interface_select = interface_select
-        self._bitsize = linesettings[0]
-        self._parity = linesettings[1]
-        self._stopbits = linesettings[2]
         self.open()
 
     def open(self):
@@ -153,10 +149,7 @@ class FtdiChip(object):
                 # force default latency timer of 16 ms
                 # on some systems, this reverts to 0 ms if not set explicitly
                 self._device.ftdi_fn.ftdi_set_latency_timer(16)
-                # Line settings are not automatically set by pylibftdi
-                self._device.ftdi_fn.ftdi_set_line_property(self._bitsize,
-                                                            self._stopbits,
-                                                            self._parity)
+
                 self.closed = False
                 self.flush()
         else:
@@ -164,6 +157,17 @@ class FtdiChip(object):
 
     def __del__(self):
         self.close()
+
+    def set_line_settings(self, bits, parity, stop_bit):
+        """Set line settings (bits, parity, stop bit).
+
+        :param bits: one of BITS_8 or BITS_7
+        :param parity: one of PARITY_NONE, PARITY_ODD, PARITY_EVEN,
+                       PARITY_MARK, PARITY_SPACE
+        :param stop_bit: one of STOP_BIT_1, STOP_BIT_15, STOP_BIT_2
+
+        """
+        self._device.ftdi_fn.ftdi_set_line_property(bits, stop_bit, parity)
 
     def close(self):
         """Close device."""

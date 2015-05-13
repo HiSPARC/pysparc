@@ -223,6 +223,8 @@ class TrimbleGPSTest(unittest.TestCase):
 
         self.gps = hardware.TrimbleGPS()
         self.gps._buffer = sentinel.buffer
+        self.mock_device = Mock()
+        self.gps._device = self.mock_device
 
         patcher1 = patch.object(hardware.TrimbleGPS, 'read_into_buffer')
         patcher2 = patch('pysparc.hardware.GPSMessageFactory')
@@ -234,6 +236,17 @@ class TrimbleGPSTest(unittest.TestCase):
 
     def test_type_is_basehardware(self):
         self.assertIsInstance(self.gps, hardware.BaseHardware)
+
+    @patch.object(hardware.BaseHardware, 'open')
+    def test_open_calls_super(self, mock_super):
+        self.gps.open()
+        mock_super.assert_called_once_with()
+
+    @patch.object(hardware.BaseHardware, 'open')
+    def test_open_sets_line_settings(self, mock_super):
+        self.gps.open()
+        self.gps._device.set_line_settings.assert_called_once_with(
+            ftdi_chip.BITS_8, ftdi_chip.PARITY_ODD, ftdi_chip.STOP_BIT_1)
 
     def test_description(self):
         self.assertEqual(hardware.TrimbleGPS.description,

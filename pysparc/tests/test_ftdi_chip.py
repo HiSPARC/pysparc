@@ -48,6 +48,12 @@ class FtdiChipTest(unittest.TestCase):
         device = ftdi_chip.FtdiChip()
         mock_open.assert_called_once_with()
 
+    def test_set_line_settings(self):
+        self.device.set_line_settings(sentinel.bits, sentinel.parity,
+                                      sentinel.stop_bit)
+        self.mock_device.ftdi_fn.ftdi_set_line_property.assert_called_once_with(
+            sentinel.bits, sentinel.stop_bit, sentinel.parity)
+
     def test_flush_flushes_device(self):
         self.device.flush()
         self.mock_device.flush.assert_called_once_with()
