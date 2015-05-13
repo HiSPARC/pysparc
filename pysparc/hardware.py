@@ -303,6 +303,15 @@ class TrimbleGPS(BaseHardware):
 
     description = "FT232R USB UART"
 
+    def open(self):
+        """Open the hardware device """
+
+        # Trimble GPS line settings are 9600,O,1 """
+        self._device = FtdiChip(self.description,
+                                linesettings=(ftdi_chip.BITS_8,
+                                              ftdi_chip.PARITY_ODD,
+                                              ftdi_chip.STOP_BIT_1))
+
     def read_message(self):
         """Read a message from the hardware device.
 
