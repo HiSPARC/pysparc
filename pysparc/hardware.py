@@ -306,7 +306,7 @@ class TrimbleGPS(BaseHardware):
     def open(self):
         """Open the hardware device """
 
-        # Trimble GPS line settings are 9600,O,1 """
+        # Trimble GPS line settings are 9600,8,O,1
         self._device = FtdiChip(self.description,
                                 linesettings=(ftdi_chip.BITS_8,
                                               ftdi_chip.PARITY_ODD,
