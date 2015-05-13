@@ -54,8 +54,8 @@ class HiSPARCIITest(unittest.TestCase):
         self.assertEqual(hardware.HiSPARCII.description,
                          "HiSPARC II Master")
 
-    @patch('pysparc.hardware.BaseHardware.__init__')
-    def test_init_calls_super(self, mock_super):
+    def test_init_calls_super(self):
+        # test that super *was* called during setUp()
         self.mock_super.assert_called_once_with()
 
     def test_init_creates_device_configuration(self):
