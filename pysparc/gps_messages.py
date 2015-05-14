@@ -37,6 +37,10 @@ class GPSMessage(BaseMessage):
     container_format = '>BB%sH'
     codons = {'start': 0x10, 'stop': 0x1003}
 
+    @classmethod
+    def extract_message_from_buffer(cls, buff):
+        pass
+
 
 class ReportSuperPacket(GPSMessage):
 
@@ -132,6 +136,24 @@ class SupplementalTimingPacket(ReportSuperPacket):
 
 
 def GPSMessageFactory(buff):
+    """Return a message, extracted from the buffer
+
+    Inspect the buffer and extract the first full message. A
+    GPSMessage subclass instance will be returned, according to
+    the type of the message.
+
+    :param buff: the contents of the usb buffer
+    :return: instance of a GPSMessage subclass
+
+    """
+    # get one message out of the buffer
+    # try to match message to Message class
+    # return message instance or log warning
+    GPSMessage.extract_message_from_buffer(buff)
+    return
+
+
+def OldGPSMessageFactory(buff):
     """Return a message, extracted from the buffer
 
     Inspect the buffer and extract the first full message. A
