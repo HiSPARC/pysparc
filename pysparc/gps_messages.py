@@ -23,17 +23,8 @@ superpacket_ids = {'primary_timing': 0xab,
                    'supplemental_timing': 0xac,
                   }
 
-pattern = re.compile('\x10+\x03')
-
-# error_ids = {'header_not_detected': 0x99,
-#              'identifier_unknown': 0x89,
-#              'stop_codon_not_detected': 0x66,
-#              }
-
-# command_ids = {'soft_reset': 0xff,
-#                'set_all_controls': 0x50,
-#                'get_all_controls': 0x55,
-#                }
+# Match ETX and all directly preceding DLEs, per the Trimble manual.
+stop_codon_pattern = re.compile('\x10+\x03')
 
 
 class GPSMessage(BaseMessage):
@@ -84,7 +75,10 @@ class PrimaryTimingPacket(ReportSuperPacket):
 
     def parse_message(self, buff):
         idx = None
-        for match in pattern.finditer(buff):
+        # If the number of DLEs is even, they are effectively all escaped and
+        # are not part of the stop codon. If the number is odd, the final one is
+        # *not* escaped, and is part of the stop codon.
+        for match in stop_codon_pattern.finditer(buff):
             group = match.group()
             if (group.count('\x10') % 2 == 1):
                 idx = match.end()
@@ -120,7 +114,7 @@ class SupplementalTimingPacket(ReportSuperPacket):
 
     def parse_message(self, buff):
         idx = None
-        for match in pattern.finditer(buff):
+        for match in stop_codon_pattern.finditer(buff):
             group = match.group()
             if (group.count('\x10') % 2 == 1):
                 idx = match.end()
