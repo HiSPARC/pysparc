@@ -146,11 +146,22 @@ def GPSMessageFactory(buff):
     :return: instance of a GPSMessage subclass
 
     """
-    # get one message out of the buffer
-    GPSMessage.extract_message_from_buffer(buff)
-    # try to match message to Message class
-    # return message instance or log warning
-    return
+    msg = GPSMessage.extract_message_from_buffer(buff)
+    cls = find_message_class(msg, GPSMessage)
+    return cls(msg)
+
+
+def find_message_class(msg, cls):
+    """Return the class implementing the correct message type.
+
+    Loop through all subclasses of :param cls: and find the one that implements
+    the message type of :param msg:.
+
+    :param msg: a single raw message
+    :param cls: the parent class implementing the message types.
+
+    """
+    pass
 
 
 def OldGPSMessageFactory(buff):

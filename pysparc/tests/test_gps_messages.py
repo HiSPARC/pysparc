@@ -34,13 +34,35 @@ class GPSMessageFactoryTest(unittest.TestCase):
         #                  autospec=MockGPSMessage)
 
         patcher1 = patch('pysparc.gps_messages.GPSMessage', autospec=True)
+        patcher2 = patch('pysparc.gps_messages.find_message_class')
         self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
         self.mock_GPSMessage = patcher1.start()
+        self.mock_find_message_class = patcher2.start()
 
     def test_factory_calls_extract_message_from_buffer(self):
         gps_messages.GPSMessageFactory(sentinel.buffer)
         self.mock_GPSMessage.extract_message_from_buffer\
             .assert_called_once_with(sentinel.buffer)
+
+    def test_factory_calls_find_message_class(self):
+        self.mock_GPSMessage.extract_message_from_buffer.return_value = \
+            sentinel.msg
+        gps_messages.GPSMessageFactory(sentinel.buffer)
+        self.mock_find_message_class.assert_called_once_with(
+            sentinel.msg, gps_messages.GPSMessage)
+
+    def test_factory_returns_message_instance(self):
+        self.mock_GPSMessage.extract_message_from_buffer.return_value = \
+            sentinel.msg
+        mock_Class = Mock()
+        mock_instance = mock_Class.return_value
+        self.mock_find_message_class.return_value = mock_Class
+
+        inst = gps_messages.GPSMessageFactory(sentinel.buffer)
+
+        mock_Class.assert_called_once_with(sentinel.msg)
+        self.assertIs(inst, mock_instance)
 
     # def test_factory_calls_all_is_message_for(self):
     #     # msgs = []
