@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, sentinel
+from mock import patch, sentinel, Mock
 
 from pysparc import messages, gps_messages
 
@@ -24,6 +24,15 @@ class GPSMessageTest(unittest.TestCase):
 class GPSMessageFactoryTest(unittest.TestCase):
 
     def setUp(self):
+        # class MockGPSMessage(gps_messages.GPSMessage):
+        #
+        #     @classmethod
+        #     def __subclasses__(cls):
+        #         pass
+        #
+        # patcher1 = patch('pysparc.gps_messages.GPSMessage',
+        #                  autospec=MockGPSMessage)
+
         patcher1 = patch('pysparc.gps_messages.GPSMessage', autospec=True)
         self.addCleanup(patcher1.stop)
         self.mock_GPSMessage = patcher1.start()
@@ -32,6 +41,18 @@ class GPSMessageFactoryTest(unittest.TestCase):
         gps_messages.GPSMessageFactory(sentinel.buffer)
         self.mock_GPSMessage.extract_message_from_buffer\
             .assert_called_once_with(sentinel.buffer)
+
+    # def test_factory_calls_all_is_message_for(self):
+    #     # msgs = []
+    #     # for i in range(3):
+    #     #     msgs.append(Mock(autospec=True,
+    #     #                      spec='pysparc.gps_messages.GPSMessage'))
+    #
+    #     self.mock_GPSMessage.__subclasses__ = Mock()
+    #     # self.mock_GPSMessage.__subclasses__.return_value = None
+    #
+    #     gps_messages.GPSMessageFactory(sentinel.buffer)
+
 
 # class GPSMessageFactoryTest(unittest.TestCase):
 #

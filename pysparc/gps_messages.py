@@ -147,9 +147,9 @@ def GPSMessageFactory(buff):
 
     """
     # get one message out of the buffer
+    GPSMessage.extract_message_from_buffer(buff)
     # try to match message to Message class
     # return message instance or log warning
-    GPSMessage.extract_message_from_buffer(buff)
     return
 
 
