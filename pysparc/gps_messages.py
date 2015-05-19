@@ -47,6 +47,7 @@ class GPSMessage(BaseMessage):
             except ValueError:
                 return None
             else:
+                logger.warning("Garbage found, stripping buffer.")
                 del buff[:idx]
 
         # If the number of DLEs is even, they are effectively all escaped and
