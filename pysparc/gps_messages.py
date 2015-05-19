@@ -41,7 +41,14 @@ class GPSMessage(BaseMessage):
     def extract_message_from_buffer(cls, buff):
         """Extract a single message from the buffer."""
 
-        idx = None
+        if not buff.startswith('\x10'):
+            try:
+                idx = buff.index('\x10')
+            except ValueError:
+                return None
+            else:
+                del buff[:idx]
+
         # If the number of DLEs is even, they are effectively all escaped and
         # are not part of the stop codon. If the number is odd, the final one
         # is *not* escaped, and is part of the stop codon.

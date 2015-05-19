@@ -43,6 +43,12 @@ class GPSMessageTest(unittest.TestCase):
         # escaped first stop codon, complete message
         self.assertEqual(func(bytearray('\x10foo\x10\x10\x03\x10\x03')),
                          'foo\x10\x03')
+        # message with garbage at front
+        self.assertEqual(func(bytearray('baz\x10foo\x10\x03')),
+                         'foo')
+        # message with garbage at front, no start codon
+        self.assertEqual(func(bytearray('baz')),
+                         None)
 
     def test_extract_message_from_buffer_deletes_from_buffer(self):
         buff = bytearray('\x10foo\x10\x03barbaz')
