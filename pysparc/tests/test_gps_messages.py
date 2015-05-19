@@ -1,6 +1,6 @@
 import unittest
 
-from mock import patch, sentinel, Mock
+from mock import patch, sentinel, Mock, create_autospec
 
 from pysparc import messages, gps_messages
 
@@ -48,6 +48,16 @@ class GPSMessageTest(unittest.TestCase):
         buff = bytearray('\x10foo\x10\x03barbaz')
         gps_messages.GPSMessage.extract_message_from_buffer(buff)
         self.assertEqual(buff, 'barbaz')
+
+    @patch.object(gps_messages.GPSMessage, 'identifier')
+    def test_is_message_for(self, identifier):
+        msg = create_autospec(str)
+        msg.startswith.return_value = sentinel.value
+
+        actual = gps_messages.GPSMessage.is_message_for(msg)
+
+        msg.startswith.assert_called_once_with(identifier)
+        self.assertEqual(actual, sentinel.value)
 
 
 class GPSMessageFactoryTest(unittest.TestCase):

@@ -39,6 +39,8 @@ class GPSMessage(BaseMessage):
 
     @classmethod
     def extract_message_from_buffer(cls, buff):
+        """Extract a single message from the buffer."""
+
         idx = None
         # If the number of DLEs is even, they are effectively all escaped and
         # are not part of the stop codon. If the number is odd, the final one
@@ -56,6 +58,16 @@ class GPSMessage(BaseMessage):
                 # squash escaped \x10 characters
                 msg = msg.replace('\x10\x10', '\x10')
                 return msg
+
+    @classmethod
+    def is_message_for(cls, msg):
+        """Check if this class can decode a particular message.
+
+        :param msg: the message
+        :return: True if this class can handle the message. False otherwise.
+
+        """
+        return msg.startswith(cls.identifier)
 
 
 class ReportSuperPacket(GPSMessage):
