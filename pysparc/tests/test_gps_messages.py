@@ -101,6 +101,14 @@ class GPSMessageFactoryTest(unittest.TestCase):
         mock_Class.assert_called_once_with(sentinel.msg)
         self.assertIs(inst, mock_instance)
 
+    def test_factory_catches_UnknownMessageError(self):
+        self.mock_find_message_class.side_effect = \
+            gps_messages.UnknownMessageError
+
+        actual = gps_messages.GPSMessageFactory(sentinel.buffer)
+
+        self.assertIsNone(actual)
+
 
 class FindMessageForTest(unittest.TestCase):
 

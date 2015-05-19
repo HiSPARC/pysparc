@@ -127,8 +127,13 @@ def GPSMessageFactory(buff):
 
     """
     msg = GPSMessage.extract_message_from_buffer(buff)
-    cls = find_message_class(msg, GPSMessage)
-    return cls(msg)
+    try:
+        cls = find_message_class(msg, GPSMessage)
+    except UnknownMessageError as e:
+        logger.error(e)
+        return None
+    else:
+        return cls(msg)
 
 
 def find_message_class(msg, cls):
