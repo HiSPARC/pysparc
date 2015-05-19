@@ -49,10 +49,12 @@ class GPSMessage(BaseMessage):
             if (group.count('\x10') % 2 == 1):
                 # number of DLEs (first byte of stop codon) is odd
                 idx = match.end()
-                # this is the message
-                msg = str(buff[:idx])
+                # this is the message, without the codons
+                msg = str(buff[1:idx - 2])
                 # remove message from buffer
                 del buff[:idx]
+                # squash escaped \x10 characters
+                msg = msg.replace('\x10\x10', '\x10')
                 return msg
 
 

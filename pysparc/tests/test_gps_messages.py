@@ -24,19 +24,25 @@ class GPSMessageTest(unittest.TestCase):
         func = gps_messages.GPSMessage.extract_message_from_buffer
         # just one message
         self.assertEqual(func(bytearray('\x10foo\x10\x03')),
-                         '\x10foo\x10\x03')
+                         'foo')
         # one message with extra characters
         self.assertEqual(func(bytearray('\x10foo\x10\x03bar')),
-                         '\x10foo\x10\x03')
+                         'foo')
         # two messages, extract ONE
         self.assertEqual(func(bytearray('\x10foo\x10\x03\x10bar\x10\x03')),
-                         '\x10foo\x10\x03')
+                         'foo')
+        # escaped characters, squash them
+        self.assertEqual(func(bytearray('\x10foo\x10\x10bar\x10\x03')),
+                         'foo\x10bar')
+        # escaped characters, squash them
+        self.assertEqual(func(bytearray('\x10foo\x10\x10\x10\x10bar\x10\x03')),
+                         'foo\x10\x10bar')
         # escaped stop codon, so incomplete message
         self.assertEqual(func(bytearray('\x10foo\x10\x10\x03')),
                          None)
         # escaped first stop codon, complete message
         self.assertEqual(func(bytearray('\x10foo\x10\x10\x03\x10\x03')),
-                         '\x10foo\x10\x10\x03\x10\x03')
+                         'foo\x10\x03')
 
     def test_extract_message_from_buffer_deletes_from_buffer(self):
         buff = bytearray('\x10foo\x10\x03barbaz')
