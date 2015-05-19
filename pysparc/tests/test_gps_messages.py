@@ -121,21 +121,5 @@ class GPSMessageFactoryTest(unittest.TestCase):
     #     gps_messages.GPSMessageFactory(sentinel.buffer)
 
 
-# class GPSMessageFactoryTest(unittest.TestCase):
-#
-#     def setUp(self):
-#         patcher1 = patch('pysparc.gps_messages.GPSMessage', autospec=True)
-#         self.addCleanup(patcher1.stop)
-#         self.mock_GPSMessage = patcher1.start()
-#
-#     def test_factory_validates_start_codon(self):
-#         gps_messages.GPSMessageFactory(sentinel.msg)
-#         self.mock_GPSMessage.validate_message_start.assert_called_once_with(
-#             sentinel.msg)
-#
-#     def test_factory_strips_start_of_message_to_find_start_codon(self):
-#         msg = '\x10foo'
-
-
 if __name__ == '__main__':
     unittest.main()
