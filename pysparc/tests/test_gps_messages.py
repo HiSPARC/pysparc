@@ -1,6 +1,7 @@
+import logging
 import unittest
 
-from mock import patch, sentinel, Mock, create_autospec
+from mock import patch, sentinel, Mock, MagicMock, create_autospec
 
 from pysparc import messages, gps_messages
 
@@ -69,16 +70,7 @@ class GPSMessageTest(unittest.TestCase):
 class GPSMessageFactoryTest(unittest.TestCase):
 
     def setUp(self):
-        # class MockGPSMessage(gps_messages.GPSMessage):
-        #
-        #     @classmethod
-        #     def __subclasses__(cls):
-        #         pass
-        #
-        # patcher1 = patch('pysparc.gps_messages.GPSMessage',
-        #                  autospec=MockGPSMessage)
-
-        patcher1 = patch('pysparc.gps_messages.GPSMessage', autospec=True)
+        patcher1 = patch('pysparc.gps_messages.GPSMessage')
         patcher2 = patch('pysparc.gps_messages.find_message_class')
         self.addCleanup(patcher1.stop)
         self.addCleanup(patcher2.stop)
@@ -109,17 +101,42 @@ class GPSMessageFactoryTest(unittest.TestCase):
         mock_Class.assert_called_once_with(sentinel.msg)
         self.assertIs(inst, mock_instance)
 
-    # def test_factory_calls_all_is_message_for(self):
-    #     # msgs = []
-    #     # for i in range(3):
-    #     #     msgs.append(Mock(autospec=True,
-    #     #                      spec='pysparc.gps_messages.GPSMessage'))
-    #
-    #     self.mock_GPSMessage.__subclasses__ = Mock()
-    #     # self.mock_GPSMessage.__subclasses__.return_value = None
-    #
-    #     gps_messages.GPSMessageFactory(sentinel.buffer)
+
+class FindMessageForTest(unittest.TestCase):
+
+    class MockGPSMessage(gps_messages.GPSMessage):
+
+        __subclasses__ = Mock()
+
+    def test_find_message_class_calls_all_is_message_for_and_raises(self):
+        msgs = []
+        for i in range(3):
+            msg = create_autospec(gps_messages.GPSMessage)
+            msg.is_message_for.return_value = False
+            msgs.append(msg)
+        self.MockGPSMessage.__subclasses__.return_value = msgs
+        mock_msg = MagicMock()
+
+        self.assertRaises(gps_messages.UnknownMessageError,
+                          gps_messages.find_message_class, mock_msg,
+                          self.MockGPSMessage)
+
+        for msg in msgs:
+            msg.is_message_for.assert_called_once_with(mock_msg)
+
+    def test_find_message_class_returns_instance(self):
+        Msg = Mock()
+        Msg.is_message_for.return_value = True
+        Msg.return_value = sentinel.instance
+        self.MockGPSMessage.__subclasses__.return_value = [Msg]
+
+        actual = gps_messages.find_message_class(sentinel.msg,
+                                                 self.MockGPSMessage)
+
+        Msg.assert_called_once_with(sentinel.msg)
+        self.assertEqual(actual, sentinel.instance)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.CRITICAL)
     unittest.main()

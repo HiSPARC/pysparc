@@ -10,8 +10,7 @@ import struct
 import logging
 import re
 
-from messages import (BaseMessage, MessageError, StartCodonError,
-                      CorruptMessageError)
+from messages import BaseMessage, MessageError
 
 
 logger = logging.getLogger(__name__)
@@ -20,6 +19,12 @@ logger = logging.getLogger(__name__)
 msg_ids = {'primary_timing': 0x8fab,
            'supplemental_timing': 0x8fac,
            }
+
+
+class UnknownMessageError(MessageError):
+
+    pass
+
 
 class GPSMessage(BaseMessage):
 
@@ -136,4 +141,7 @@ def find_message_class(msg, cls):
     :param cls: the parent class implementing the message types.
 
     """
-    pass
+    for klass in cls.__subclasses__():
+        if klass.is_message_for(msg):
+            return klass(msg)
+    raise UnknownMessageError("Unknown message: %r" % msg[:5])
