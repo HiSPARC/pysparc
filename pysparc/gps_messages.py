@@ -39,7 +39,21 @@ class GPSMessage(BaseMessage):
 
     @classmethod
     def extract_message_from_buffer(cls, buff):
-        pass
+        idx = None
+        # If the number of DLEs is even, they are effectively all escaped and
+        # are not part of the stop codon. If the number is odd, the final one
+        # is *not* escaped, and is part of the stop codon.
+        for match in stop_codon_pattern.finditer(buff):
+            # we found something that looks like a stop codon
+            group = match.group()
+            if (group.count('\x10') % 2 == 1):
+                # number of DLEs (first byte of stop codon) is odd
+                idx = match.end()
+                # this is the message
+                msg = str(buff[:idx])
+                # remove message from buffer
+                del buff[:idx]
+                return msg
 
 
 class ReportSuperPacket(GPSMessage):
