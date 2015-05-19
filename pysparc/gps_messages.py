@@ -78,6 +78,7 @@ class PrimaryTimingPacket(ReportSuperPacket):
         self.parse_message(buff)
 
     def parse_message(self, buff):
+        logger.warning("FIXME, don't search for messages")
         idx = None
         # If the number of DLEs is even, they are effectively all escaped and
         # are not part of the stop codon. If the number is odd, the final one is
@@ -117,6 +118,7 @@ class SupplementalTimingPacket(ReportSuperPacket):
         self.parse_message(buff)
 
     def parse_message(self, buff):
+        logger.warning("FIXME, don't search for messages")
         idx = None
         for match in stop_codon_pattern.finditer(buff):
             group = match.group()
