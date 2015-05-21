@@ -89,6 +89,12 @@ class GPSMessageFactoryTest(unittest.TestCase):
         self.mock_find_message_class.assert_called_once_with(
             sentinel.msg, gps_messages.GPSMessage)
 
+    def test_factory_return_immediately_if_no_message(self):
+        self.mock_GPSMessage.extract_message_from_buffer.return_value = \
+            None
+        gps_messages.GPSMessageFactory(sentinel.buffer)
+        self.assertFalse(self.mock_find_message_class.called)
+
     def test_factory_returns_message_instance(self):
         self.mock_GPSMessage.extract_message_from_buffer.return_value = \
             sentinel.msg
