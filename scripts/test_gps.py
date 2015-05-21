@@ -1,7 +1,4 @@
 import logging
-import re
-import struct
-import time
 
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
@@ -21,8 +18,6 @@ class Main(object):
         self.device.close()
 
     def run(self):
-        pattern = re.compile('\x10+\x03')
-
         try:
             while True:
                 msg = self.gps.read_message()
@@ -36,7 +31,7 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     app = Main()
     buff = app.run()

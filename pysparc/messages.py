@@ -91,7 +91,6 @@ class BaseMessage(object):
     container_format = '%s'
     codons = {'start': None, 'stop': None}
 
-
     def __init__(self):
         self.data = []
 
