@@ -48,6 +48,12 @@ class FtdiChipTest(unittest.TestCase):
         device = ftdi_chip.FtdiChip()
         mock_open.assert_called_once_with()
 
+    def test_set_line_settings(self):
+        self.device.set_line_settings(sentinel.bits, sentinel.parity,
+                                      sentinel.stop_bit)
+        self.mock_device.ftdi_fn.ftdi_set_line_property.assert_called_once_with(
+            sentinel.bits, sentinel.stop_bit, sentinel.parity)
+
     def test_flush_flushes_device(self):
         self.device.flush()
         self.mock_device.flush.assert_called_once_with()
@@ -238,6 +244,13 @@ class FtdiChipTestWithClosedDevice(unittest.TestCase):
         mock_Device.side_effect = ftdi_chip.pylibftdi.FtdiError(msg)
         self.assertRaisesRegexp(ftdi_chip.DeviceError, msg,
                                 self.device.open)
+
+    @patch('pysparc.ftdi_chip.pylibftdi.Device')
+    def test_open_sets_latency_timer(self, mock_Device):
+        # explicitly set timer, required on some linux systems
+        mock_device = mock_Device.return_value
+        self.device.open()
+        mock_device.ftdi_fn.ftdi_set_latency_timer.assert_called_once_with(16)
 
     @patch('pysparc.ftdi_chip.pylibftdi.Device')
     @patch.object(ftdi_chip.FtdiChip, 'flush')

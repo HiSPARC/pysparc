@@ -75,8 +75,6 @@ class Main(object):
                         stew.add_one_second_message(msg)
                         logging.debug("One-second received: %d", msg.timestamp)
                 else:
-                    # regretfully required on linux systems
-                    time.sleep(.016)
                     if t - t_msg > 5:
                         logging.warning("Hardware is silent, resetting.")
                         self.device.reset_hardware()
