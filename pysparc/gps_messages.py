@@ -134,12 +134,12 @@ def GPSMessageFactory(buff):
     msg = GPSMessage.extract_message_from_buffer(buff)
     if msg:
         try:
-            cls = find_message_class(msg, GPSMessage)
+            klass = find_message_class(msg, GPSMessage)
         except UnknownMessageError as e:
             logger.error(e)
             return None
         else:
-            return cls(msg)
+            return klass(msg)
     else:
         return None
 
@@ -152,9 +152,10 @@ def find_message_class(msg, cls):
 
     :param msg: a single raw message
     :param cls: the parent class implementing the message types.
+    :return: the class implementing the correct message type.
 
     """
     for klass in cls.__subclasses__():
         if klass.is_message_for(msg):
-            return klass(msg)
+            return klass
     raise UnknownMessageError("Unknown message: %r" % msg[:5])

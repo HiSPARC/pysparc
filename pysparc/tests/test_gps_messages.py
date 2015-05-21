@@ -159,17 +159,16 @@ class FindMessageForTest(unittest.TestCase):
         for msg in msgs:
             msg.is_message_for.assert_called_once_with(mock_msg)
 
-    def test_find_message_class_returns_instance(self):
+    def test_find_message_class_returns_class(self):
         Msg = Mock()
         Msg.is_message_for.return_value = True
-        Msg.return_value = sentinel.instance
         self.MockGPSMessage.__subclasses__.return_value = [Msg]
 
         actual = gps_messages.find_message_class(sentinel.msg,
                                                  self.MockGPSMessage)
 
-        Msg.assert_called_once_with(sentinel.msg)
-        self.assertEqual(actual, sentinel.instance)
+        self.assertFalse(Msg.called)
+        self.assertEqual(actual, Msg)
 
 
 if __name__ == '__main__':
