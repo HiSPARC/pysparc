@@ -109,15 +109,24 @@ class PrimaryTimingPacket(GPSMessage):
 class SupplementalTimingPacket(GPSMessage):
 
     identifier = msg_ids['supplemental_timing']
-    msg_format = '>H68sH'
+    msg_format = '>H67s'
+    msg_format = '>H3BI2H4B2fI2f3df4s'
 
     def __init__(self, msg):
         super(SupplementalTimingPacket, self).__init__()
         self.parse_message(msg)
 
     def parse_message(self, msg):
-        (identifier, msg, end) = \
+        (identifier, self.receiver_mode, x1, self.survey_progress, x2, x3,
+         self.alarms, self.gps_status, x4, spare1, spare2, self.clock_bias,
+         self.clock_bias_rate, x5, x6, self.temperature, self.latitude,
+         self.longitude, self.altitude, self.pps_quantization_error, spare3) =\
             struct.unpack(self.msg_format, msg)
+
+    def __str__(self):
+        return "Supplemental Timing Packet: mode: %d, alarms: %s, " \
+               "status: %d" % (self.receiver_mode, bin(self.alarms),
+                               self.gps_status)
 
 
 def GPSMessageFactory(buff):
