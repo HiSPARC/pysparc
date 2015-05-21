@@ -29,28 +29,6 @@ class Main(object):
                 if msg:
                     print msg
 
-                # self.gps.read_into_buffer()
-                # idx = None
-                # msg = ''
-                # for match in pattern.finditer(self.gps._buffer):
-                #     group = match.group()
-                #     if (group.count('\x10') % 2 == 1):
-                #         idx = match.end()
-                #         break
-                # if idx:
-                #     msg = str(self.gps._buffer[:idx])
-                #     del self.gps._buffer[:idx]
-                #     msg2 = msg.replace('\x10\x10', '\x10')
-                #
-                # if msg[:3] == '\x10\x8f\xab':
-                #     print '%r ... %r %d %d %d' % (msg[:3], msg[-2:], len(msg), len(msg2), msg.count('\x10'))
-                #     if len(msg2) == 21:
-                #         tow, week, offset = struct.unpack_from('>LHh', msg[3:])
-                #         print tow, week, offset
-
-                # if len(self.gps._buffer) > 4096:
-                #     break
-                # time.sleep(.1)
         except KeyboardInterrupt:
             logging.info("Keyboard interrupt, shutting down.")
 
