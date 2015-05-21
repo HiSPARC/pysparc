@@ -19,7 +19,7 @@ class GPSMessageTest(unittest.TestCase):
         self.assertIsInstance(self.msg, messages.BaseMessage)
 
     def test_attributes(self):
-        self.assertEqual(self.msg.container_format, '>BB%sH')
+        self.assertEqual(self.msg.container_format, '>B%sH')
 
     def test_extract_message_from_buffer(self):
         func = gps_messages.GPSMessage.extract_message_from_buffer
@@ -56,15 +56,35 @@ class GPSMessageTest(unittest.TestCase):
         gps_messages.GPSMessage.extract_message_from_buffer(buff)
         self.assertEqual(buff, 'barbaz')
 
-    @patch.object(gps_messages.GPSMessage, 'identifier')
-    def test_is_message_for(self, identifier):
+    def test_is_message_for_returns_result(self):
+        class Fake(gps_messages.GPSMessage):
+            identifier = 0x00
+
         msg = create_autospec(str)
         msg.startswith.return_value = sentinel.value
 
-        actual = gps_messages.GPSMessage.is_message_for(msg)
+        actual = Fake.is_message_for(msg)
 
-        msg.startswith.assert_called_once_with(identifier)
         self.assertEqual(actual, sentinel.value)
+
+    def test_is_message_for_uses_identifiers(self):
+        class Fake(gps_messages.GPSMessage):
+            pass
+        msg = create_autospec(str)
+
+        Fake.identifier = None
+        result = Fake.is_message_for(msg)
+        self.assertFalse(result)
+
+        msg.reset_mock()
+        Fake.identifier = 0xff
+        Fake.is_message_for(msg)
+        msg.startswith.assert_called_once_with('\xff')
+
+        msg.reset_mock()
+        Fake.identifier = 0xffee
+        Fake.is_message_for(msg)
+        msg.startswith.assert_called_once_with('\xff\xee')
 
 
 class GPSMessageFactoryTest(unittest.TestCase):

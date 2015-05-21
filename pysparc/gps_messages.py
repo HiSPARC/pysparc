@@ -33,7 +33,7 @@ class GPSMessage(BaseMessage):
     Base and factory class for GPS hardware messages.
 
     """
-    container_format = '>BB%sH'
+    container_format = '>B%sH'
     codons = {'start': 0x10, 'stop': 0x1003}
 
     # Match ETX and all directly preceding DLEs, per the Trimble manual.
@@ -77,7 +77,12 @@ class GPSMessage(BaseMessage):
         :return: True if this class can handle the message. False otherwise.
 
         """
-        return msg.startswith(cls.identifier)
+        if cls.identifier is None:
+            return False
+        elif cls.identifier <= 0xff:
+            return msg.startswith(chr(cls.identifier))
+        else:
+            return msg.startswith(struct.pack('>H', cls.identifier))
 
 
 class PrimaryTimingPacket(GPSMessage):
