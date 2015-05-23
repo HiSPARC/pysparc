@@ -30,9 +30,10 @@ class Main(object):
         try:
             while True:
                 if time.time() - t0 > 5 and has_reset is False:
-                    msg = gps_messages.ResetMessage('warm')
+                    msg = gps_messages.ResetMessage('factory')
                     self.gps.send_message(msg)
-                    msg = gps_messages.SetSurveyParameters(60)
+                    time.sleep(2.2)
+                    msg = gps_messages.SetSurveyParameters(86400)
                     self.gps.send_message(msg)
                     has_reset = True
 

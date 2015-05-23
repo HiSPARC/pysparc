@@ -153,6 +153,23 @@ class SupplementalTimingPacket(GPSMessage):
 
 class ResetMessage(GPSMessage):
 
+    """Reset the Trimble GPS hardware.
+
+    There are four different reset modes; this message implements three of
+    them: warm, cold and factory reset. A warm reset will clear the RAM but
+    keep all GPS data. A cold reset (equivalent to a power cycle) will clear
+    the RAM including the GPS data. The data is read back to RAM from the flash
+    ROM. A factory reset will clear the RAM, *and* the flash ROM.
+
+    Interestingly, once the reset is complete, the cold reset appears to have
+    kept the GPS location, but not the GPS time. That is set to 1999-8-22. In
+    contrast, the factory reset appears to have reset the GPS location (it is
+    set to 0., 0., 0.) but the GPS time is retained.
+
+    :param reset_mode: either 'warm', 'cold', or 'factory' (default).
+
+    """
+
     identifier = msg_ids['reset']
     msg_format = 'BB'
 

@@ -51,6 +51,10 @@ class GPSMessageTest(unittest.TestCase):
         self.assertEqual(func(bytearray('baz')),
                          None)
 
+        # incomplete message, no stop codon
+        self.assertEqual(func(bytearray('\x10foo')),
+                         None)
+
     def test_extract_message_from_buffer_deletes_from_buffer(self):
         buff = bytearray('\x10foo\x10\x03barbaz')
         gps_messages.GPSMessage.extract_message_from_buffer(buff)
