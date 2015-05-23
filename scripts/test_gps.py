@@ -24,13 +24,13 @@ class Main(object):
         has_reset = False
 
         # msg = gps_messages.ResetMessage(reset_mode='warm')
-        msg = gps_messages.SetInitialPosition(52, 4, 0)
-        self.gps.send_message(msg)
+        # msg = gps_messages.SetInitialPosition(52, 4, 0)
+        # self.gps.send_message(msg)
 
         try:
             while True:
                 if time.time() - t0 > 5 and has_reset is False:
-                    msg = gps_messages.ResetMessage('factory')
+                    msg = gps_messages.ResetMessage('warm')
                     self.gps.send_message(msg)
                     msg = gps_messages.SetSurveyParameters(60)
                     self.gps.send_message(msg)
