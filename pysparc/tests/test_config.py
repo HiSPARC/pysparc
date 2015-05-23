@@ -1,7 +1,7 @@
 import unittest
 import weakref
 
-from mock import patch, sentinel, Mock, MagicMock, mock_open, call, ANY
+from mock import patch, sentinel, Mock, MagicMock, call, ANY
 
 import pysparc.config
 
@@ -127,7 +127,8 @@ class ReadWriteConfigTest(unittest.TestCase):
 
     @patch.object(pysparc.config.Config, '__setattr__')
     @patch.object(pysparc.config, 'literal_eval')
-    def test_read_config_gets_all_members_except_device(self, mock_eval, mock_setattr):
+    def test_read_config_gets_all_members_except_device(self, mock_eval,
+                                                        mock_setattr):
         eval_value = mock_eval.return_value
 
         mock_configparser = Mock()
@@ -170,8 +171,8 @@ class WriteSettingTest(unittest.TestCase):
 
     def test_write_byte_setting_to_device_calls_map_setting(self):
         self.config._write_byte_setting_to_device(self.mock_setting)
-        self.mock_map_setting.assert_called_once_with(sentinel.value,
-            sentinel.low, sentinel.high, 0x00, 0xff)
+        self.mock_map_setting.assert_called_once_with(
+            sentinel.value, sentinel.low, sentinel.high, 0x00, 0xff)
 
     def test_write_byte_setting_to_device_creates_message(self):
         self.config._write_byte_setting_to_device(self.mock_setting)
