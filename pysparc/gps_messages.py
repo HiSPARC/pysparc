@@ -16,7 +16,8 @@ from messages import BaseMessage, MessageError
 logger = logging.getLogger(__name__)
 
 
-msg_ids = {'primary_timing': 0x8fab,
+msg_ids = {'reset': 0x1e,
+           'primary_timing': 0x8fab,
            'supplemental_timing': 0x8fac,
            }
 
@@ -84,6 +85,20 @@ class GPSMessage(BaseMessage):
         else:
             return msg.startswith(struct.pack('>H', cls.identifier))
 
+    def encode(self):
+        """Encode message to bytestream to be sent to the hardware.
+
+        For GPS messages, the identifier may be a byte or a word. If
+        :attr:`msg_format` is the empty string, autodetect the identifier size.
+
+        """
+        if self.msg_format == '':
+            if self.identifier <= 0xff:
+                self.msg_format = 'B'
+            else:
+                self.msg_format = 'H'
+        return super(GPSMessage, self).encode()
+
 
 class PrimaryTimingPacket(GPSMessage):
 
@@ -127,6 +142,11 @@ class SupplementalTimingPacket(GPSMessage):
         return "Supplemental Timing Packet: mode: %d, alarms: %s, " \
                "status: %d" % (self.receiver_mode, bin(self.alarms),
                                self.gps_status)
+
+
+class ResetMessage(GPSMessage):
+
+    identifier = msg_ids['reset']
 
 
 def GPSMessageFactory(buff):

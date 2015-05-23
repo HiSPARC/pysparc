@@ -86,6 +86,32 @@ class GPSMessageTest(unittest.TestCase):
         Fake.is_message_for(msg)
         msg.startswith.assert_called_once_with('\xff\xee')
 
+    @patch.object(messages.BaseMessage, 'encode')
+    def test_encode_calls_and_returns_super(self, mock_super):
+        encoded_msg = self.msg.encode()
+        mock_super.assert_called_once_with()
+        self.assertEqual(encoded_msg, mock_super.return_value)
+
+    @patch.object(messages.BaseMessage, 'encode')
+    def test_encode_sets_msg_format(self, mock_super):
+        self.msg.msg_format = ''
+        self.msg.identifier = 0xff
+        self.msg.encode()
+        self.assertEqual(self.msg.msg_format, 'B')
+
+        self.msg.msg_format = ''
+        self.msg.identifier = 0x100
+        self.msg.encode()
+        self.assertEqual(self.msg.msg_format, 'H')
+
+    def test_encode_acceptance(self):
+        class FakeMsg(gps_messages.GPSMessage):
+            identifier = 0x1234
+
+        f = FakeMsg()
+        encoded_msg = f.encode()
+        self.assertEqual(encoded_msg, '\x10\x12\x34\x10\x03')
+
 
 class GPSMessageFactoryTest(unittest.TestCase):
 
