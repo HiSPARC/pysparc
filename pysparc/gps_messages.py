@@ -9,6 +9,7 @@ Parse and operate on messages from and to the Trimble GPS hardware.
 import struct
 import logging
 import re
+from math import degrees, radians
 
 from messages import BaseMessage, MessageError
 
@@ -16,7 +17,11 @@ from messages import BaseMessage, MessageError
 logger = logging.getLogger(__name__)
 
 
-msg_ids = {'reset': 0x1e,
+msg_ids = {'unparsable_packet': 0x13,
+           'reset': 0x1e,
+           'set_initial_position': 0x32,
+           'software_version': 0x45,
+           'set_survey_parameters': 0x8ea9,
            'primary_timing': 0x8fab,
            'supplemental_timing': 0x8fac,
            }
@@ -124,7 +129,6 @@ class PrimaryTimingPacket(GPSMessage):
 class SupplementalTimingPacket(GPSMessage):
 
     identifier = msg_ids['supplemental_timing']
-    msg_format = '>H67s'
     msg_format = '>H3BI2H4B2fI2f3df4s'
 
     def __init__(self, msg):
@@ -138,6 +142,9 @@ class SupplementalTimingPacket(GPSMessage):
          self.longitude, self.altitude, self.pps_quantization_error, spare3) =\
             struct.unpack(self.msg_format, msg)
 
+        self.latitude = degrees(self.latitude)
+        self.longitude = degrees(self.longitude)
+
     def __str__(self):
         return "Supplemental Timing Packet: mode: %d, alarms: %s, " \
                "status: %d" % (self.receiver_mode, bin(self.alarms),
@@ -147,6 +154,79 @@ class SupplementalTimingPacket(GPSMessage):
 class ResetMessage(GPSMessage):
 
     identifier = msg_ids['reset']
+    msg_format = 'BB'
+
+    def __init__(self, reset_mode='warm'):
+        super(ResetMessage, self).__init__()
+
+        if reset_mode == 'factory':
+            self.data.append(0x46)
+        elif reset_mode == 'cold':
+            self.data.append(0x4b)
+        elif reset_mode == 'warm':
+            self.data.append(0x0e)
+        else:
+            raise ValueError("Unknown reset mode: %s" % reset_mode)
+
+
+class UnparsablePacket(GPSMessage):
+
+    identifier = msg_ids['unparsable_packet']
+
+    def __init__(self, msg):
+        super(UnparsablePacket, self).__init__()
+        self.parse_message(msg)
+
+    def parse_message(self, msg):
+        self.unparsable_msg = msg
+
+    def __str__(self):
+        return "Unparsable Packet: %r" % self.unparsable_msg
+
+
+class SoftwareVersionMessage(GPSMessage):
+
+    identifier = msg_ids['software_version']
+    msg_format = '11B'
+
+    def __init__(self, msg):
+        super(SoftwareVersionMessage, self).__init__()
+        self.parse_message(msg)
+
+    def parse_message(self, msg):
+        (identifier, self.version_major, self.version_minor,
+         self.version_month,  self.version_day,  self.version_year,
+         self.revision_major,  self.revision_minor, self.revision_month,
+         self.revision_day,  self.revision_year) = \
+            struct.unpack(self.msg_format, msg)
+
+    def __str__(self):
+        return "Firmware version: %d.%d. GPS revision: %d.%d" % \
+            (self.version_major, self.version_minor, self.revision_major,
+             self.revision_minor)
+
+
+class SetInitialPosition(GPSMessage):
+
+    identifier = msg_ids['set_initial_position']
+    msg_format = 'B3f'
+
+    def __init__(self, latitude, longitude, altitude):
+        super(SetInitialPosition, self).__init__()
+        latitude = radians(latitude)
+        longitude = radians(longitude)
+        self.data.extend([latitude, longitude, altitude])
+
+
+class SetSurveyParameters(GPSMessage):
+
+    identifier = msg_ids['set_survey_parameters']
+    msg_format = 'H2B2I'
+
+    def __init__(self, num_fixes=86400):
+        super(SetSurveyParameters, self).__init__()
+        # enable survey, save position, number of fixes, reserved
+        self.data.extend([1, 1, num_fixes, 0])
 
 
 def GPSMessageFactory(buff):
