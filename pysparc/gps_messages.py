@@ -11,7 +11,7 @@ import logging
 import re
 from math import degrees, radians
 
-from messages import BaseMessage, MessageError
+from messages import BaseMessage, MessageError, CorruptMessageError
 
 
 logger = logging.getLogger(__name__)
@@ -115,10 +115,13 @@ class PrimaryTimingPacket(GPSMessage):
         self.parse_message(msg)
 
     def parse_message(self, msg):
-        (identifier, self.time_of_week, self.week_number, self.utc_offset,
-         self.timing_flag, self.seconds, self.minutes, self.hours,
-         self.day_of_month, self.month, self.year) = \
-            struct.unpack(self.msg_format, msg)
+        try:
+            (identifier, self.time_of_week, self.week_number, self.utc_offset,
+             self.timing_flag, self.seconds, self.minutes, self.hours,
+             self.day_of_month, self.month, self.year) = \
+                struct.unpack(self.msg_format, msg)
+        except struct.error:
+            raise CorruptMessageError("Error unpacking message: %r" % msg)
 
     def __str__(self):
         return 'Primary Timing Packet: %d-%d-%d %d:%02d:%02d' % (
@@ -136,11 +139,14 @@ class SupplementalTimingPacket(GPSMessage):
         self.parse_message(msg)
 
     def parse_message(self, msg):
-        (identifier, self.receiver_mode, x1, self.survey_progress, x2, x3,
-         self.alarms, self.gps_status, x4, spare1, spare2, self.clock_bias,
-         self.clock_bias_rate, x5, x6, self.temperature, self.latitude,
-         self.longitude, self.altitude, self.pps_quantization_error, spare3) =\
-            struct.unpack(self.msg_format, msg)
+        try:
+            (identifier, self.receiver_mode, x1, self.survey_progress, x2, x3,
+             self.alarms, self.gps_status, x4, spare1, spare2, self.clock_bias,
+             self.clock_bias_rate, x5, x6, self.temperature, self.latitude,
+             self.longitude, self.altitude, self.pps_quantization_error,
+             spare3) = struct.unpack(self.msg_format, msg)
+        except struct.error:
+            raise CorruptMessageError("Error unpacking message: %r" % msg)
 
         self.latitude = degrees(self.latitude)
         self.longitude = degrees(self.longitude)
@@ -211,11 +217,14 @@ class SoftwareVersionMessage(GPSMessage):
         self.parse_message(msg)
 
     def parse_message(self, msg):
-        (identifier, self.version_major, self.version_minor,
-         self.version_month,  self.version_day,  self.version_year,
-         self.revision_major,  self.revision_minor, self.revision_month,
-         self.revision_day,  self.revision_year) = \
-            struct.unpack(self.msg_format, msg)
+        try:
+            (identifier, self.version_major, self.version_minor,
+             self.version_month, self.version_day, self.version_year,
+             self.revision_major, self.revision_minor, self.revision_month,
+             self.revision_day, self.revision_year) = \
+                struct.unpack(self.msg_format, msg)
+        except struct.error:
+            raise CorruptMessageError("Error unpacking message: %r" % msg)
 
     def __str__(self):
         return "Firmware version: %d.%d. GPS revision: %d.%d" % \

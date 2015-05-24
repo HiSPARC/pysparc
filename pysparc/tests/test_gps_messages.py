@@ -117,6 +117,21 @@ class GPSMessageTest(unittest.TestCase):
         self.assertEqual(encoded_msg, '\x10\x12\x34\x10\x03')
 
 
+class UnpackMessagesTest(unittest.TestCase):
+
+    def test_primary_timing_packet(self):
+        self.assertRaises(gps_messages.CorruptMessageError,
+                          gps_messages.PrimaryTimingPacket, 'msg')
+
+    def test_supplemental_timing_packet(self):
+        self.assertRaises(gps_messages.CorruptMessageError,
+                          gps_messages.SupplementalTimingPacket, 'msg')
+
+    def test_software_version_message(self):
+        self.assertRaises(gps_messages.CorruptMessageError,
+                          gps_messages.SoftwareVersionMessage, 'msg')
+
+
 class GPSMessageFactoryTest(unittest.TestCase):
 
     def setUp(self):
