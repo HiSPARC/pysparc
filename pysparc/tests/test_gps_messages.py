@@ -152,7 +152,7 @@ class GPSMessageFactoryTest(unittest.TestCase):
             sentinel.msg
         gps_messages.GPSMessageFactory(sentinel.buffer)
         self.mock_find_message_class.assert_called_once_with(
-            sentinel.msg, gps_messages.GPSMessage)
+            sentinel.msg, self.mock_GPSMessage)
 
     def test_factory_return_none_if_no_message(self):
         self.mock_GPSMessage.extract_message_from_buffer.return_value = \
@@ -180,6 +180,18 @@ class GPSMessageFactoryTest(unittest.TestCase):
         actual = gps_messages.GPSMessageFactory(sentinel.buffer)
 
         self.assertIsNone(actual)
+
+    @patch.object(gps_messages, 'logger', autospec=True)
+    def test_factory_catches_CorruptMessageError(self, mock_logger):
+        corrupt_message_error = gps_messages.CorruptMessageError()
+        mock_Class = Mock()
+        mock_Class.side_effect = corrupt_message_error
+        self.mock_find_message_class.return_value = mock_Class
+
+        actual = gps_messages.GPSMessageFactory(sentinel.buffer)
+
+        self.assertIsNone(actual)
+        mock_logger.error.assert_called_once_with(corrupt_message_error)
 
 
 class FindMessageForTest(unittest.TestCase):

@@ -274,7 +274,11 @@ def GPSMessageFactory(buff):
             logger.error(e)
             return None
         else:
-            return klass(msg)
+            try:
+                return klass(msg)
+            except CorruptMessageError as exc:
+                logger.error(exc)
+                return None
     else:
         return None
 
