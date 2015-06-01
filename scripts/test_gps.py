@@ -21,7 +21,7 @@ class Main(object):
         self.gps.close()
 
     def run(self):
-        t0 = time.time()
+        t0 = t1 = time.time()
         has_reset = False
 
         # msg = gps_messages.ResetMessage(reset_mode='warm')
@@ -30,13 +30,17 @@ class Main(object):
 
         try:
             while True:
-                # if time.time() - t0 > 5 and has_reset is False:
-                #     msg = gps_messages.ResetMessage('factory')
-                #     self.gps.send_message(msg)
-                #     time.sleep(2.2)
-                #     msg = gps_messages.SetSurveyParameters(86400)
-                #     self.gps.send_message(msg)
-                #     has_reset = True
+                if time.time() - t1 > 1:
+                    t1 = time.time()
+                    self.gps._device.write('\x10\xbb\x00\x10\x03')
+
+                if time.time() - t0 > 5 and has_reset is False:
+                    msg = gps_messages.ResetMessage('factory')
+                    self.gps.send_message(msg)
+                    time.sleep(2.2)
+                    msg = gps_messages.SetSurveyParameters(10)
+                    self.gps.send_message(msg)
+                    has_reset = True
 
                 msg = self.gps.read_message()
                 if msg:

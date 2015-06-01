@@ -297,4 +297,4 @@ def find_message_class(msg, cls):
     for klass in cls.__subclasses__():
         if klass.is_message_for(msg):
             return klass
-    raise UnknownMessageError("Unknown message: %r" % msg[:5])
+    raise UnknownMessageError("Unknown message: %r" % msg)
