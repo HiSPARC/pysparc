@@ -38,7 +38,7 @@ class Main(object):
                     msg = gps_messages.ResetMessage('factory')
                     self.gps.send_message(msg)
                     time.sleep(2.2)
-                    msg = gps_messages.SetSurveyParameters(10)
+                    msg = gps_messages.SetSurveyParameters(86400)
                     self.gps.send_message(msg)
                     has_reset = True
 
