@@ -19,7 +19,6 @@ Contents
 
 import logging
 import time
-import random
 
 import ftdi_chip
 from ftdi_chip import FtdiChip
