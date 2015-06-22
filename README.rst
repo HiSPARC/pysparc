@@ -47,6 +47,22 @@ interface and a new LabVIEW interface is in development for driving the
 Muonlab III hardware.
 
 
+Updating the Raspberry Pi's
+---------------------------
+
+We use Ansible to keep all Raspberry Pi's up to date. Run the Ansible commands
+from the directory containing the ``ansible.cfg`` file. That is, the project
+root directory.
+
+To update all machines (dev and production), run::
+
+    $ ansible-playbook provisioning/playbook.yml
+
+To update only the machines in the ``dev`` group, run::
+
+    $ ansible-playbook provisioning/playbook.yml -l dev
+
+
 Creating the disk image for provisioning a Raspberry Pi
 -------------------------------------------------------
 
