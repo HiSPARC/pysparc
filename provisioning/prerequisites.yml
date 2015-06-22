@@ -11,6 +11,7 @@
     - redis-server
     - python-redis
     - libftdi-dev
+    - hdf5-tools
 
 - name: Install PySPARC prerequisites (python packages)
   pip: name={{ item }} state=present
