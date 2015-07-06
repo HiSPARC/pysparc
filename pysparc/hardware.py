@@ -24,6 +24,7 @@ import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
                       InitializeMessage, MeasuredDataMessage)
+import gps_messages
 from gps_messages import GPSMessageFactory
 import config
 
@@ -323,3 +324,8 @@ class TrimbleGPS(BaseHardware):
         """
         self.read_into_buffer()
         return GPSMessageFactory(self._buffer)
+
+    def reset_defaults(self):
+        """Reset GPS factory defaults."""
+
+        self.send_message(gps_messages.ResetMessage(reset_mode='factory'))

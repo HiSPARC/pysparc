@@ -5,7 +5,7 @@ import ConfigParser
 
 import pkg_resources
 
-from pysparc.hardware import HiSPARCII, HiSPARCIII
+from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
 from pysparc.align_adcs import AlignADCs
 from pysparc.events import Stew
@@ -26,6 +26,7 @@ class Main(object):
             self.device = HiSPARCIII()
         except DeviceNotFoundError:
             self.device = HiSPARCII()
+        self.gps = TrimbleGPS()
         self.initialize_device()
 
         station_name = self.config.get('DAQ', 'station_name')
@@ -47,12 +48,18 @@ class Main(object):
         logging.info("Initializing device configuration")
         self.device.config.read_config(self.config)
 
+        if self.config.getboolean('DAQ', 'force_reset_gps'):
+            logging.info("Force reset GPS to factory defaults.")
+            self.gps.reset_defaults()
+            self.config.set('DAQ', 'force_reset_gps', False)
+
         if self.config.getboolean('DAQ', 'force_align_adcs'):
             logging.info("Force aligning ADCs.")
             align_adcs = AlignADCs(self.device)
             align_adcs.align()
             self.config.set('DAQ', 'force_align_adcs', False)
-            self.write_config()
+
+        self.write_config()
 
     def run(self):
         stew = Stew()
