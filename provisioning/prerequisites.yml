@@ -9,7 +9,6 @@
     - python-tables
     - python-flask
     - redis-server
-    - python-redis
     - libftdi-dev
     - hdf5-tools
 
@@ -22,6 +21,7 @@
     - atom
     - lazy
     - requests>=2.4.1
+    - redis
 
 # DF: Ok, so here I was following the Redis FAQ to be able to overcommit
 # memory. I was going to look at the reason for the large DB next, but
