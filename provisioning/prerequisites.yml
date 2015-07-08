@@ -21,7 +21,7 @@
     - atom
     - lazy
     - requests>=2.4.1
-    - redis
+    - redis==2.10.3
 
 # DF: Ok, so here I was following the Redis FAQ to be able to overcommit
 # memory. I was going to look at the reason for the large DB next, but
