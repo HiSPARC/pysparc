@@ -22,3 +22,14 @@
     - atom
     - lazy
     - requests>=2.4.1
+
+- name: Make sure memory can be overcommitted (for Redis)
+  lineinfile: dest=/etc/sysctl.conf state=present regexp=^vm.overcommit_memory
+              line=vm.overcommit_memory=1
+  register: result
+  sudo: yes
+
+- name: Reload kernel parameters
+  service: name=procps state=restarted
+  when: result|changed
+  sudo: yes
