@@ -9,8 +9,8 @@
     - python-tables
     - python-flask
     - redis-server
-    - python-redis
     - libftdi-dev
+    - hdf5-tools
 
 - name: Install PySPARC prerequisites (python packages)
   pip: name={{ item }} state=present
@@ -21,3 +21,21 @@
     - atom
     - lazy
     - requests>=2.4.1
+    - redis==2.10.3
+
+# DF: Ok, so here I was following the Redis FAQ to be able to overcommit
+# memory. I was going to look at the reason for the large DB next, but
+# suspected that the safe-mode was preventing PySPARC from uploading events and
+# emptying the DB. Next thing I know the database is still growing, and an
+# Ansible run with apt-get upgrade triggers the OOM killer and I end up with an
+# unstable system. Yikes. Reversing the decision.
+- name: Make sure memory can *not* be overcommitted (for Redis)
+  lineinfile: dest=/etc/sysctl.conf state=present regexp=^vm.overcommit_memory
+              line=vm.overcommit_memory=0
+  register: result
+  sudo: yes
+
+- name: Reload kernel parameters
+  service: name=procps state=restarted
+  when: result|changed
+  sudo: yes

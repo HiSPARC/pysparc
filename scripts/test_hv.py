@@ -113,7 +113,7 @@ class Main(object):
             try:
                 self.storage_manager.store_event(event)
             except Exception as e:
-                logging.warning(str(e))
+                logging.error(str(e))
         logging.debug("Stored %d events.", len(events))
 
     def write_config(self):
