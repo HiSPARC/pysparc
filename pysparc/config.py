@@ -1,4 +1,3 @@
-import struct
 import logging
 import ConfigParser
 import weakref

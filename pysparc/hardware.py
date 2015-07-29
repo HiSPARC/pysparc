@@ -19,12 +19,12 @@ Contents
 
 import logging
 import time
-import random
 
 import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
                       InitializeMessage, MeasuredDataMessage)
+import gps_messages
 from gps_messages import GPSMessageFactory
 import config
 
@@ -324,3 +324,14 @@ class TrimbleGPS(BaseHardware):
         """
         self.read_into_buffer()
         return GPSMessageFactory(self._buffer)
+
+    def reset_defaults(self):
+        """Reset GPS defaults.
+
+        First, the Trimble GPS unit is reset to factory settings. Then, the
+        survey length is set to a full day.
+
+        """
+
+        self.send_message(gps_messages.ResetMessage(reset_mode='factory'))
+        self.send_message(gps_messages.SetSurveyParameters(num_fixes=86400))
