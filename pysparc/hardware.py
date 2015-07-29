@@ -326,6 +326,12 @@ class TrimbleGPS(BaseHardware):
         return GPSMessageFactory(self._buffer)
 
     def reset_defaults(self):
-        """Reset GPS factory defaults."""
+        """Reset GPS defaults.
+
+        First, the Trimble GPS unit is reset to factory settings. Then, the
+        survey length is set to a full day.
+
+        """
 
         self.send_message(gps_messages.ResetMessage(reset_mode='factory'))
+        self.send_message(gps_messages.SetSurveyParameters(num_fixes=86400))
