@@ -16,7 +16,7 @@
   pip: name={{ item }} state=present
   sudo: yes
   with_items:
-    - mock
+    - mock==1.1.0
     - pylibftdi
     - atom
     - lazy
