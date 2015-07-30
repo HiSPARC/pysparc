@@ -38,6 +38,7 @@
     - name: ensure pysparc is started
       supervisorctl: name=pysparc state=started
       when: p.stat.isreg is not defined
+      when: inventory_hostname != "vagrant"
 
   handlers:
     - include: handlers.yml
