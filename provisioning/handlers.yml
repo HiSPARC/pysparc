@@ -22,3 +22,4 @@
 
 - name: restart pysparc
   supervisorctl: name=pysparc state=restarted
+  when: inventory_hostname != "vagrant"
