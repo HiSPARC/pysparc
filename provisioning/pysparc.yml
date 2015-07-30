@@ -32,3 +32,7 @@
   sudo: yes
   notify: restart pysparc
   tags: pysparc
+
+- name: ensure pysparc is running
+  supervisorctl: name=pysparc state=started
+  tags: pysparc
