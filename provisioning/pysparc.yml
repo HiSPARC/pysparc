@@ -35,4 +35,5 @@
 
 - name: ensure pysparc is running
   supervisorctl: name=pysparc state=started
+  when: inventory_hostname != "vagrant"
   tags: pysparc
