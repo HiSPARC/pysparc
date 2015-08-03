@@ -121,8 +121,8 @@ class StorageManager(object):
 
         """
 
-        key = 'event_%d' % event.ext_timestamp
         pickled_event = pickle.dumps(event)
+        key = 'event_%s' % hashlib.md5(pickled_event).hexdigest()
         self.kvstore.hmset(key, {'event': pickled_event, 'count': 0})
 
         for queue, worker in self.workers:
