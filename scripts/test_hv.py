@@ -137,5 +137,7 @@ if __name__ == '__main__':
     requests_log.setLevel(logging.WARNING)
 
     app = Main()
-    app.run()
-    app.close()
+    try:
+        app.run()
+    finally:
+        app.close()
