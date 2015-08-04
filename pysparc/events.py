@@ -2,6 +2,7 @@ from __future__ import division
 
 import collections
 import logging
+import time
 import zlib
 
 import numpy as np
@@ -251,3 +252,10 @@ class Event(object):
         traces -= baselines.T
         integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
         self.integrals = integrals + [-1, -1]
+
+
+class ConfigEvent(object):
+
+    def __init__(self, app_config, master_config):
+        self.app = app_config
+        self.master = master_config
