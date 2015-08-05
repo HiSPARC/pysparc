@@ -27,6 +27,7 @@ Contents
 
 import base64
 import cPickle as pickle
+import datetime
 import hashlib
 import logging
 import re
@@ -37,6 +38,8 @@ import tables
 import requests
 from requests.exceptions import ConnectionError, Timeout
 import redis
+
+import pysparc.events
 
 
 logger = logging.getLogger(__name__)
@@ -421,10 +424,16 @@ class NikhefDataStore(object):
     def store_event(self, event):
         """Store an event.
 
-        Override this method.
+        Check the type of the event (HiSPARC, config, ...) and store
+        accordingly.
 
         """
-        data = self._create_event_container(event)
+        if type(event) == pysparc.events.Event:
+            data = self._create_event_container(event)
+        elif type(event) == pysparc.events.ConfigEvent:
+            data = self._create_config_container(event)
+        else:
+            raise StorageError("Unknown event type: %s" % type(event))
         self._upload_data(data)
 
     def _create_event_container(self, event):
@@ -454,6 +463,115 @@ class NikhefDataStore(object):
         trace_ch1 = base64.b64encode(event.zlib_trace_ch1)
         trace_ch2 = base64.b64encode(event.zlib_trace_ch2)
         self._add_values_to_datalist(datalist, 'TR', [trace_ch1, trace_ch2])
+
+        event_list = [{'header': header, 'datalist': datalist}]
+        return event_list
+
+    def _create_config_container(self, config):
+        """Encapsulate the configuration in a container for the datastore.
+
+        This hurts.  But it is necessary for historical reasons.
+
+        :param event: hardware config object.
+        :returns: container for the event data.
+
+        """
+        header = {'eventtype_uploadcode': 'CFG',
+                  'datetime': datetime.datetime.now(),
+                  'nanoseconds': 0}
+
+        datalist = []
+        # self._add_value_to_datalist(datalist, 'CFG_PRECTIME',
+        #                             config.pre_coincidence_time)
+        # self._add_value_to_datalist(datalist, 'CFG_CTIME',
+        #                             config.coincidence_time)
+        # self._add_value_to_datalist(datalist, 'CFG_POSTCTIME',
+        #                             config.post_coincidence_time)
+
+        # 'CFG_GPS_LAT': 'gps_latitude',
+        # 'CFG_GPS_LONG': 'gps_longitude',
+        # 'CFG_GPS_ALT': 'gps_altitude',
+        # 'CFG_MAS_VERSION': 'mas_version',
+        # 'CFG_SLV_VERSION': 'slv_version',
+        # 'CFG_TRIGLOWSIG': 'trig_low_signals',
+        # 'CFG_TRIGHIGHSIG': 'trig_high_signals',
+        # 'CFG_TRIGEXT': 'trig_external',
+        # 'CFG_TRIGANDOR': 'trig_and_or',
+        # 'CFG_DETNUM': 'detnum',
+        # 'CFG_PASSWORD': 'password',
+        # 'CFG_SPAREBYTES': 'spare_bytes',
+        # 'CFG_USEFILTER': 'use_filter',
+        # 'CFG_USEFILTTHRES': 'use_filter_threshold',
+        # 'CFG_REDUCE': 'reduce_data',
+        # 'CFG_BUFFER': 'buffer',
+        # 'CFG_STARTMODE': 'startmode',
+        # 'CFG_DELAYSCREEN': 'delay_screen',
+        # 'CFG_DELAYCHECK': 'delay_check',
+        # 'CFG_DELAYERROR': 'delay_error',
+        # 'CFG_MAS_CH1THRLOW': 'mas_ch1_thres_low',
+        # 'CFG_MAS_CH1THRHIGH': 'mas_ch1_thres_high',
+        # 'CFG_MAS_CH2THRLOW': 'mas_ch2_thres_low',
+        # 'CFG_MAS_CH2THRHIGH': 'mas_ch2_thres_high',
+        # 'CFG_MAS_CH1INTTIME': 'mas_ch1_inttime',
+        # 'CFG_MAS_CH2INTTIME': 'mas_ch2_inttime',
+        # 'CFG_MAS_CH1VOLT': 'mas_ch1_voltage',
+        # 'CFG_MAS_CH2VOLT': 'mas_ch2_voltage',
+        # 'CFG_MAS_CH1CURR': 'mas_ch1_current',
+        # 'CFG_MAS_CH2CURR': 'mas_ch2_current',
+        # 'CFG_MAS_COMPTHRLOW': 'mas_comp_thres_low',
+        # 'CFG_MAS_COMPTHRHIGH': 'mas_comp_thres_high',
+        # 'CFG_MAS_MAXVOLT': 'mas_max_voltage',
+        # 'CFG_MAS_RESET': 'mas_reset',
+        # 'CFG_MAS_CH1GAINPOS': 'mas_ch1_gain_pos',
+        # 'CFG_MAS_CH1GAINNEG': 'mas_ch1_gain_neg',
+        # 'CFG_MAS_CH2GAINPOS': 'mas_ch2_gain_pos',
+        # 'CFG_MAS_CH2GAINNEG': 'mas_ch2_gain_neg',
+        # 'CFG_MAS_CH1OFFPOS': 'mas_ch1_offset_pos',
+        # 'CFG_MAS_CH1OFFNEG': 'mas_ch1_offset_neg',
+        # 'CFG_MAS_CH2OFFPOS': 'mas_ch2_offset_pos',
+        # 'CFG_MAS_CH2OFFNEG': 'mas_ch2_offset_neg',
+        # 'CFG_MAS_COMMOFF': 'mas_common_offset',
+        # 'CFG_MAS_INTVOLTAGE': 'mas_internal_voltage',
+        # 'CFG_MAS_CH1ADCGAIN': 'mas_ch1_adc_gain',
+        # 'CFG_MAS_CH1ADCOFF': 'mas_ch1_adc_offset',
+        # 'CFG_MAS_CH2ADCGAIN': 'mas_ch2_adc_gain',
+        # 'CFG_MAS_CH2ADCOFF': 'mas_ch2_adc_offset',
+        # 'CFG_MAS_CH1COMPGAIN': 'mas_ch1_comp_gain',
+        # 'CFG_MAS_CH1COMPOFF': 'mas_ch1_comp_offset',
+        # 'CFG_MAS_CH2COMPGAIN': 'mas_ch2_comp_gain',
+        # 'CFG_MAS_CH2COMPOFF': 'mas_ch2_comp_offset',
+        # 'CFG_SLV_CH1THRLOW': 'slv_ch1_thres_low',
+        # 'CFG_SLV_CH1THRHIGH': 'slv_ch1_thres_high',
+        # 'CFG_SLV_CH2THRLOW': 'slv_ch2_thres_low',
+        # 'CFG_SLV_CH2THRHIGH': 'slv_ch2_thres_high',
+        # 'CFG_SLV_CH1INTTIME': 'slv_ch1_inttime',
+        # 'CFG_SLV_CH2INTTIME': 'slv_ch2_inttime',
+        # 'CFG_SLV_CH1VOLT': 'slv_ch1_voltage',
+        # 'CFG_SLV_CH2VOLT': 'slv_ch2_voltage',
+        # 'CFG_SLV_CH1CURR': 'slv_ch1_current',
+        # 'CFG_SLV_CH2CURR': 'slv_ch2_current',
+        # 'CFG_SLV_COMPTHRLOW': 'slv_comp_thres_low',
+        # 'CFG_SLV_COMPTHRHIGH': 'slv_comp_thres_high',
+        # 'CFG_SLV_MAXVOLT': 'slv_max_voltage',
+        # 'CFG_SLV_RESET': 'slv_reset',
+        # 'CFG_SLV_CH1GAINPOS': 'slv_ch1_gain_pos',
+        # 'CFG_SLV_CH1GAINNEG': 'slv_ch1_gain_neg',
+        # 'CFG_SLV_CH2GAINPOS': 'slv_ch2_gain_pos',
+        # 'CFG_SLV_CH2GAINNEG': 'slv_ch2_gain_neg',
+        # 'CFG_SLV_CH1OFFPOS': 'slv_ch1_offset_pos',
+        # 'CFG_SLV_CH1OFFNEG': 'slv_ch1_offset_neg',
+        # 'CFG_SLV_CH2OFFPOS': 'slv_ch2_offset_pos',
+        # 'CFG_SLV_CH2OFFNEG': 'slv_ch2_offset_neg',
+        # 'CFG_SLV_COMMOFF': 'slv_common_offset',
+        # 'CFG_SLV_INTVOLTAGE': 'slv_internal_voltage',
+        # 'CFG_SLV_CH1ADCGAIN': 'slv_ch1_adc_gain',
+        # 'CFG_SLV_CH1ADCOFF': 'slv_ch1_adc_offset',
+        # 'CFG_SLV_CH2ADCGAIN': 'slv_ch2_adc_gain',
+        # 'CFG_SLV_CH2ADCOFF': 'slv_ch2_adc_offset',
+        # 'CFG_SLV_CH1COMPGAIN': 'slv_ch1_comp_gain',
+        # 'CFG_SLV_CH1COMPOFF': 'slv_ch1_comp_offset',
+        # 'CFG_SLV_CH2COMPGAIN': 'slv_ch2_comp_gain',
+        # 'CFG_SLV_CH2COMPOFF': 'slv_ch2_comp_offset',
 
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list
