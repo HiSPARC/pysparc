@@ -481,12 +481,12 @@ class NikhefDataStore(object):
                   'nanoseconds': 0}
 
         datalist = []
-        # self._add_value_to_datalist(datalist, 'CFG_PRECTIME',
-        #                             config.pre_coincidence_time)
-        # self._add_value_to_datalist(datalist, 'CFG_CTIME',
-        #                             config.coincidence_time)
-        # self._add_value_to_datalist(datalist, 'CFG_POSTCTIME',
-        #                             config.post_coincidence_time)
+        self._add_value_to_datalist(datalist, 'CFG_PRECTIME',
+                                    config.pre_coincidence_time)
+        self._add_value_to_datalist(datalist, 'CFG_CTIME',
+                                    config.coincidence_time)
+        self._add_value_to_datalist(datalist, 'CFG_POSTCTIME',
+                                    config.post_coincidence_time)
 
         # 'CFG_GPS_LAT': 'gps_latitude',
         # 'CFG_GPS_LONG': 'gps_longitude',
