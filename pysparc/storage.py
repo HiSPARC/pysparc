@@ -491,6 +491,7 @@ class NikhefDataStore(object):
         # 'CFG_GPS_LAT': 'gps_latitude',
         # 'CFG_GPS_LONG': 'gps_longitude',
         # 'CFG_GPS_ALT': 'gps_altitude',
+
         # 'CFG_MAS_VERSION': 'mas_version',
         # 'CFG_SLV_VERSION': 'slv_version',
         # 'CFG_TRIGLOWSIG': 'trig_low_signals',
@@ -500,38 +501,59 @@ class NikhefDataStore(object):
         # 'CFG_DETNUM': 'detnum',
         # 'CFG_PASSWORD': 'password',
         # 'CFG_SPAREBYTES': 'spare_bytes',
-        # 'CFG_USEFILTER': 'use_filter',
-        # 'CFG_USEFILTTHRES': 'use_filter_threshold',
-        # 'CFG_REDUCE': 'reduce_data',
+
+        self._add_value_to_datalist(datalist, 'CFG_USEFILTER',
+                                    config.use_filter)
+        self._add_value_to_datalist(datalist, 'CFG_USEFILTTHRES',
+                                    config.use_filter_threshold)
+        self._add_value_to_datalist(datalist, 'CFG_REDUCE', config.reduce_data)
+
         # 'CFG_BUFFER': 'buffer',
         # 'CFG_STARTMODE': 'startmode',
         # 'CFG_DELAYSCREEN': 'delay_screen',
         # 'CFG_DELAYCHECK': 'delay_check',
         # 'CFG_DELAYERROR': 'delay_error',
-        # 'CFG_MAS_CH1THRLOW': 'mas_ch1_thres_low',
-        # 'CFG_MAS_CH1THRHIGH': 'mas_ch1_thres_high',
-        # 'CFG_MAS_CH2THRLOW': 'mas_ch2_thres_low',
-        # 'CFG_MAS_CH2THRHIGH': 'mas_ch2_thres_high',
+
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1THRLOW',
+                                    config.mas_ch1_thres_low)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1THRHIGH',
+                                    config.mas_ch1_thres_high)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2THRLOW',
+                                    config.mas_ch2_thres_low)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2THRHIGH',
+                                    config.mas_ch2_thres_high)
         # 'CFG_MAS_CH1INTTIME': 'mas_ch1_inttime',
         # 'CFG_MAS_CH2INTTIME': 'mas_ch2_inttime',
-        # 'CFG_MAS_CH1VOLT': 'mas_ch1_voltage',
-        # 'CFG_MAS_CH2VOLT': 'mas_ch2_voltage',
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1VOLT',
+                                    config.mas_ch1_voltage)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2VOLT',
+                                    config.mas_ch2_voltage)
         # 'CFG_MAS_CH1CURR': 'mas_ch1_current',
         # 'CFG_MAS_CH2CURR': 'mas_ch2_current',
         # 'CFG_MAS_COMPTHRLOW': 'mas_comp_thres_low',
         # 'CFG_MAS_COMPTHRHIGH': 'mas_comp_thres_high',
         # 'CFG_MAS_MAXVOLT': 'mas_max_voltage',
         # 'CFG_MAS_RESET': 'mas_reset',
-        # 'CFG_MAS_CH1GAINPOS': 'mas_ch1_gain_pos',
-        # 'CFG_MAS_CH1GAINNEG': 'mas_ch1_gain_neg',
-        # 'CFG_MAS_CH2GAINPOS': 'mas_ch2_gain_pos',
-        # 'CFG_MAS_CH2GAINNEG': 'mas_ch2_gain_neg',
-        # 'CFG_MAS_CH1OFFPOS': 'mas_ch1_offset_pos',
-        # 'CFG_MAS_CH1OFFNEG': 'mas_ch1_offset_neg',
-        # 'CFG_MAS_CH2OFFPOS': 'mas_ch2_offset_pos',
-        # 'CFG_MAS_CH2OFFNEG': 'mas_ch2_offset_neg',
-        # 'CFG_MAS_COMMOFF': 'mas_common_offset',
-        # 'CFG_MAS_INTVOLTAGE': 'mas_internal_voltage',
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1GAINPOS',
+                                    config.mas_ch1_gain_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1GAINNEG',
+                                    config.mas_ch1_gain_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2GAINPOS',
+                                    config.mas_ch2_gain_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2GAINNEG',
+                                    config.mas_ch2_gain_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1OFFPOS',
+                                    config.mas_ch1_offset_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1OFFNEG',
+                                    config.mas_ch1_offset_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2OFFPOS',
+                                    config.mas_ch2_offset_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2OFFNEG',
+                                    config.mas_ch2_offset_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_COMMOFF',
+                                    config.mas_common_offset)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_INTVOLTAGE',
+                                    config.mas_internal_voltage)
         # 'CFG_MAS_CH1ADCGAIN': 'mas_ch1_adc_gain',
         # 'CFG_MAS_CH1ADCOFF': 'mas_ch1_adc_offset',
         # 'CFG_MAS_CH2ADCGAIN': 'mas_ch2_adc_gain',
@@ -540,38 +562,6 @@ class NikhefDataStore(object):
         # 'CFG_MAS_CH1COMPOFF': 'mas_ch1_comp_offset',
         # 'CFG_MAS_CH2COMPGAIN': 'mas_ch2_comp_gain',
         # 'CFG_MAS_CH2COMPOFF': 'mas_ch2_comp_offset',
-        # 'CFG_SLV_CH1THRLOW': 'slv_ch1_thres_low',
-        # 'CFG_SLV_CH1THRHIGH': 'slv_ch1_thres_high',
-        # 'CFG_SLV_CH2THRLOW': 'slv_ch2_thres_low',
-        # 'CFG_SLV_CH2THRHIGH': 'slv_ch2_thres_high',
-        # 'CFG_SLV_CH1INTTIME': 'slv_ch1_inttime',
-        # 'CFG_SLV_CH2INTTIME': 'slv_ch2_inttime',
-        # 'CFG_SLV_CH1VOLT': 'slv_ch1_voltage',
-        # 'CFG_SLV_CH2VOLT': 'slv_ch2_voltage',
-        # 'CFG_SLV_CH1CURR': 'slv_ch1_current',
-        # 'CFG_SLV_CH2CURR': 'slv_ch2_current',
-        # 'CFG_SLV_COMPTHRLOW': 'slv_comp_thres_low',
-        # 'CFG_SLV_COMPTHRHIGH': 'slv_comp_thres_high',
-        # 'CFG_SLV_MAXVOLT': 'slv_max_voltage',
-        # 'CFG_SLV_RESET': 'slv_reset',
-        # 'CFG_SLV_CH1GAINPOS': 'slv_ch1_gain_pos',
-        # 'CFG_SLV_CH1GAINNEG': 'slv_ch1_gain_neg',
-        # 'CFG_SLV_CH2GAINPOS': 'slv_ch2_gain_pos',
-        # 'CFG_SLV_CH2GAINNEG': 'slv_ch2_gain_neg',
-        # 'CFG_SLV_CH1OFFPOS': 'slv_ch1_offset_pos',
-        # 'CFG_SLV_CH1OFFNEG': 'slv_ch1_offset_neg',
-        # 'CFG_SLV_CH2OFFPOS': 'slv_ch2_offset_pos',
-        # 'CFG_SLV_CH2OFFNEG': 'slv_ch2_offset_neg',
-        # 'CFG_SLV_COMMOFF': 'slv_common_offset',
-        # 'CFG_SLV_INTVOLTAGE': 'slv_internal_voltage',
-        # 'CFG_SLV_CH1ADCGAIN': 'slv_ch1_adc_gain',
-        # 'CFG_SLV_CH1ADCOFF': 'slv_ch1_adc_offset',
-        # 'CFG_SLV_CH2ADCGAIN': 'slv_ch2_adc_gain',
-        # 'CFG_SLV_CH2ADCOFF': 'slv_ch2_adc_offset',
-        # 'CFG_SLV_CH1COMPGAIN': 'slv_ch1_comp_gain',
-        # 'CFG_SLV_CH1COMPOFF': 'slv_ch1_comp_offset',
-        # 'CFG_SLV_CH2COMPGAIN': 'slv_ch2_comp_gain',
-        # 'CFG_SLV_CH2COMPOFF': 'slv_ch2_comp_offset',
 
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list
