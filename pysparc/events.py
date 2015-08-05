@@ -258,4 +258,4 @@ class ConfigEvent(object):
 
     def __init__(self, app_config, master_config):
         self.app = app_config
-        self.master = master_config
+        # self.master = master_config
