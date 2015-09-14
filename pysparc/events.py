@@ -121,10 +121,12 @@ class Stew(object):
         t2_msg = self._get_one_second_message(msg.timestamp + 2)
 
         CTD = msg.count_ticks_PPS
-        CTP = t1_msg.count_ticks_PPS
+        # CTP is everything EXCEPT the synchronization bit
+        CTP = t1_msg.count_ticks_PPS ^ SYNCHRONIZATION_BIT
         synchronization_error = 2.5 if (t0_msg.count_ticks_PPS & SYNCHRONIZATION_BIT) else 0
-        quantization_error1 = t1_msg.quantization_error * 1e9
-        quantization_error2 = t2_msg.quantization_error * 1e9
+        # ERROR IN TRIMBLE/HISPARC DOCS: quantization error is in NANOseconds
+        quantization_error1 = t1_msg.quantization_error
+        quantization_error2 = t2_msg.quantization_error
 
         # This may be larger than one second due to synchronization error!
         trigger_offset = int(synchronization_error + quantization_error1
