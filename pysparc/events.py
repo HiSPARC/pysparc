@@ -17,6 +17,7 @@ FRESHNESS_TIME = 10
 EVENTRATE_TIME = 60
 
 SYNCHRONIZATION_BIT = 1 << 31
+CTP_BITS = (1 << 31) - 1
 NANOSECONDS_PER_SECOND = int(1e9)
 
 INTEGRAL_THRESHOLD = 25
@@ -122,7 +123,7 @@ class Stew(object):
 
         CTD = msg.count_ticks_PPS
         # CTP is everything EXCEPT the synchronization bit
-        CTP = t1_msg.count_ticks_PPS ^ SYNCHRONIZATION_BIT
+        CTP = t1_msg.count_ticks_PPS & CTP_BITS
         synchronization_error = 2.5 if (t0_msg.count_ticks_PPS & SYNCHRONIZATION_BIT) else 0
         # ERROR IN TRIMBLE/HISPARC DOCS: quantization error is in NANOseconds
         quantization_error1 = t1_msg.quantization_error
