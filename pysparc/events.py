@@ -141,6 +141,8 @@ class Stew(object):
         msg.ext_timestamp = ext_timestamp
 
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
+        logger.debug("COOK: %d %d %d %d %d", ext_timestamp, t0_msg.timestamp, trigger_offset, CTD * 5, trigger_offset - CTD * 5)
+        logger.debug("TERR: %f %f %f %d %d", synchronization_error, quantization_error1, quantization_error2, CTD, CTP)
         return Event(msg)
 
     def _get_one_second_message(self, timestamp):
