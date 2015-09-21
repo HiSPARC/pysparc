@@ -117,7 +117,6 @@ class Stew(object):
         :returns: event
 
         """
-        logger.debug("CORT1: %d", msg.timestamp)
         t0_msg = self._get_one_second_message(msg.timestamp)
         t1_msg = self._get_one_second_message(msg.timestamp + 1)
         t2_msg = self._get_one_second_message(msg.timestamp + 2)
@@ -125,7 +124,8 @@ class Stew(object):
         CTD = msg.count_ticks_PPS
         # CTP is everything EXCEPT the synchronization bit
         CTP = t1_msg.count_ticks_PPS & CTP_BITS
-        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS & SYNCHRONIZATION_BIT) else 0
+        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS &
+                                        SYNCHRONIZATION_BIT) else 0
         # ERROR IN TRIMBLE/HISPARC DOCS: quantization error is in NANOseconds
         quantization_error1 = t1_msg.quantization_error
         quantization_error2 = t2_msg.quantization_error
@@ -136,19 +136,12 @@ class Stew(object):
                              * (1e9 - quantization_error1 + quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
-        logger.debug("CORTS: %d", (msg.timestamp - int(ext_timestamp / NANOSECONDS_PER_SECOND)))
         # Correct timestamp
         msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
         msg.ext_timestamp = ext_timestamp
 
-        logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
-        logger.debug("COOK: %d %d %d %d %d", ext_timestamp, t0_msg.timestamp, trigger_offset, CTD * 5, trigger_offset - CTD * 5)
-        logger.debug("TERR: %f %f %f %d %d", synchronization_error, quantization_error1, quantization_error2, CTD, CTP)
-
-        event = Event(msg)
-        logger.debug("CORT2: %d", event.ext_timestamp - msg.ext_timestamp)
-        return event
+        return Event(msg)
 
     def _get_one_second_message(self, timestamp):
         """Return one-second message or raise MissingOneSecondMessage.
