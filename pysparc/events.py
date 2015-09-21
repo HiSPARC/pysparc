@@ -1,6 +1,7 @@
 from __future__ import division
 
 import collections
+import datetime
 import logging
 import zlib
 
@@ -17,6 +18,7 @@ FRESHNESS_TIME = 10
 EVENTRATE_TIME = 60
 
 SYNCHRONIZATION_BIT = 1 << 31
+CTP_BITS = (1 << 31) - 1
 NANOSECONDS_PER_SECOND = int(1e9)
 
 INTEGRAL_THRESHOLD = 25
@@ -122,8 +124,9 @@ class Stew(object):
 
         CTD = msg.count_ticks_PPS
         # CTP is everything EXCEPT the synchronization bit
-        CTP = t1_msg.count_ticks_PPS ^ SYNCHRONIZATION_BIT
-        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS & SYNCHRONIZATION_BIT) else 0
+        CTP = t1_msg.count_ticks_PPS & CTP_BITS
+        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS &
+                                        SYNCHRONIZATION_BIT) else 0
         # ERROR IN TRIMBLE/HISPARC DOCS: quantization error is in NANOseconds
         quantization_error1 = t1_msg.quantization_error
         quantization_error2 = t2_msg.quantization_error
@@ -134,10 +137,11 @@ class Stew(object):
                              * (1e9 - quantization_error1 + quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
-        # Correct timestamp
+        # Correct timestamp (and datetime attribute)
         msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
         msg.ext_timestamp = ext_timestamp
+        msg.datetime = datetime.datetime.utcfromtimestamp(msg.timestamp)
 
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         return Event(msg)
@@ -215,7 +219,7 @@ class Event(object):
         self.datetime = msg.datetime
         self.timestamp = msg.timestamp
         self.nanoseconds = msg.nanoseconds
-        self.ext_timestamp = msg.timestamp * int(1e9) + msg.nanoseconds
+        self.ext_timestamp = msg.ext_timestamp
         self.data_reduction = False
         self.trigger_pattern = msg.trigger_pattern
         self.event_rate = event_rate
