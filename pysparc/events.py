@@ -117,6 +117,7 @@ class Stew(object):
         :returns: event
 
         """
+        logger.debug("CORT1: %d", msg.timestamp)
         t0_msg = self._get_one_second_message(msg.timestamp)
         t1_msg = self._get_one_second_message(msg.timestamp + 1)
         t2_msg = self._get_one_second_message(msg.timestamp + 2)
@@ -135,6 +136,7 @@ class Stew(object):
                              * (1e9 - quantization_error1 + quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
+        logger.debug("CORTS: %d", (msg.timestamp - int(ext_timestamp / NANOSECONDS_PER_SECOND)))
         # Correct timestamp
         msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
@@ -143,7 +145,10 @@ class Stew(object):
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         logger.debug("COOK: %d %d %d %d %d", ext_timestamp, t0_msg.timestamp, trigger_offset, CTD * 5, trigger_offset - CTD * 5)
         logger.debug("TERR: %f %f %f %d %d", synchronization_error, quantization_error1, quantization_error2, CTD, CTP)
-        return Event(msg)
+
+        event = Event(msg)
+        logger.debug("CORT2: %d", event.ext_timestamp - msg.ext_timestamp)
+        return event
 
     def _get_one_second_message(self, timestamp):
         """Return one-second message or raise MissingOneSecondMessage.
