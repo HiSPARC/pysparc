@@ -1,6 +1,7 @@
 from __future__ import division
 
 import collections
+import datetime
 import logging
 import zlib
 
@@ -136,10 +137,11 @@ class Stew(object):
                              * (1e9 - quantization_error1 + quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
-        # Correct timestamp
+        # Correct timestamp (and datetime attribute)
         msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
         msg.ext_timestamp = ext_timestamp
+        msg.datetime = datetime.datetime.utcfromtimestamp(msg.timestamp)
 
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         return Event(msg)
