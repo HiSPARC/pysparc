@@ -141,6 +141,7 @@ class Stew(object):
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
         msg.ext_timestamp = ext_timestamp
 
+        logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         return Event(msg)
 
     def _get_one_second_message(self, timestamp):
