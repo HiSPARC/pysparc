@@ -1,6 +1,13 @@
 vagrant ansible_ssh_user=vagrant ansible_ssh_host=192.168.99.20 ansible_ssh_port=22 ansible_ssh_private_key_file=.vagrant/machines/vagrant/virtualbox/private_key
 
+[raspberry_pi]
+pysparc1.his
+pysparc2.his
+zaanlands1.his
+kajmunk1.his
+
 [pysparc]
+pysparc1.his
 zaanlands1.his
 kajmunk1.his
 

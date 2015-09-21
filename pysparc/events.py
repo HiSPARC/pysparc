@@ -1,6 +1,7 @@
 from __future__ import division
 
 import collections
+import datetime
 import logging
 import time
 import zlib
@@ -18,6 +19,7 @@ FRESHNESS_TIME = 10
 EVENTRATE_TIME = 60
 
 SYNCHRONIZATION_BIT = 1 << 31
+CTP_BITS = (1 << 31) - 1
 NANOSECONDS_PER_SECOND = int(1e9)
 
 INTEGRAL_THRESHOLD = 25
@@ -122,10 +124,13 @@ class Stew(object):
         t2_msg = self._get_one_second_message(msg.timestamp + 2)
 
         CTD = msg.count_ticks_PPS
-        CTP = t1_msg.count_ticks_PPS
-        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS & SYNCHRONIZATION_BIT) else 0
-        quantization_error1 = t1_msg.quantization_error * 1e9
-        quantization_error2 = t2_msg.quantization_error * 1e9
+        # CTP is everything EXCEPT the synchronization bit
+        CTP = t1_msg.count_ticks_PPS & CTP_BITS
+        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS &
+                                        SYNCHRONIZATION_BIT) else 0
+        # ERROR IN TRIMBLE/HISPARC DOCS: quantization error is in NANOseconds
+        quantization_error1 = t1_msg.quantization_error
+        quantization_error2 = t2_msg.quantization_error
 
         # This may be larger than one second due to synchronization error!
         trigger_offset = int(synchronization_error + quantization_error1
@@ -133,10 +138,15 @@ class Stew(object):
                              * (1e9 - quantization_error1 + quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
-        # Correct timestamp
+        # Synchronize with LabVIEW DAQ. There is a one-second difference
+        # between LabVIEW DAQ and PySPARC. We don't know why.
+        ext_timestamp += 1 * NANOSECONDS_PER_SECOND
+
+        # Correct timestamp (and datetime attribute)
         msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
         msg.ext_timestamp = ext_timestamp
+        msg.datetime = datetime.datetime.utcfromtimestamp(msg.timestamp)
 
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         return Event(msg)
@@ -214,7 +224,7 @@ class Event(object):
         self.datetime = msg.datetime
         self.timestamp = msg.timestamp
         self.nanoseconds = msg.nanoseconds
-        self.ext_timestamp = msg.timestamp * int(1e9) + msg.nanoseconds
+        self.ext_timestamp = msg.ext_timestamp
         self.data_reduction = False
         self.trigger_pattern = msg.trigger_pattern
         self.event_rate = event_rate
