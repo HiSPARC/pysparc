@@ -218,7 +218,7 @@ class Event(object):
         self.datetime = msg.datetime
         self.timestamp = msg.timestamp
         self.nanoseconds = msg.nanoseconds
-        self.ext_timestamp = msg.timestamp * int(1e9) + msg.nanoseconds
+        self.ext_timestamp = msg.ext_timestamp
         self.data_reduction = False
         self.trigger_pattern = msg.trigger_pattern
         self.event_rate = event_rate
