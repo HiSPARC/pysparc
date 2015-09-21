@@ -137,6 +137,10 @@ class Stew(object):
                              * (1e9 - quantization_error1 + quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
+        # Synchronize with LabVIEW DAQ. There is a one-second difference
+        # between LabVIEW DAQ and PySPARC. We don't know why.
+        ext_timestamp += 1 * NANOSECONDS_PER_SECOND
+
         # Correct timestamp (and datetime attribute)
         msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
