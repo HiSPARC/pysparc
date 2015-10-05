@@ -60,10 +60,9 @@ class HardwareError(Exception):
 
 class BaseHardware(object):
 
-    """Access HiSPARC II hardware.
+    """Hardware base class.
 
-    Instantiate this class to get access to connected HiSPARC II
-    hardware. The hardware device is opened during instantiation.
+    Subclass this class for actual hardware. See, e.g. :class:`HiSPARCII`.
 
     """
 
@@ -135,6 +134,13 @@ class BaseHardware(object):
 
 
 class HiSPARCII(BaseHardware):
+
+    """Access HiSPARC II hardware.
+
+    Instantiate this class to get access to connected HiSPARC II
+    hardware. The hardware device is opened during instantiation.
+
+    """
 
     description = "HiSPARC II Master"
 
