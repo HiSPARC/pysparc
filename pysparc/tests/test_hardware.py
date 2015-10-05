@@ -89,6 +89,20 @@ class HiSPARCIITest(unittest.TestCase):
         mock_factory.assert_called_once_with(self.hisparc._buffer)
 
     @patch('pysparc.hardware.HisparcMessageFactory')
+    def test_read_message_sets_config_parameters(self, mock_factory):
+        mock_config_message = Mock(spec=messages.ControlParameterList)
+        mock_other_message = Mock()
+
+        mock_factory.return_value = mock_other_message
+        self.hisparc.read_message()
+        self.assertFalse(self.mock_config.update_from_config_message.called)
+
+        mock_factory.return_value = mock_config_message
+        self.hisparc.read_message()
+        self.mock_config.update_from_config_message.assert_called_once_with(
+            mock_config_message)
+
+    @patch('pysparc.hardware.HisparcMessageFactory')
     def test_read_message_returns_message(self, mock_factory):
         mock_factory.return_value = sentinel.msg
         actual = self.hisparc.read_message()

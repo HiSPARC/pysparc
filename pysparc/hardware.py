@@ -23,7 +23,7 @@ import time
 import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
-                      InitializeMessage, MeasuredDataMessage)
+                      InitializeMessage, MeasuredDataMessage, ControlParameterList)
 import gps_messages
 from gps_messages import GPSMessageFactory
 import config
@@ -166,7 +166,10 @@ class HiSPARCII(BaseHardware):
 
         """
         self.read_into_buffer()
-        return HisparcMessageFactory(self._buffer)
+        msg = HisparcMessageFactory(self._buffer)
+        if isinstance(msg, ControlParameterList):
+            self.config.update_from_config_message(msg)
+        return msg
 
     def flush_and_get_measured_data_message(self, timeout=15):
         """Flush output buffers and wait for measured data.

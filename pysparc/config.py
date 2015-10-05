@@ -104,6 +104,17 @@ class Config(Atom):
             setting.notify(self, {'name': name, 'type': 'update',
                                   'value': getattr(self, name)})
 
+    def update_from_config_message(self, msg):
+        """Update read-only config values from hardware config message.
+
+        This updates read-only values from a parameter list returned by the
+        hardware device.
+
+        :param msg: ControlParameterList message read from device.
+
+        """
+        raise NotImplementedError("Not yet implemented")
+
     def write_config(self, config):
         """Write config settings to existing config object.
 
