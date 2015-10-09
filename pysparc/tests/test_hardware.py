@@ -108,6 +108,13 @@ class HiSPARCIITest(unittest.TestCase):
         actual = self.hisparc.read_message()
         self.assertIs(actual, sentinel.msg)
 
+    @patch('pysparc.hardware.HisparcMessageFactory')
+    def test_read_message_returns_config_message(self, mock_factory):
+        mock_config_message = Mock(spec=messages.ControlParameterList)
+        mock_factory.return_value = mock_config_message
+        actual = self.hisparc.read_message()
+        self.assertIs(actual, mock_config_message)
+
     @patch.object(hardware.HiSPARCII, 'flush_device')
     @patch.object(hardware.HiSPARCII, 'read_message')
     def test_flush_and_get_measured_data_message_calls_flush(self,
