@@ -498,9 +498,10 @@ class NikhefDataStore(object):
         # 'CFG_TRIGHIGHSIG': 'trig_high_signals',
         # 'CFG_TRIGEXT': 'trig_external',
         # 'CFG_TRIGANDOR': 'trig_and_or',
-        # 'CFG_DETNUM': 'detnum',
-        # 'CFG_PASSWORD': 'password',
-        # 'CFG_SPAREBYTES': 'spare_bytes',
+
+        ## 'CFG_DETNUM': 'detnum',
+        ## 'CFG_PASSWORD': 'password',
+        ## 'CFG_SPAREBYTES': 'spare_bytes',
 
         self._add_value_to_datalist(datalist, 'CFG_USEFILTER',
                                     config.use_filter)
@@ -508,11 +509,11 @@ class NikhefDataStore(object):
                                     config.use_filter_threshold)
         self._add_value_to_datalist(datalist, 'CFG_REDUCE', config.reduce_data)
 
-        # 'CFG_BUFFER': 'buffer',
-        # 'CFG_STARTMODE': 'startmode',
-        # 'CFG_DELAYSCREEN': 'delay_screen',
-        # 'CFG_DELAYCHECK': 'delay_check',
-        # 'CFG_DELAYERROR': 'delay_error',
+        ## 'CFG_BUFFER': 'buffer',
+        ## 'CFG_STARTMODE': 'startmode',
+        ## 'CFG_DELAYSCREEN': 'delay_screen',
+        ## 'CFG_DELAYCHECK': 'delay_check',
+        ## 'CFG_DELAYERROR': 'delay_error',
 
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH1THRLOW',
                                     config.mas_ch1_thres_low)
