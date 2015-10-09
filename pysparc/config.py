@@ -3,7 +3,7 @@ import ConfigParser
 import weakref
 from ast import literal_eval
 
-from atom.api import Atom, observe, Range, Value, Bool
+from atom.api import Atom, observe, Range, Value, Bool, Float
 
 from pysparc.util import map_setting
 from pysparc.messages import SetControlParameter, InitializeMessage
@@ -38,6 +38,10 @@ class Config(Atom):
     pre_coincidence_time = Range(0, 2000, 1000)
     coincidence_time = Range(0, 5000, 2000)
     post_coincidence_time = Range(0, 10000, 2000)
+
+    gps_longitude = Float()
+    gps_latitude = Float()
+    gps_altitude = Float()
 
     _device = Value()
 
@@ -113,7 +117,9 @@ class Config(Atom):
         :param msg: ControlParameterList message read from device.
 
         """
-        raise NotImplementedError("Not yet implemented")
+        self.gps_longitude = msg.gps_longitude
+        self.gps_latitude = msg.gps_latitude
+        self.gps_altitude = msg.gps_altitude
 
     def write_config(self, config):
         """Write config settings to existing config object.

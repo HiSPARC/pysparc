@@ -10,6 +10,7 @@ import struct
 import datetime
 import calendar
 import logging
+from math import pi
 
 import numpy as np
 
@@ -385,6 +386,9 @@ class ControlParameterList(HisparcMessage):
         version, = struct.unpack('>L', '\00' + self._version)
         self.firmware_version = version >> 16
         self.serial_number = version & 0b1111111111
+
+        self.gps_latitude *= 360 / (2 * pi)
+        self.gps_longitude *= 360 / (2 * pi)
 
         del buff[:msg_length]
 
