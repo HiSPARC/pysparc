@@ -3,7 +3,7 @@ import ConfigParser
 import weakref
 from ast import literal_eval
 
-from atom.api import Atom, observe, Range, Value, Bool, Float
+from atom.api import Atom, observe, Range, Value, Bool, Float, Str
 
 from pysparc.util import map_setting
 from pysparc.messages import SetControlParameter, InitializeMessage
@@ -42,6 +42,8 @@ class Config(Atom):
     gps_longitude = Float()
     gps_latitude = Float()
     gps_altitude = Float()
+
+    version = Str()
 
     _device = Value()
 
@@ -120,6 +122,9 @@ class Config(Atom):
         self.gps_longitude = msg.gps_longitude
         self.gps_latitude = msg.gps_latitude
         self.gps_altitude = msg.gps_altitude
+
+        self.version = "Hardware: %d FPGA: %d" % (msg.serial_number,
+                                                  msg.firmware_version)
 
     def write_config(self, config):
         """Write config settings to existing config object.
