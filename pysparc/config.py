@@ -39,9 +39,13 @@ class Config(Atom):
     coincidence_time = Range(0, 5000, 2000)
     post_coincidence_time = Range(0, 10000, 2000)
 
-    gps_longitude = Float()
+    # Read-only attributes below
     gps_latitude = Float()
+    gps_longitude = Float()
     gps_altitude = Float()
+
+    ch1_current = Float()
+    ch2_current = Float()
 
     version = Str()
 
@@ -119,12 +123,15 @@ class Config(Atom):
         :param msg: ControlParameterList message read from device.
 
         """
-        self.gps_longitude = msg.gps_longitude
         self.gps_latitude = msg.gps_latitude
+        self.gps_longitude = msg.gps_longitude
         self.gps_altitude = msg.gps_altitude
 
         self.version = "Hardware: %d FPGA: %d" % (msg.serial_number,
                                                   msg.firmware_version)
+
+        self.ch1_current = msg.ch1_current
+        self.ch2_current = msg.ch2_current
 
     def write_config(self, config):
         """Write config settings to existing config object.

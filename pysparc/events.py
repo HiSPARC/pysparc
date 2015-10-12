@@ -271,9 +271,17 @@ class ConfigEvent(object):
         self.coincidence_time = master_config.coincidence_time
         self.post_coincidence_time = master_config.post_coincidence_time
 
+        self.gps_latitude = master_config.gps_latitude
+        self.gps_longitude = master_config.gps_longitude
+        self.gps_altitude = master_config.gps_altitude
+
         self.use_filter = False
         self.use_filter_threshold = False
         self.reduce_data = False
+
+        self.mas_version = master_config.version
+        self.mas_ch1_current = master_config.ch1_current
+        self.mas_ch2_current = master_config.ch2_current
 
         self.mas_ch1_thres_low = master_config.ch1_threshold_low
         self.mas_ch1_thres_high = master_config.ch1_threshold_high

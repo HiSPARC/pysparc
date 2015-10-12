@@ -488,11 +488,16 @@ class NikhefDataStore(object):
         self._add_value_to_datalist(datalist, 'CFG_POSTCTIME',
                                     config.post_coincidence_time)
 
-        # 'CFG_GPS_LAT': 'gps_latitude',
-        # 'CFG_GPS_LONG': 'gps_longitude',
-        # 'CFG_GPS_ALT': 'gps_altitude',
+        self._add_value_to_datalist(datalist, 'CFG_GPS_LAT',
+                                    config.gps_latitude)
+        self._add_value_to_datalist(datalist, 'CFG_GPS_LONG',
+                                    config.gps_longitude)
+        self._add_value_to_datalist(datalist, 'CFG_GPS_ALT',
+                                    config.gps_altitude)
 
-        # 'CFG_MAS_VERSION': 'mas_version',
+        self._add_value_to_datalist(datalist, 'CFG_MAS_VERSION',
+                                    config.mas_version)
+
         # 'CFG_SLV_VERSION': 'slv_version',
         # 'CFG_TRIGLOWSIG': 'trig_low_signals',
         # 'CFG_TRIGHIGHSIG': 'trig_high_signals',
@@ -529,8 +534,10 @@ class NikhefDataStore(object):
                                     config.mas_ch1_voltage)
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH2VOLT',
                                     config.mas_ch2_voltage)
-        # 'CFG_MAS_CH1CURR': 'mas_ch1_current',
-        # 'CFG_MAS_CH2CURR': 'mas_ch2_current',
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1CURR',
+                                    config.mas_ch1_current)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2CURR',
+                                    config.mas_ch2_current)
         # 'CFG_MAS_COMPTHRLOW': 'mas_comp_thres_low',
         # 'CFG_MAS_COMPTHRHIGH': 'mas_comp_thres_high',
         # 'CFG_MAS_MAXVOLT': 'mas_max_voltage',
