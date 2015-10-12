@@ -247,7 +247,7 @@ class Event(object):
         self.baselines = baselines + [-1, -1]
 
         # Standard deviation of the first 100 samples of the trace
-        std_dev = [int(round(t[:100].std())) for t in self.trace_ch1, self.trace_ch2]
+        std_dev = [int(round(1000 * t[:100].std())) for t in self.trace_ch1, self.trace_ch2]
         self.std_dev = std_dev + [-1, -1]
 
         # Maximum peak to baseline value in trace
