@@ -266,7 +266,7 @@ class Event(object):
 
 class ConfigEvent(object):
 
-    def __init__(self, app_config, master_config):
+    def __init__(self, master_config):
         self.pre_coincidence_time = master_config.pre_coincidence_time
         self.coincidence_time = master_config.coincidence_time
         self.post_coincidence_time = master_config.post_coincidence_time
