@@ -498,7 +498,6 @@ class NikhefDataStore(object):
         self._add_value_to_datalist(datalist, 'CFG_MAS_VERSION',
                                     config.mas_version)
 
-        # 'CFG_SLV_VERSION': 'slv_version',
         # 'CFG_TRIGLOWSIG': 'trig_low_signals',
         # 'CFG_TRIGHIGHSIG': 'trig_high_signals',
         # 'CFG_TRIGEXT': 'trig_external',
