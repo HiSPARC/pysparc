@@ -129,11 +129,15 @@ class ReadWriteConfigTest(unittest.TestCase):
         mock_configparser = Mock()
         self.config.write_config(mock_configparser)
         for member in self.config.members():
-            if member != '_device':
+            if (member != '_device' and member not in
+                self.config._private_settings):
                 mock_configparser.set.assert_any_call(
                     self.section, member, getattr(self.config, member))
         device_call = call.set(self.section, '_device', ANY)
         assert device_call not in mock_configparser.mock_calls
+        for private_setting in self.config._private_settings:
+            device_call = call.set(self.section, private_setting, ANY)
+            assert device_call not in mock_configparser.mock_calls
 
     @patch.object(pysparc.config.Config, '__setattr__')
     @patch.object(pysparc.config, 'literal_eval')

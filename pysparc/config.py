@@ -55,6 +55,9 @@ class Config(Atom):
 
     _device = Value()
 
+    _private_settings = ['gps_latitude', 'gps_longitude', 'gps_altitude',
+                         'ch1_current', 'ch2_current', 'version']
+
     def __init__(self, device):
         super(Config, self).__init__()
         # Keep a weak reference to the device, so the garbage collector
@@ -160,7 +163,7 @@ class Config(Atom):
 
         settings = self.members()
         for setting in sorted(settings):
-            if setting != '_device':
+            if setting[0] != '_' and setting not in self._private_settings:
                 config.set(section, setting, getattr(self, setting))
 
     def read_config(self, config):
