@@ -87,6 +87,7 @@ class Main(object):
                         config = ConfigEvent(self.device.config)
                         self.storage_manager.store_event(config)
                         t_config = datetime.date.today()
+                        logging.info("Sent configuration message.")
                 else:
                     if t - t_msg > 5:
                         logging.warning("Hardware is silent, resetting.")
