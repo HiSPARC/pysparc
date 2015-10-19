@@ -397,6 +397,7 @@ class SetControlParameter(HisparcMessage):
 
     def __init__(self, parameter, value, nbytes=1):
         super(SetControlParameter, self).__init__()
+        self.parameter = parameter
         self.identifier = msg_ids[parameter]
         self.data = [value]
         if nbytes == 1:
@@ -405,6 +406,9 @@ class SetControlParameter(HisparcMessage):
             self.msg_format = 'H'
         else:
             raise NotImplementedError("nbytes out of range")
+
+    def __str__(self):
+        return "Set control parameter %s." % self.parameter
 
 
 class InitializeMessage(HisparcMessage):

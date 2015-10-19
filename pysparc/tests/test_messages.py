@@ -158,23 +158,30 @@ class SetControlParameterTest(unittest.TestCase):
 
     def test_identifier(self):
         msg = pysparc.messages.SetControlParameter(sentinel.parameter,
-            sentinel.value)
-        self.mock_msg_ids.__getitem__.assert_called_once_with(sentinel.parameter)
-        self.assertEqual(msg.identifier, self.mock_msg_ids.__getitem__.return_value)
+                                                   sentinel.value)
+        self.mock_msg_ids.__getitem__.assert_called_once_with(
+            sentinel.parameter)
+        self.assertEqual(msg.identifier,
+                         self.mock_msg_ids.__getitem__.return_value)
+
+    def test_parameter(self):
+        msg = pysparc.messages.SetControlParameter(sentinel.parameter,
+                                                   sentinel.value)
+        self.assertEqual(msg.parameter, sentinel.parameter)
 
     def test_data(self):
         msg = pysparc.messages.SetControlParameter(sentinel.parameter,
-            sentinel.value)
+                                                   sentinel.value)
         self.assertEqual(msg.data, [sentinel.value])
 
     def test_msg_format_for_nbytes_is_1(self):
         msg = pysparc.messages.SetControlParameter(sentinel.parameter,
-            sentinel.value, nbytes=1)
+                                                   sentinel.value, nbytes=1)
         self.assertEqual(msg.msg_format, 'B')
 
     def test_msg_format_for_nbytes_is_2(self):
         msg = pysparc.messages.SetControlParameter(sentinel.parameter,
-            sentinel.value, nbytes=2)
+                                                   sentinel.value, nbytes=2)
         self.assertEqual(msg.msg_format, 'H')
 
     def test_msg_format_raises_NotImplementedError(self):
