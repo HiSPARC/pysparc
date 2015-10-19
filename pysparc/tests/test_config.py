@@ -48,9 +48,10 @@ class ConfigTest(unittest.TestCase):
                 name = 'ch%d_threshold_%s' % (channel, level)
                 low, high = self.config._get_range_from(name)
                 value = getattr(self.config, name)
-                self.assertEqual(low, 0)
-                self.assertEqual(high, 2000)
-                self.assertEqual(value, 30 if level == 'low' else 70)
+                self.assertEqual(low, 0x000)
+                self.assertEqual(high, 0xfff)
+                self.assertEqual(value, (200 + 50) if level == 'low' else
+                                 (200 + 120))
 
     def test_individual_gains_and_offsets(self):
         for channel in [1, 2]:

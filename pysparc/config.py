@@ -16,10 +16,11 @@ class Config(Atom):
 
     ch1_voltage = Range(300, 1500, 300)
     ch2_voltage = Range(300, 1500, 300)
-    ch1_threshold_low = Range(0, 2000, 30)
-    ch2_threshold_low = Range(0, 2000, 30)
-    ch1_threshold_high = Range(0, 2000, 70)
-    ch2_threshold_high = Range(0, 2000, 70)
+    # thresholds are in absolute ADC counts
+    ch1_threshold_low = Range(0, 0xfff, 250)
+    ch2_threshold_low = Range(0, 0xfff, 250)
+    ch1_threshold_high = Range(0, 0xfff, 320)
+    ch2_threshold_high = Range(0, 0xfff, 320)
 
     ch1_offset_positive = Range(0x00, 0xff, 0x80)
     ch1_offset_negative = Range(0x00, 0xff, 0x80)
@@ -74,6 +75,15 @@ class Config(Atom):
         low, high = self._get_range_from(name)
         setting_value = map_setting(value, low, high, 0x00, 0xff)
         msg = SetControlParameter(name, setting_value)
+        self._device().send_message(msg)
+
+    @observe('ch1_threshold_low',
+             'ch1_threshold_high',
+             'ch2_threshold_low',
+             'ch2_threshold_high')
+    def _write_threshold_setting_to_device(self, setting):
+        name, value = setting['name'], setting['value']
+        msg = SetControlParameter(name, value, nbytes=2)
         self._device().send_message(msg)
 
     @observe('pre_coincidence_time',
