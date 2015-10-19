@@ -504,21 +504,11 @@ class NikhefDataStore(object):
         # 'CFG_TRIGEXT': 'trig_external',
         # 'CFG_TRIGANDOR': 'trig_and_or',
 
-        ## 'CFG_DETNUM': 'detnum',
-        ## 'CFG_PASSWORD': 'password',
-        ## 'CFG_SPAREBYTES': 'spare_bytes',
-
         self._add_value_to_datalist(datalist, 'CFG_USEFILTER',
                                     config.use_filter)
         self._add_value_to_datalist(datalist, 'CFG_USEFILTTHRES',
                                     config.use_filter_threshold)
         self._add_value_to_datalist(datalist, 'CFG_REDUCE', config.reduce_data)
-
-        ## 'CFG_BUFFER': 'buffer',
-        ## 'CFG_STARTMODE': 'startmode',
-        ## 'CFG_DELAYSCREEN': 'delay_screen',
-        ## 'CFG_DELAYCHECK': 'delay_check',
-        ## 'CFG_DELAYERROR': 'delay_error',
 
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH1THRLOW',
                                     config.mas_ch1_thres_low)
@@ -538,10 +528,10 @@ class NikhefDataStore(object):
                                     config.mas_ch1_current)
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH2CURR',
                                     config.mas_ch2_current)
+
         # 'CFG_MAS_COMPTHRLOW': 'mas_comp_thres_low',
         # 'CFG_MAS_COMPTHRHIGH': 'mas_comp_thres_high',
-        # 'CFG_MAS_MAXVOLT': 'mas_max_voltage',
-        # 'CFG_MAS_RESET': 'mas_reset',
+
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH1GAINPOS',
                                     config.mas_ch1_gain_pos)
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH1GAINNEG',
@@ -562,14 +552,6 @@ class NikhefDataStore(object):
                                     config.mas_common_offset)
         self._add_value_to_datalist(datalist, 'CFG_MAS_INTVOLTAGE',
                                     config.mas_internal_voltage)
-        # 'CFG_MAS_CH1ADCGAIN': 'mas_ch1_adc_gain',
-        # 'CFG_MAS_CH1ADCOFF': 'mas_ch1_adc_offset',
-        # 'CFG_MAS_CH2ADCGAIN': 'mas_ch2_adc_gain',
-        # 'CFG_MAS_CH2ADCOFF': 'mas_ch2_adc_offset',
-        # 'CFG_MAS_CH1COMPGAIN': 'mas_ch1_comp_gain',
-        # 'CFG_MAS_CH1COMPOFF': 'mas_ch1_comp_offset',
-        # 'CFG_MAS_CH2COMPGAIN': 'mas_ch2_comp_gain',
-        # 'CFG_MAS_CH2COMPOFF': 'mas_ch2_comp_offset',
 
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list
