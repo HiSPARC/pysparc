@@ -518,8 +518,10 @@ class NikhefDataStore(object):
                                     config.mas_ch2_thres_low)
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH2THRHIGH',
                                     config.mas_ch2_thres_high)
-        # 'CFG_MAS_CH1INTTIME': 'mas_ch1_inttime',
-        # 'CFG_MAS_CH2INTTIME': 'mas_ch2_inttime',
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1INTTIME',
+                                    config.mas_ch1_inttime)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2INTTIME',
+                                    config.mas_ch2_inttime)
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH1VOLT',
                                     config.mas_ch1_voltage)
         self._add_value_to_datalist(datalist, 'CFG_MAS_CH2VOLT',

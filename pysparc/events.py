@@ -291,6 +291,9 @@ class ConfigEvent(object):
         self.mas_ch1_voltage = master_config.ch1_voltage
         self.mas_ch2_voltage = master_config.ch2_voltage
 
+        self.mas_ch1_inttime = master_config.ch1_integrator_time
+        self.mas_ch2_inttime = master_config.ch2_integrator_time
+
         self.mas_ch1_offset_pos = master_config.ch1_offset_positive
         self.mas_ch1_offset_neg = master_config.ch1_offset_negative
         self.mas_ch2_offset_pos = master_config.ch2_offset_positive

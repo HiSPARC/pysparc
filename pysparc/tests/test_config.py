@@ -53,6 +53,15 @@ class ConfigTest(unittest.TestCase):
                 self.assertEqual(value, (200 + 50) if level == 'low' else
                                  (200 + 120))
 
+    def test_integration_times(self):
+        for channel in [1, 2]:
+            name = 'ch%d_integrator_time' % channel
+            low, high = self.config._get_range_from(name)
+            value = getattr(self.config, name)
+            self.assertEqual(low, 0x00)
+            self.assertEqual(high, 0xff)
+            self.assertEqual(value, 0xff)
+
     def test_individual_gains_and_offsets(self):
         for channel in [1, 2]:
             for type in ['gain', 'offset']:

@@ -22,6 +22,9 @@ class Config(Atom):
     ch1_threshold_high = Range(0, 0xfff, 320)
     ch2_threshold_high = Range(0, 0xfff, 320)
 
+    ch1_integrator_time = Range(0x00, 0xff, 0xff)
+    ch2_integrator_time = Range(0x00, 0xff, 0xff)
+
     ch1_offset_positive = Range(0x00, 0xff, 0x80)
     ch1_offset_negative = Range(0x00, 0xff, 0x80)
     ch2_offset_positive = Range(0x00, 0xff, 0x80)
@@ -60,6 +63,8 @@ class Config(Atom):
 
     @observe('ch1_voltage',
              'ch2_voltage',
+             'ch1_integrator_time',
+             'ch2_integrator_time',
              'ch1_offset_positive',
              'ch1_offset_negative',
              'ch2_offset_positive',
