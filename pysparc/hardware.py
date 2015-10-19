@@ -23,7 +23,8 @@ import time
 import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
-                      InitializeMessage, MeasuredDataMessage, ControlParameterList)
+                      InitializeMessage, MeasuredDataMessage,
+                      ControlParameterList, GetControlParameterList)
 import gps_messages
 from gps_messages import GPSMessageFactory
 import config
@@ -155,6 +156,8 @@ class HiSPARCII(BaseHardware):
         self.send_message(ResetMessage())
         self.send_message(InitializeMessage())
         self.config.reset_hardware()
+        # Read (some) config values from device
+        self.send_message(GetControlParameterList())
 
     def read_message(self):
         """Read a message from the hardware device.

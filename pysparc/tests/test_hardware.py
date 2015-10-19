@@ -66,15 +66,17 @@ class HiSPARCIITest(unittest.TestCase):
         self.mock_reset.assert_called_once_with()
 
     @patch.object(hardware.HiSPARCII, 'send_message')
+    @patch('pysparc.hardware.GetControlParameterList')
     @patch('pysparc.hardware.ResetMessage')
     @patch('pysparc.hardware.InitializeMessage')
     def test_reset_hardware(self, mock_Init_msg, mock_Reset_msg,
-                            mock_send):
+                            mock_Parameter_msg, mock_send):
         self.hisparc.config = Mock()
         self.hisparc.reset_hardware()
         msg1 = mock_Reset_msg.return_value
         msg2 = mock_Init_msg.return_value
-        mock_send.assert_has_calls([call(msg1), call(msg2)])
+        msg3 = mock_Parameter_msg.return_value
+        mock_send.assert_has_calls([call(msg1), call(msg2), call(msg3)])
         self.hisparc.config.reset_hardware.assert_called_once_with()
 
     @patch.object(hardware.HiSPARCII, 'read_into_buffer')
