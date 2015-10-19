@@ -3,6 +3,7 @@ from __future__ import division
 import collections
 import datetime
 import logging
+import time
 import zlib
 
 import numpy as np
@@ -261,3 +262,45 @@ class Event(object):
         traces -= baselines.T
         integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
         self.integrals = integrals + [-1, -1]
+
+
+class ConfigEvent(object):
+
+    def __init__(self, master_config):
+        self.pre_coincidence_time = master_config.pre_coincidence_time
+        self.coincidence_time = master_config.coincidence_time
+        self.post_coincidence_time = master_config.post_coincidence_time
+
+        self.gps_latitude = master_config.gps_latitude
+        self.gps_longitude = master_config.gps_longitude
+        self.gps_altitude = master_config.gps_altitude
+
+        self.use_filter = False
+        self.use_filter_threshold = False
+        self.reduce_data = False
+
+        self.mas_version = master_config.version
+        self.mas_ch1_current = master_config.ch1_current
+        self.mas_ch2_current = master_config.ch2_current
+
+        self.mas_ch1_thres_low = -1 * master_config.ch1_threshold_low
+        self.mas_ch1_thres_high = -1 * master_config.ch1_threshold_high
+        self.mas_ch2_thres_low = -1 * master_config.ch2_threshold_low
+        self.mas_ch2_thres_high = -1 * master_config.ch2_threshold_high
+
+        self.mas_ch1_voltage = master_config.ch1_voltage
+        self.mas_ch2_voltage = master_config.ch2_voltage
+
+        self.mas_ch1_inttime = master_config.ch1_integrator_time
+        self.mas_ch2_inttime = master_config.ch2_integrator_time
+
+        self.mas_ch1_offset_pos = master_config.ch1_offset_positive
+        self.mas_ch1_offset_neg = master_config.ch1_offset_negative
+        self.mas_ch2_offset_pos = master_config.ch2_offset_positive
+        self.mas_ch2_offset_neg = master_config.ch2_offset_negative
+        self.mas_ch1_gain_pos = master_config.ch1_gain_positive
+        self.mas_ch1_gain_neg = master_config.ch1_gain_negative
+        self.mas_ch2_gain_pos = master_config.ch2_gain_positive
+        self.mas_ch2_gain_neg = master_config.ch2_gain_negative
+        self.mas_common_offset = master_config.common_offset
+        self.mas_internal_voltage = master_config.full_scale

@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import time
@@ -8,7 +9,7 @@ import pkg_resources
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
 from pysparc.align_adcs import AlignADCs
-from pysparc.events import Stew
+from pysparc.events import Stew, ConfigEvent
 from pysparc import messages, storage, monitor
 
 
@@ -69,6 +70,7 @@ class Main(object):
         t_msg = time.time() + 20
         t_log = time.time() - .5
         t_status = time.time()
+        t_config = datetime.date(1970, 1, 1)
         try:
             while True:
                 t = time.time()
@@ -81,6 +83,11 @@ class Main(object):
                     elif isinstance(msg, messages.OneSecondMessage):
                         stew.add_one_second_message(msg)
                         logging.debug("One-second received: %d", msg.timestamp)
+                    elif isinstance(msg, messages.ControlParameterList):
+                        config = ConfigEvent(self.device.config)
+                        self.storage_manager.store_event(config)
+                        t_config = datetime.date.today()
+                        logging.info("Sent configuration message.")
                 else:
                     if t - t_msg > 5:
                         logging.warning("Hardware is silent, resetting.")
@@ -98,12 +105,16 @@ class Main(object):
                     stew.drain()
 
                 # Periodically send status messages to the monitor,
-                # currently Nagios
+                # currently Nagios, and config messages
                 if t - t_status >= 60:
                     t_status += 60
                     self.monitor.send_uptime()
                     self.monitor.send_cpu_load()
                     self.monitor.send_trigger_rate(stew.event_rate())
+                    if t_config < datetime.date.today():
+                        # update config (set t_config when sent, not here)
+                        self.device.send_message(
+                            messages.GetControlParameterList())
 
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
@@ -137,5 +148,7 @@ if __name__ == '__main__':
     requests_log.setLevel(logging.WARNING)
 
     app = Main()
-    app.run()
-    app.close()
+    try:
+        app.run()
+    finally:
+        app.close()

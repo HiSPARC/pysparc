@@ -48,9 +48,19 @@ class ConfigTest(unittest.TestCase):
                 name = 'ch%d_threshold_%s' % (channel, level)
                 low, high = self.config._get_range_from(name)
                 value = getattr(self.config, name)
-                self.assertEqual(low, 0)
-                self.assertEqual(high, 2000)
-                self.assertEqual(value, 30 if level == 'low' else 70)
+                self.assertEqual(low, 0x000)
+                self.assertEqual(high, 0xfff)
+                self.assertEqual(value, (200 + 50) if level == 'low' else
+                                 (200 + 120))
+
+    def test_integration_times(self):
+        for channel in [1, 2]:
+            name = 'ch%d_integrator_time' % channel
+            low, high = self.config._get_range_from(name)
+            value = getattr(self.config, name)
+            self.assertEqual(low, 0x00)
+            self.assertEqual(high, 0xff)
+            self.assertEqual(value, 0xff)
 
     def test_individual_gains_and_offsets(self):
         for channel in [1, 2]:
@@ -119,11 +129,15 @@ class ReadWriteConfigTest(unittest.TestCase):
         mock_configparser = Mock()
         self.config.write_config(mock_configparser)
         for member in self.config.members():
-            if member != '_device':
+            if (member != '_device' and member not in
+                self.config._private_settings):
                 mock_configparser.set.assert_any_call(
                     self.section, member, getattr(self.config, member))
         device_call = call.set(self.section, '_device', ANY)
         assert device_call not in mock_configparser.mock_calls
+        for private_setting in self.config._private_settings:
+            device_call = call.set(self.section, private_setting, ANY)
+            assert device_call not in mock_configparser.mock_calls
 
     @patch.object(pysparc.config.Config, '__setattr__')
     @patch.object(pysparc.config, 'literal_eval')

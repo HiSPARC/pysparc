@@ -27,6 +27,7 @@ Contents
 
 import base64
 import cPickle as pickle
+import datetime
 import hashlib
 import logging
 import re
@@ -37,6 +38,8 @@ import tables
 import requests
 from requests.exceptions import ConnectionError, Timeout
 import redis
+
+import pysparc.events
 
 
 logger = logging.getLogger(__name__)
@@ -121,8 +124,8 @@ class StorageManager(object):
 
         """
 
-        key = 'event_%d' % event.ext_timestamp
         pickled_event = pickle.dumps(event)
+        key = 'event_%s' % hashlib.md5(pickled_event).hexdigest()
         self.kvstore.hmset(key, {'event': pickled_event, 'count': 0})
 
         for queue, worker in self.workers:
@@ -421,10 +424,16 @@ class NikhefDataStore(object):
     def store_event(self, event):
         """Store an event.
 
-        Override this method.
+        Check the type of the event (HiSPARC, config, ...) and store
+        accordingly.
 
         """
-        data = self._create_event_container(event)
+        if type(event) == pysparc.events.Event:
+            data = self._create_event_container(event)
+        elif type(event) == pysparc.events.ConfigEvent:
+            data = self._create_config_container(event)
+        else:
+            raise StorageError("Unknown event type: %s" % type(event))
         self._upload_data(data)
 
     def _create_event_container(self, event):
@@ -454,6 +463,96 @@ class NikhefDataStore(object):
         trace_ch1 = base64.b64encode(event.zlib_trace_ch1)
         trace_ch2 = base64.b64encode(event.zlib_trace_ch2)
         self._add_values_to_datalist(datalist, 'TR', [trace_ch1, trace_ch2])
+
+        event_list = [{'header': header, 'datalist': datalist}]
+        return event_list
+
+    def _create_config_container(self, config):
+        """Encapsulate the configuration in a container for the datastore.
+
+        This hurts.  But it is necessary for historical reasons.
+
+        :param event: hardware config object.
+        :returns: container for the event data.
+
+        """
+        header = {'eventtype_uploadcode': 'CFG',
+                  'datetime': datetime.datetime.now(),
+                  'nanoseconds': 0}
+
+        datalist = []
+        self._add_value_to_datalist(datalist, 'CFG_PRECTIME',
+                                    config.pre_coincidence_time)
+        self._add_value_to_datalist(datalist, 'CFG_CTIME',
+                                    config.coincidence_time)
+        self._add_value_to_datalist(datalist, 'CFG_POSTCTIME',
+                                    config.post_coincidence_time)
+
+        self._add_value_to_datalist(datalist, 'CFG_GPS_LAT',
+                                    config.gps_latitude)
+        self._add_value_to_datalist(datalist, 'CFG_GPS_LONG',
+                                    config.gps_longitude)
+        self._add_value_to_datalist(datalist, 'CFG_GPS_ALT',
+                                    config.gps_altitude)
+
+        self._add_value_to_datalist(datalist, 'CFG_MAS_VERSION',
+                                    config.mas_version)
+
+        # 'CFG_TRIGLOWSIG': 'trig_low_signals',
+        # 'CFG_TRIGHIGHSIG': 'trig_high_signals',
+        # 'CFG_TRIGEXT': 'trig_external',
+        # 'CFG_TRIGANDOR': 'trig_and_or',
+
+        self._add_value_to_datalist(datalist, 'CFG_USEFILTER',
+                                    config.use_filter)
+        self._add_value_to_datalist(datalist, 'CFG_USEFILTTHRES',
+                                    config.use_filter_threshold)
+        self._add_value_to_datalist(datalist, 'CFG_REDUCE', config.reduce_data)
+
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1THRLOW',
+                                    config.mas_ch1_thres_low)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1THRHIGH',
+                                    config.mas_ch1_thres_high)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2THRLOW',
+                                    config.mas_ch2_thres_low)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2THRHIGH',
+                                    config.mas_ch2_thres_high)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1INTTIME',
+                                    config.mas_ch1_inttime)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2INTTIME',
+                                    config.mas_ch2_inttime)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1VOLT',
+                                    config.mas_ch1_voltage)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2VOLT',
+                                    config.mas_ch2_voltage)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1CURR',
+                                    config.mas_ch1_current)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2CURR',
+                                    config.mas_ch2_current)
+
+        # 'CFG_MAS_COMPTHRLOW': 'mas_comp_thres_low',
+        # 'CFG_MAS_COMPTHRHIGH': 'mas_comp_thres_high',
+
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1GAINPOS',
+                                    config.mas_ch1_gain_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1GAINNEG',
+                                    config.mas_ch1_gain_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2GAINPOS',
+                                    config.mas_ch2_gain_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2GAINNEG',
+                                    config.mas_ch2_gain_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1OFFPOS',
+                                    config.mas_ch1_offset_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH1OFFNEG',
+                                    config.mas_ch1_offset_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2OFFPOS',
+                                    config.mas_ch2_offset_pos)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_CH2OFFNEG',
+                                    config.mas_ch2_offset_neg)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_COMMOFF',
+                                    config.mas_common_offset)
+        self._add_value_to_datalist(datalist, 'CFG_MAS_INTVOLTAGE',
+                                    config.mas_internal_voltage)
 
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list

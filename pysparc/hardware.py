@@ -23,7 +23,8 @@ import time
 import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
-                      InitializeMessage, MeasuredDataMessage)
+                      InitializeMessage, MeasuredDataMessage,
+                      ControlParameterList, GetControlParameterList)
 import gps_messages
 from gps_messages import GPSMessageFactory
 import config
@@ -60,10 +61,9 @@ class HardwareError(Exception):
 
 class BaseHardware(object):
 
-    """Access HiSPARC II hardware.
+    """Hardware base class.
 
-    Instantiate this class to get access to connected HiSPARC II
-    hardware. The hardware device is opened during instantiation.
+    Subclass this class for actual hardware. See, e.g. :class:`HiSPARCII`.
 
     """
 
@@ -136,6 +136,13 @@ class BaseHardware(object):
 
 class HiSPARCII(BaseHardware):
 
+    """Access HiSPARC II hardware.
+
+    Instantiate this class to get access to connected HiSPARC II
+    hardware. The hardware device is opened during instantiation.
+
+    """
+
     description = "HiSPARC II Master"
 
     def __init__(self):
@@ -149,6 +156,8 @@ class HiSPARCII(BaseHardware):
         self.send_message(ResetMessage())
         self.send_message(InitializeMessage())
         self.config.reset_hardware()
+        # Read (some) config values from device
+        self.send_message(GetControlParameterList())
 
     def read_message(self):
         """Read a message from the hardware device.
@@ -160,7 +169,10 @@ class HiSPARCII(BaseHardware):
 
         """
         self.read_into_buffer()
-        return HisparcMessageFactory(self._buffer)
+        msg = HisparcMessageFactory(self._buffer)
+        if isinstance(msg, ControlParameterList):
+            self.config.update_from_config_message(msg)
+        return msg
 
     def flush_and_get_measured_data_message(self, timeout=15):
         """Flush output buffers and wait for measured data.

@@ -3,7 +3,7 @@ import ConfigParser
 import weakref
 from ast import literal_eval
 
-from atom.api import Atom, observe, Range, Value, Bool
+from atom.api import Atom, observe, Range, Value, Bool, Float, Str
 
 from pysparc.util import map_setting
 from pysparc.messages import SetControlParameter, InitializeMessage
@@ -16,10 +16,14 @@ class Config(Atom):
 
     ch1_voltage = Range(300, 1500, 300)
     ch2_voltage = Range(300, 1500, 300)
-    ch1_threshold_low = Range(0, 2000, 30)
-    ch2_threshold_low = Range(0, 2000, 30)
-    ch1_threshold_high = Range(0, 2000, 70)
-    ch2_threshold_high = Range(0, 2000, 70)
+    # thresholds are in absolute ADC counts
+    ch1_threshold_low = Range(0, 0xfff, 250)
+    ch2_threshold_low = Range(0, 0xfff, 250)
+    ch1_threshold_high = Range(0, 0xfff, 320)
+    ch2_threshold_high = Range(0, 0xfff, 320)
+
+    ch1_integrator_time = Range(0x00, 0xff, 0xff)
+    ch2_integrator_time = Range(0x00, 0xff, 0xff)
 
     ch1_offset_positive = Range(0x00, 0xff, 0x80)
     ch1_offset_negative = Range(0x00, 0xff, 0x80)
@@ -39,7 +43,20 @@ class Config(Atom):
     coincidence_time = Range(0, 5000, 2000)
     post_coincidence_time = Range(0, 10000, 2000)
 
+    # Read-only attributes below
+    gps_latitude = Float()
+    gps_longitude = Float()
+    gps_altitude = Float()
+
+    ch1_current = Float()
+    ch2_current = Float()
+
+    version = Str()
+
     _device = Value()
+
+    _private_settings = ['gps_latitude', 'gps_longitude', 'gps_altitude',
+                         'ch1_current', 'ch2_current', 'version']
 
     def __init__(self, device):
         super(Config, self).__init__()
@@ -49,6 +66,8 @@ class Config(Atom):
 
     @observe('ch1_voltage',
              'ch2_voltage',
+             'ch1_integrator_time',
+             'ch2_integrator_time',
              'ch1_offset_positive',
              'ch1_offset_negative',
              'ch2_offset_positive',
@@ -64,6 +83,15 @@ class Config(Atom):
         low, high = self._get_range_from(name)
         setting_value = map_setting(value, low, high, 0x00, 0xff)
         msg = SetControlParameter(name, setting_value)
+        self._device().send_message(msg)
+
+    @observe('ch1_threshold_low',
+             'ch1_threshold_high',
+             'ch2_threshold_low',
+             'ch2_threshold_high')
+    def _write_threshold_setting_to_device(self, setting):
+        name, value = setting['name'], setting['value']
+        msg = SetControlParameter(name, value, nbytes=2)
         self._device().send_message(msg)
 
     @observe('pre_coincidence_time',
@@ -104,6 +132,25 @@ class Config(Atom):
             setting.notify(self, {'name': name, 'type': 'update',
                                   'value': getattr(self, name)})
 
+    def update_from_config_message(self, msg):
+        """Update read-only config values from hardware config message.
+
+        This updates read-only values from a parameter list returned by the
+        hardware device.
+
+        :param msg: ControlParameterList message read from device.
+
+        """
+        self.gps_latitude = msg.gps_latitude
+        self.gps_longitude = msg.gps_longitude
+        self.gps_altitude = msg.gps_altitude
+
+        self.version = "Hardware: %d FPGA: %d" % (msg.serial_number,
+                                                  msg.firmware_version)
+
+        self.ch1_current = msg.ch1_current
+        self.ch2_current = msg.ch2_current
+
     def write_config(self, config):
         """Write config settings to existing config object.
 
@@ -116,7 +163,7 @@ class Config(Atom):
 
         settings = self.members()
         for setting in sorted(settings):
-            if setting != '_device':
+            if setting[0] != '_' and setting not in self._private_settings:
                 config.set(section, setting, getattr(self, setting))
 
     def read_config(self, config):

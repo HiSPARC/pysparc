@@ -10,6 +10,7 @@ import struct
 import datetime
 import calendar
 import logging
+from math import pi
 
 import numpy as np
 
@@ -37,6 +38,8 @@ msg_ids = {'measured_data': 0xa0,
            'ch2_gain_negative': 0x17,
            'common_offset': 0x18,
            'full_scale': 0x19,
+           'ch1_integrator_time': 0x1a,
+           'ch2_integrator_time': 0x1b,
            'ch1_voltage': 0x1e,
            'ch2_voltage': 0x1f,
            'ch1_threshold_low': 0x20,
@@ -386,6 +389,9 @@ class ControlParameterList(HisparcMessage):
         self.firmware_version = version >> 16
         self.serial_number = version & 0b1111111111
 
+        self.gps_latitude *= 360 / (2 * pi)
+        self.gps_longitude *= 360 / (2 * pi)
+
         del buff[:msg_length]
 
 
@@ -393,6 +399,7 @@ class SetControlParameter(HisparcMessage):
 
     def __init__(self, parameter, value, nbytes=1):
         super(SetControlParameter, self).__init__()
+        self.parameter = parameter
         self.identifier = msg_ids[parameter]
         self.data = [value]
         if nbytes == 1:
@@ -401,6 +408,9 @@ class SetControlParameter(HisparcMessage):
             self.msg_format = 'H'
         else:
             raise NotImplementedError("nbytes out of range")
+
+    def __str__(self):
+        return "Set control parameter %s." % self.parameter
 
 
 class InitializeMessage(HisparcMessage):

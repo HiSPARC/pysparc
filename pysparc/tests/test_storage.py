@@ -1,5 +1,6 @@
 import unittest
 import cPickle as pickle
+import hashlib
 import threading
 
 from mock import Mock, patch, sentinel, call
@@ -76,23 +77,29 @@ class StorageManagerStoreEventTest(unittest.TestCase):
     def setUp(self):
         patcher1 = patch('redis.StrictRedis')
         patcher2 = patch('cPickle.dumps')
+        patcher3 = patch('hashlib.md5')
         self.addCleanup(patcher1.stop)
         self.addCleanup(patcher2.stop)
+        self.addCleanup(patcher3.stop)
         mock_KVStore = patcher1.start()
         self.mock_kvstore = mock_KVStore.return_value
         self.mock_pickle_dumps = patcher2.start()
+        self.mock_md5 = patcher3.start()
+
+        # Make sure we have a generic value for the key
+        self.mock_md5.return_value.hexdigest.return_value = '1234567890'
 
         self.manager = storage.StorageManager()
 
     def test_store_event_adds_event_to_kvstore(self):
         event = Mock(name='event')
-        event.ext_timestamp = 1234567890
         key = 'event_1234567890'
         self.mock_pickle_dumps.return_value = sentinel.pickled_event
 
         self.manager.store_event(event)
 
         self.mock_pickle_dumps.assert_called_once_with(event)
+        self.mock_md5.assert_called_once_with(sentinel.pickled_event)
         self.mock_kvstore.hmset.assert_called_once_with(
             key, {'event': sentinel.pickled_event, 'count': 0})
 
