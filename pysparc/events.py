@@ -283,10 +283,10 @@ class ConfigEvent(object):
         self.mas_ch1_current = master_config.ch1_current
         self.mas_ch2_current = master_config.ch2_current
 
-        self.mas_ch1_thres_low = master_config.ch1_threshold_low
-        self.mas_ch1_thres_high = master_config.ch1_threshold_high
-        self.mas_ch2_thres_low = master_config.ch2_threshold_low
-        self.mas_ch2_thres_high = master_config.ch2_threshold_high
+        self.mas_ch1_thres_low = -1 * master_config.ch1_threshold_low
+        self.mas_ch1_thres_high = -1 * master_config.ch1_threshold_high
+        self.mas_ch2_thres_low = -1 * master_config.ch2_threshold_low
+        self.mas_ch2_thres_high = -1 * master_config.ch2_threshold_high
 
         self.mas_ch1_voltage = master_config.ch1_voltage
         self.mas_ch2_voltage = master_config.ch2_voltage
