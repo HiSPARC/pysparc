@@ -121,8 +121,8 @@ class Config(Atom):
 
         settings = self.members()
         for name, setting in settings.iteritems():
-            setting.notify(self, {'name': name, 'type': 'update',
-                                  'value': getattr(self, name)})
+            # first time accessing an attribute will trigger a notification
+            getattr(self, name)
 
     def update_from_config_message(self, msg):
         """Update read-only config values from hardware config message.
