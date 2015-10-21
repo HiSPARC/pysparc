@@ -89,11 +89,11 @@ class Main(object):
                         t_config = datetime.date.today()
                         logging.info("Sent configuration message.")
                 else:
-                    if t - t_msg > 5:
+                    if t - t_msg > 20:
                         logging.warning("Hardware is silent, resetting.")
                         self.device.reset_hardware()
                         # Give hardware at least 20 seconds to startup
-                        t_msg = t + 20
+                        t_msg = t
 
                 if t - t_log >= 1:
                     logging.info("Event rate: %.1f Hz", stew.event_rate())
