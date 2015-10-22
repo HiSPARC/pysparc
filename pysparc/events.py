@@ -280,6 +280,7 @@ class ConfigEvent(object):
         self.reduce_data = False
 
         self.mas_version = master_config.version
+        self.slv_version = ""
         self.mas_ch1_current = master_config.ch1_current
         self.mas_ch2_current = master_config.ch2_current
 
