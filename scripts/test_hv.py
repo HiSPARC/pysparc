@@ -63,6 +63,10 @@ class Main(object):
         self.write_config()
 
     def run(self):
+        # The first configuration message does not include GPS information.
+        # Flush it, and possibly other outdated messages, and request it later.
+        self.device.flush_device()
+
         stew = Stew()
 
         logging.info("Taking data.")
