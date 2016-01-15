@@ -72,3 +72,7 @@
   copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf
   sudo: yes
   notify: restart supervisor
+
+- name: Install nmap
+  apt: name=nmap state=present
+  sudo: yes
