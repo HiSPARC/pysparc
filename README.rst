@@ -136,3 +136,19 @@ restart OpenVPN::
 The connection will be immediately dropped, but can be restored by
 connecting using the new hostname.  Add the new host to the Ansible
 inventory file and run the playbook.
+
+
+Troubleshooting
+---------------
+
+Run command across all pysparc installations::
+
+   (localhost) $ ansible pysparc -a "<insert command here>"
+
+Query the NTP daemon::
+
+   $ ntpq -p
+
+Scan for filtered NTP port::
+
+   $ sudo nmap -PN -sU -p ntp time.apple.com
