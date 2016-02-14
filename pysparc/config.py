@@ -149,8 +149,9 @@ class Config(Atom):
         self.version = "Hardware: %d FPGA: %d" % (msg.serial_number,
                                                   msg.firmware_version)
 
-        self.ch1_current = msg.ch1_current
-        self.ch2_current = msg.ch2_current
+        # 0xff corresponds to 25 mA, give value in mA units
+        self.ch1_current = msg.ch1_current * (25. / 0xff)
+        self.ch2_current = msg.ch2_current * (25. / 0xff)
 
     def write_config(self, config):
         """Write config settings to existing config object.
