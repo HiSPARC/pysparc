@@ -3,7 +3,7 @@ import ConfigParser
 import weakref
 from ast import literal_eval
 
-from atom.api import Atom, observe, Range, Value, Bool, Float, Str
+from atom.api import Atom, observe, Range, FloatRange, Value, Bool, Float, Str
 
 from pysparc.util import map_setting
 from pysparc.messages import SetControlParameter, InitializeMessage
@@ -39,9 +39,9 @@ class Config(Atom):
     trigger_condition = Range(0x01, 0xff, 0x08)
     one_second_enabled = Bool(False)
 
-    pre_coincidence_time = Range(0, 2000, 1000)
-    coincidence_time = Range(0, 5000, 2000)
-    post_coincidence_time = Range(0, 10000, 2000)
+    pre_coincidence_time = FloatRange(0., 2., 1.)
+    coincidence_time = FloatRange(0., 5., 2.)
+    post_coincidence_time = FloatRange(0., 10., 2.)
 
     # Read-only attributes below
     gps_latitude = Float()
@@ -101,7 +101,7 @@ class Config(Atom):
         name, value = setting['name'], setting['value']
         low, high = self._get_range_from(name)
         # time settings are in 5 ns increments
-        setting_value = map_setting(value, low, high, low / 5, high / 5)
+        setting_value = map_setting(value, low, high, low / 5e-3, high / 5e-3)
         msg = SetControlParameter(name, setting_value, nbytes=2)
         self._device().send_message(msg)
 
