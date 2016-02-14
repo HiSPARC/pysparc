@@ -39,6 +39,7 @@ class Config(Atom):
     trigger_condition = Range(0x01, 0xff, 0x08)
     one_second_enabled = Bool(False)
 
+    # values are in microseconds
     pre_coincidence_time = FloatRange(0., 2., 1.)
     coincidence_time = FloatRange(0., 5., 2.)
     post_coincidence_time = FloatRange(0., 10., 2.)
