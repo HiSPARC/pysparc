@@ -125,6 +125,21 @@ class Config(Atom):
         validator, (low, high) = atom.validate_mode
         return low, high
 
+    def build_trigger_condition(self, num_low=0, num_high=0, or_not_and=False,
+                                use_external=False, calibration_mode=False):
+        if calibration_mode:
+            return 1 << 7
+        else:
+            if not or_not_and:
+                trig_condition = num_low + (num_high << 3)
+            else:
+                trig_condition = 0b100 + (num_low - 1) + (num_high << 3)
+
+            if use_external:
+                trig_condition |= 1 << 6
+
+            return trig_condition
+
     def reset_hardware(self):
         """Force writing all config values to device."""
 
