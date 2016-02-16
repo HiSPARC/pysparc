@@ -201,19 +201,15 @@ class WriteSettingTest(unittest.TestCase):
 
 class TriggerSettingsTest(unittest.TestCase):
 
-    def setUp(self):
-        mock_device = Mock()
-        self.config = pysparc.config.Config(mock_device)
-
     def test_build_trigger_condition(self):
         # shorthand notation
-        trig = self.config.build_trigger_condition
+        trig = pysparc.config.Config.build_trigger_condition
         test = lambda x, y: self.assertEqual(trig(**x), y)
         self._assert_trigger_conditions(test)
 
     def test_unpack_trigger_condition(self):
         # shorthand notation
-        trig = self.config.unpack_trigger_condition
+        trig = pysparc.config.Config.unpack_trigger_condition
         # set sensible defaults
         deflt = dict(num_low=0, num_high=0, or_not_and=False,
                      use_external=False, calibration_mode=False)

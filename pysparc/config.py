@@ -125,7 +125,8 @@ class Config(Atom):
         validator, (low, high) = atom.validate_mode
         return low, high
 
-    def build_trigger_condition(self, num_low=0, num_high=0, or_not_and=False,
+    @classmethod
+    def build_trigger_condition(cls, num_low=0, num_high=0, or_not_and=False,
                                 use_external=False, calibration_mode=False):
         """Build trigger condition byte from parameters.
 
@@ -153,7 +154,8 @@ class Config(Atom):
 
             return trig_condition
 
-    def unpack_trigger_condition(self, condition):
+    @classmethod
+    def unpack_trigger_condition(cls, condition):
         """Unpack trigger condition from byte value.
 
         :param condition: the trigger condition as a coded byte
