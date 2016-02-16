@@ -280,7 +280,7 @@ class ConfigEvent(object):
         self.reduce_data = False
 
         self.mas_version = master_config.version
-        self.slv_version = ""
+        self.slv_version = "Hardware: 0 FPGA: 0"
         self.mas_ch1_current = master_config.ch1_current
         self.mas_ch2_current = master_config.ch2_current
 
@@ -288,6 +288,13 @@ class ConfigEvent(object):
         self.mas_ch1_thres_high = master_config.ch1_threshold_high
         self.mas_ch2_thres_low = master_config.ch2_threshold_low
         self.mas_ch2_thres_high = master_config.ch2_threshold_high
+
+        condition = master_config.unpack_trigger_condition(
+            master_config.trigger_condition)
+        self.trig_low_signals = condition['num_low']
+        self.trig_high_signals = condition['num_high']
+        self.trig_or_not_and = condition['or_not_and']
+        self.trig_external = condition['use_external']
 
         self.mas_ch1_voltage = master_config.ch1_voltage
         self.mas_ch2_voltage = master_config.ch2_voltage

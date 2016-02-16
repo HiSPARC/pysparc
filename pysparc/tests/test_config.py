@@ -199,5 +199,46 @@ class WriteSettingTest(unittest.TestCase):
         self.mock_device.send_message.assert_called_once_with(msg)
 
 
+class TriggerSettingsTest(unittest.TestCase):
+
+    def test_build_trigger_condition(self):
+        # shorthand notation
+        trig = pysparc.config.Config.build_trigger_condition
+        test = lambda x, y: self.assertEqual(trig(**x), y)
+        self._assert_trigger_conditions(test)
+
+    def test_unpack_trigger_condition(self):
+        # shorthand notation
+        trig = pysparc.config.Config.unpack_trigger_condition
+        # set sensible defaults
+        deflt = dict(num_low=0, num_high=0, or_not_and=False,
+                     use_external=False, calibration_mode=False)
+        # test function takes defaults and updates them with test values and
+        # compares with the unpack_trigger_condition output
+        test = lambda x, y: self.assertEqual(dict(deflt, **x),
+                                             trig(y))
+        self._assert_trigger_conditions(test)
+
+    def _assert_trigger_conditions(self, test):
+        test(dict(num_low=1, num_high=0, or_not_and=False), 0b00000001)
+        test(dict(num_low=4, num_high=0, or_not_and=False), 0b00000100)
+
+        test(dict(num_low=0, num_high=1, or_not_and=False), 0b00001000)
+        test(dict(num_low=0, num_high=4, or_not_and=False), 0b00100000)
+        test(dict(num_low=3, num_high=1, or_not_and=False), 0b00001011)
+
+        test(dict(num_low=1, num_high=1, or_not_and=True), 0b00001100)
+        test(dict(num_low=4, num_high=3, or_not_and=True), 0b00011111)
+        test(dict(num_low=4, num_high=4, or_not_and=True), 0b00100111)
+
+        test(dict(use_external=True), 0b01000000)
+        test(dict(num_low=3, num_high=1, or_not_and=False, use_external=True),
+             0b01001011)
+        test(dict(num_low=4, num_high=3, or_not_and=True, use_external=True),
+             0b01011111)
+
+        test(dict(calibration_mode=True), 0b10000000)
+
+
 if __name__ == '__main__':
     unittest.main()

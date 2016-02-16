@@ -3,7 +3,7 @@ import ConfigParser
 import weakref
 from ast import literal_eval
 
-from atom.api import Atom, observe, Range, Value, Bool, Float, Str
+from atom.api import Atom, observe, Range, FloatRange, Value, Bool, Float, Str
 
 from pysparc.util import map_setting
 from pysparc.messages import SetControlParameter, InitializeMessage
@@ -39,9 +39,10 @@ class Config(Atom):
     trigger_condition = Range(0x01, 0xff, 0x08)
     one_second_enabled = Bool(False)
 
-    pre_coincidence_time = Range(0, 2000, 1000)
-    coincidence_time = Range(0, 5000, 2000)
-    post_coincidence_time = Range(0, 10000, 2000)
+    # values are in microseconds
+    pre_coincidence_time = FloatRange(0., 2., 1.)
+    coincidence_time = FloatRange(0., 5., 2.)
+    post_coincidence_time = FloatRange(0., 10., 2.)
 
     # Read-only attributes below
     gps_latitude = Float()
@@ -101,7 +102,7 @@ class Config(Atom):
         name, value = setting['name'], setting['value']
         low, high = self._get_range_from(name)
         # time settings are in 5 ns increments
-        setting_value = map_setting(value, low, high, low / 5, high / 5)
+        setting_value = map_setting(value, low, high, low / 5e-3, high / 5e-3)
         msg = SetControlParameter(name, setting_value, nbytes=2)
         self._device().send_message(msg)
 
@@ -123,6 +124,69 @@ class Config(Atom):
         atom = self.get_member(name)
         validator, (low, high) = atom.validate_mode
         return low, high
+
+    @classmethod
+    def build_trigger_condition(cls, num_low=0, num_high=0, or_not_and=False,
+                                use_external=False, calibration_mode=False):
+        """Build trigger condition byte from parameters.
+
+        :param num_low: minimum number of detectors over low threshold
+        :param num_high: minimum number of detectors over high threshold
+        :param or_not_and: if True, condition is num_low OR num_high. If false,
+                           condition is num_low AND num_high.
+        :param use_external: use external trigger
+        :param calibration_mode: trigger once per second, for hardware
+                                 calibration.
+
+        :returns: trigger condition, as a coded byte
+
+        """
+        if calibration_mode:
+            return 1 << 7
+        else:
+            if not or_not_and:
+                trig_condition = num_low + (num_high << 3)
+            else:
+                trig_condition = 0b100 + (num_low - 1) + (num_high << 3)
+
+            if use_external:
+                trig_condition |= 1 << 6
+
+            return trig_condition
+
+    @classmethod
+    def unpack_trigger_condition(cls, condition):
+        """Unpack trigger condition from byte value.
+
+        :param condition: the trigger condition as a coded byte
+
+        :returns: dictionary with keys describing the trigger condition. The
+                  keys are identical to the paramers of the
+                  :meth:`build_trigger_condition` method.
+
+        """
+        num_low = condition & 0b111
+        num_high = (condition & 0b111000) >> 3
+
+        if num_high > 0 and num_low & 0b100:
+            or_not_and = True
+            num_low = (num_low & 0b11) + 1
+        else:
+            or_not_and = False
+
+        if condition & (1 << 6):
+            use_external = True
+        else:
+            use_external = False
+
+        if condition & (1 << 7):
+            calibration_mode = True
+        else:
+            calibration_mode = False
+
+        return dict(num_low=num_low, num_high=num_high, or_not_and=or_not_and,
+                    use_external=use_external,
+                    calibration_mode=calibration_mode)
 
     def reset_hardware(self):
         """Force writing all config values to device."""
@@ -148,8 +212,9 @@ class Config(Atom):
         self.version = "Hardware: %d FPGA: %d" % (msg.serial_number,
                                                   msg.firmware_version)
 
-        self.ch1_current = msg.ch1_current
-        self.ch2_current = msg.ch2_current
+        # 0xff corresponds to 25 mA, give value in mA units
+        self.ch1_current = msg.ch1_current * (25. / 0xff)
+        self.ch2_current = msg.ch2_current * (25. / 0xff)
 
     def write_config(self, config):
         """Write config settings to existing config object.
