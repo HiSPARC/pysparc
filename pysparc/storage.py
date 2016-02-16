@@ -501,11 +501,15 @@ class NikhefDataStore(object):
         # this value has no correct default on the server force sending it
         self._add_value_to_datalist(datalist, 'CFG_SLV_VERSION',
                                     config.slv_version)
-                                    
-        # 'CFG_TRIGLOWSIG': 'trig_low_signals',
-        # 'CFG_TRIGHIGHSIG': 'trig_high_signals',
-        # 'CFG_TRIGEXT': 'trig_external',
-        # 'CFG_TRIGANDOR': 'trig_and_or',
+
+        self._add_value_to_datalist(datalist, 'CFG_TRIGLOWSIG',
+                                    config.trig_low_signals)
+        self._add_value_to_datalist(datalist, 'CFG_TRIGHIGHSIG',
+                                    config.trig_high_signals)
+        self._add_value_to_datalist(datalist, 'CFG_TRIGEXT',
+                                    config.trig_external)
+        self._add_value_to_datalist(datalist, 'CFG_TRIGANDOR',
+                                    config.trig_or_not_and)
 
         self._add_value_to_datalist(datalist, 'CFG_USEFILTER',
                                     config.use_filter)
