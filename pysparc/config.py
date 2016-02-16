@@ -127,6 +127,19 @@ class Config(Atom):
 
     def build_trigger_condition(self, num_low=0, num_high=0, or_not_and=False,
                                 use_external=False, calibration_mode=False):
+        """Build trigger condition byte from parameters.
+
+        :param num_low: minimum number of detectors over low threshold
+        :param num_high: minimum number of detectors over high threshold
+        :param or_not_and: if True, condition is num_low OR num_high. If false,
+                           condition is num_low AND num_high.
+        :param use_external: use external trigger
+        :param calibration_mode: trigger once per second, for hardware
+                                 calibration.
+
+        :returns: trigger condition, as a coded byte
+
+        """
         if calibration_mode:
             return 1 << 7
         else:
@@ -139,6 +152,39 @@ class Config(Atom):
                 trig_condition |= 1 << 6
 
             return trig_condition
+
+    def unpack_trigger_condition(self, condition):
+        """Unpack trigger condition from byte value.
+
+        :param condition: the trigger condition as a coded byte
+
+        :returns: dictionary with keys describing the trigger condition. The
+                  keys are identical to the paramers of the
+                  :meth:`build_trigger_condition` method.
+
+        """
+        num_low = condition & 0b111
+        num_high = (condition & 0b111000) >> 3
+
+        if num_high > 0 and num_low & 0b100:
+            or_not_and = True
+            num_low = (num_low & 0b11) + 1
+        else:
+            or_not_and = False
+
+        if condition & (1 << 6):
+            use_external = True
+        else:
+            use_external = False
+
+        if condition & (1 << 7):
+            calibration_mode = True
+        else:
+            calibration_mode = False
+
+        return dict(num_low=num_low, num_high=num_high, or_not_and=or_not_and,
+                    use_external=use_external,
+                    calibration_mode=calibration_mode)
 
     def reset_hardware(self):
         """Force writing all config values to device."""

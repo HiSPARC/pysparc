@@ -209,7 +209,21 @@ class TriggerSettingsTest(unittest.TestCase):
         # shorthand notation
         trig = self.config.build_trigger_condition
         test = lambda x, y: self.assertEqual(trig(**x), y)
+        self._assert_trigger_conditions(test)
 
+    def test_unpack_trigger_condition(self):
+        # shorthand notation
+        trig = self.config.unpack_trigger_condition
+        # set sensible defaults
+        deflt = dict(num_low=0, num_high=0, or_not_and=False,
+                     use_external=False, calibration_mode=False)
+        # test function takes defaults and updates them with test values and
+        # compares with the unpack_trigger_condition output
+        test = lambda x, y: self.assertEqual(dict(deflt, **x),
+                                             trig(y))
+        self._assert_trigger_conditions(test)
+
+    def _assert_trigger_conditions(self, test):
         test(dict(num_low=1, num_high=0, or_not_and=False), 0b00000001)
         test(dict(num_low=4, num_high=0, or_not_and=False), 0b00000100)
 
