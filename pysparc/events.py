@@ -39,6 +39,8 @@ class Stew(object):
         self._one_second_messages = {}
         self._events = []
         self._latest_timestamp = 0
+        # Setting the defaultfactory to 0. This allows adding values to
+        # non-existing keys, like d[key] += 1 if key does not exist.
         self._event_rates = collections.defaultdict(lambda: 0)
 
     def add_one_second_message(self, msg):
