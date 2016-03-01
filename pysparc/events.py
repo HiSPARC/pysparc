@@ -42,6 +42,7 @@ class Stew(object):
         # Setting the defaultfactory to 0. This allows adding values to
         # non-existing keys, like d[key] += 1 if key does not exist.
         self._event_rates = collections.defaultdict(lambda: 0)
+        self._last_update = 0
 
     def add_one_second_message(self, msg):
         """Add a one-second message to the stew.
@@ -51,6 +52,7 @@ class Stew(object):
         :param msg: one-second message
 
         """
+        self._last_update = time.time()
         timestamp = msg.timestamp
         delta_t = timestamp - self._latest_timestamp
 
@@ -85,6 +87,7 @@ class Stew(object):
         :param msg: event message
 
         """
+        self._last_update = time.time()
         if not self._one_second_messages:
             logger.debug("No one-second messages yet, ignoring event.")
         else:
@@ -180,6 +183,10 @@ class Stew(object):
 
     def event_rate(self):
         """Return event rate, averaged over EVENTRATE_TIME seconds."""
+
+        # if the hardware fell silent, return 0.0
+        if time.time() - self._last_update > FRESHNESS_TIME:
+            return -999.0
 
         try:
             number_of_events = sum(self._event_rates.values())
