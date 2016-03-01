@@ -181,9 +181,7 @@ class Stew(object):
 
         try:
             number_of_events = sum(self._event_rates.values())
-            timestamps = self._event_rates.keys()
-            time = EVENTRATE_TIME
-            event_rate = number_of_events / time
+            event_rate = number_of_events / EVENTRATE_TIME
             return event_rate
         except (ValueError, ZeroDivisionError):
             # probably there are no events received yet in more than one
