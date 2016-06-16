@@ -172,6 +172,13 @@ class HisparcMessage(BaseMessage):
 
 class OneSecondMessage(HisparcMessage):
 
+    """One-second messages from HiSPARC hardware.
+
+    Note: :attr:`count_ticks_PPS` contains a synchronization error flag in bit
+    31. If the bit is set, the counts are off by 2.5 ns.
+
+    """
+
     identifier = msg_ids['one_second']
     msg_format = '>2B2BH3BIf4H61s1B'
 
