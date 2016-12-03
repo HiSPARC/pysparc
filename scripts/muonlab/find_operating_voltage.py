@@ -31,7 +31,7 @@ class Main(object):
 
         voltages, counts = [], []
 
-        for voltage in range(300, 1201, 50):
+        for voltage in range(900, 1501, 50):
             print voltage,
             self.muonlab.set_pmt1_voltage(voltage)
             t0 = time.time()
@@ -45,10 +45,12 @@ class Main(object):
         self.data.createArray(group, 'voltage', voltages)
         self.data.createArray(group, 'count', counts)
 
+        self.muonlab.set_pmt1_voltage(300)
+
 
 if __name__ == '__main__':
     logging.basicConfig()
 
     if 'main' not in globals():
         main = Main()
-    main.main(interval=10*60)
+    main.main(interval=10, group='operating_voltage_run2')
