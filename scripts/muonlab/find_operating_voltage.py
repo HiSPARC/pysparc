@@ -31,7 +31,7 @@ class Main(object):
 
         voltages, counts = [], []
 
-        for voltage in range(900, 1501, 50):
+        for voltage in range(800, 1101, 50):
             print voltage,
             self.muonlab.set_pmt1_voltage(voltage)
             t0 = time.time()
@@ -53,4 +53,4 @@ if __name__ == '__main__':
 
     if 'main' not in globals():
         main = Main()
-    main.main(interval=10, group='operating_voltage_run2')
+    main.main(interval=3600, group='operating_voltage_run3')
