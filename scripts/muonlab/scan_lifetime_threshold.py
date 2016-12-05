@@ -30,7 +30,7 @@ class Main(object):
 
         thresholds, counts = [], []
 
-        for threshold in range(0, 101, 10):
+        for threshold in range(0, 201, 10):
             print threshold,
             self.muonlab.set_pmt1_threshold(threshold)
             t0 = time.time()
@@ -50,4 +50,4 @@ if __name__ == '__main__':
 
     if 'main' not in globals():
         main = Main()
-    main.main(interval=3600, overwrite=True)
+    main.main(interval=3600, group='lifetime_threshold_run2')
