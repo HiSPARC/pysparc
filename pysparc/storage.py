@@ -411,7 +411,7 @@ class NikhefDataStore(object):
 
     """
 
-    def __init__(self, station_id, password):
+    def __init__(self, station_id, password, url=DATASTORE_URL):
         """Initialize the datastore.
 
         Each station has a unique station number / password combination.
@@ -420,6 +420,7 @@ class NikhefDataStore(object):
         """
         self.station_id = station_id
         self.password = password
+        self.url = url
 
     def store_event(self, event):
         """Store an event.
@@ -604,7 +605,7 @@ class NikhefDataStore(object):
                    'password': self.password, 'data': pickled_data,
                    'checksum': checksum}
         try:
-            r = requests.post(DATASTORE_URL, data=payload, timeout=10)
+            r = requests.post(self.url, data=payload, timeout=10)
             r.raise_for_status()
         except (ConnectionError, Timeout) as exc:
             raise UploadError(str(exc))
