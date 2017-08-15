@@ -6,7 +6,7 @@
       sudo: yes
 
     - name: Install update-notifier-common
-      apt: name=screen state=present
+      apt: name=update-notifier-common state=present
       sudo: yes
 
     - name: ensure pysparc is stopped
