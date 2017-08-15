@@ -1,6 +1,6 @@
 - name: Safe-upgrade packages
   apt: upgrade=safe
-  sudo: yes
+  become: yes
 
 - name: Check if reboot is necessary
   stat: path=/var/run/reboot-required
