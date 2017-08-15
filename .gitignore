@@ -7,3 +7,4 @@ scripts/config.ini
 .vagrant
 pysparc.img
 vpncert.zip
+playbook.retry

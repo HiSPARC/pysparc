@@ -17,6 +17,8 @@ class HiSPARCIIITest(unittest.TestCase):
     @patch('time.sleep')
     @patch('pysparc.hardware.FtdiChip')
     def test_open(self, mock_Device, mock_sleep, mock_burn, mock_init):
+        # Using a manager with child mocks allows us to test for the order of
+        # calls (see below). The manager itself is not used.
         manager = Mock()
         manager.attach_mock(mock_burn, 'burn')
         manager.attach_mock(mock_sleep, 'sleep')
@@ -52,8 +54,8 @@ class HiSPARCIITest(unittest.TestCase):
         self.assertEqual(hardware.HiSPARCII.description,
                          "HiSPARC II Master")
 
-    @patch('pysparc.hardware.BaseHardware.__init__')
-    def test_init_calls_super(self, mock_super):
+    def test_init_calls_super(self):
+        # test that super *was* called during setUp()
         self.mock_super.assert_called_once_with()
 
     def test_init_creates_device_configuration(self):
@@ -64,15 +66,17 @@ class HiSPARCIITest(unittest.TestCase):
         self.mock_reset.assert_called_once_with()
 
     @patch.object(hardware.HiSPARCII, 'send_message')
+    @patch('pysparc.hardware.GetControlParameterList')
     @patch('pysparc.hardware.ResetMessage')
     @patch('pysparc.hardware.InitializeMessage')
     def test_reset_hardware(self, mock_Init_msg, mock_Reset_msg,
-                            mock_send):
+                            mock_Parameter_msg, mock_send):
         self.hisparc.config = Mock()
         self.hisparc.reset_hardware()
         msg1 = mock_Reset_msg.return_value
         msg2 = mock_Init_msg.return_value
-        mock_send.assert_has_calls([call(msg1), call(msg2)])
+        msg3 = mock_Parameter_msg.return_value
+        mock_send.assert_has_calls([call(msg1), call(msg2), call(msg3)])
         self.hisparc.config.reset_hardware.assert_called_once_with()
 
     @patch.object(hardware.HiSPARCII, 'read_into_buffer')
@@ -87,10 +91,31 @@ class HiSPARCIITest(unittest.TestCase):
         mock_factory.assert_called_once_with(self.hisparc._buffer)
 
     @patch('pysparc.hardware.HisparcMessageFactory')
+    def test_read_message_sets_config_parameters(self, mock_factory):
+        mock_config_message = Mock(spec=messages.ControlParameterList)
+        mock_other_message = Mock()
+
+        mock_factory.return_value = mock_other_message
+        self.hisparc.read_message()
+        self.assertFalse(self.mock_config.update_from_config_message.called)
+
+        mock_factory.return_value = mock_config_message
+        self.hisparc.read_message()
+        self.mock_config.update_from_config_message.assert_called_once_with(
+            mock_config_message)
+
+    @patch('pysparc.hardware.HisparcMessageFactory')
     def test_read_message_returns_message(self, mock_factory):
         mock_factory.return_value = sentinel.msg
         actual = self.hisparc.read_message()
         self.assertIs(actual, sentinel.msg)
+
+    @patch('pysparc.hardware.HisparcMessageFactory')
+    def test_read_message_returns_config_message(self, mock_factory):
+        mock_config_message = Mock(spec=messages.ControlParameterList)
+        mock_factory.return_value = mock_config_message
+        actual = self.hisparc.read_message()
+        self.assertIs(actual, mock_config_message)
 
     @patch.object(hardware.HiSPARCII, 'flush_device')
     @patch.object(hardware.HiSPARCII, 'read_message')
@@ -210,6 +235,58 @@ class BaseHardwareTest(unittest.TestCase):
         self.assertRaises(NotImplementedError, self.hisparc.read_message)
         mock_read_into_buffer.assert_called_once_with()
 
+
+class TrimbleGPSTest(unittest.TestCase):
+
+    # mock __init__ of the parent class, so we do not depend on that
+    # implementation
+    @patch.object(hardware.TrimbleGPS, '__init__')
+    def setUp(self, mock_init):
+        mock_init.return_value = None
+
+        self.gps = hardware.TrimbleGPS()
+        self.gps._buffer = sentinel.buffer
+        self.mock_device = Mock()
+        self.gps._device = self.mock_device
+
+        patcher1 = patch.object(hardware.TrimbleGPS, 'read_into_buffer')
+        patcher2 = patch('pysparc.hardware.GPSMessageFactory')
+        self.mock_read_into_buffer = patcher1.start()
+        self.mock_factory = patcher2.start()
+
+        self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
+
+    def test_type_is_basehardware(self):
+        self.assertIsInstance(self.gps, hardware.BaseHardware)
+
+    @patch.object(hardware.BaseHardware, 'open')
+    def test_open_calls_super(self, mock_super):
+        self.gps.open()
+        mock_super.assert_called_once_with()
+
+    @patch.object(hardware.BaseHardware, 'open')
+    def test_open_sets_line_settings(self, mock_super):
+        self.gps.open()
+        self.gps._device.set_line_settings.assert_called_once_with(
+            ftdi_chip.BITS_8, ftdi_chip.PARITY_ODD, ftdi_chip.STOP_BIT_1)
+
+    def test_description(self):
+        self.assertEqual(hardware.TrimbleGPS.description,
+                         "FT232R USB UART")
+
+    def test_read_message(self):
+        self.gps.read_message()
+        self.mock_read_into_buffer.assert_called_once_with()
+
+    def test_read_message_calls_message_factory(self):
+        self.gps.read_message()
+        self.mock_factory.assert_called_once_with(sentinel.buffer)
+
+    def test_read_message_returns_message(self):
+        self.mock_factory.return_value = sentinel.msg
+        actual = self.gps.read_message()
+        self.assertIs(actual, sentinel.msg)
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ import struct
 import datetime
 import calendar
 import logging
+from math import pi
 
 import numpy as np
 
@@ -18,8 +19,6 @@ from lazy import lazy
 
 logger = logging.getLogger(__name__)
 
-
-codons = {'start': 0x99, 'stop': 0x66}
 
 msg_ids = {'measured_data': 0xa0,
            'comparator_data': 0xa2,
@@ -39,6 +38,8 @@ msg_ids = {'measured_data': 0xa0,
            'ch2_gain_negative': 0x17,
            'common_offset': 0x18,
            'full_scale': 0x19,
+           'ch1_integrator_time': 0x1a,
+           'ch2_integrator_time': 0x1b,
            'ch1_voltage': 0x1e,
            'ch2_voltage': 0x1f,
            'ch1_threshold_low': 0x20,
@@ -81,7 +82,7 @@ class CorruptMessageError(MessageError):
     pass
 
 
-class HisparcMessage(object):
+class BaseMessage(object):
 
     """HiSPARC Message base/factory class
 
@@ -90,6 +91,8 @@ class HisparcMessage(object):
     """
     identifier = None
     msg_format = ''
+    container_format = '%s'
+    codons = {'start': None, 'stop': None}
 
     def __init__(self):
         self.data = []
@@ -104,35 +107,83 @@ class HisparcMessage(object):
 
     @classmethod
     def validate_message_start(cls, buff):
-        if buff[0] != codons['start']:
+        if buff[0] != cls.codons['start']:
             raise StartCodonError("First byte of buffer is not start codon")
 
     def validate_codons_and_id(self, header, identifier, end):
-        if (header != codons['start'] or end != codons['stop'] or
+        if (header != self.codons['start'] or end != self.codons['stop'] or
                 identifier != self.identifier):
             raise CorruptMessageError("Corrupt message detected: %x %x %x" %
                                       (header, identifier, end))
+
+    @classmethod
+    def strip_until_start_codon(cls, buff):
+        """Strip bytes from left until start codon is found.
+
+        This method assumes that the data at the start of the buffer is
+        actually somewhere in the middle of a message.
+
+        :param buff: the contents of the usb buffer
+
+        """
+        try:
+            index = buff.index(chr(cls.codons['start']))
+        except ValueError:
+            del buff[:]
+        else:
+            del buff[:index]
+
+    @classmethod
+    def strip_partial_message(cls, buff):
+        """Strip partial message from left, until new start codon found.
+
+        This method assumes that there is a message at the start of the buffer, but
+        that it is only a partial message.  Strip data until a new message appears
+        to begin.
+
+        :param buff: the contents of the usb buffer
+
+        """
+        del buff[0]
+        cls.strip_until_start_codon(buff)
 
     def encode(self):
         if self.identifier is None:
             return None
 
-        format = '>BB' + self.msg_format + 'B'
+        format = self.container_format % self.msg_format
         packer = struct.Struct(format)
-        data = [codons['start'], self.identifier]
+        data = [self.codons['start'], self.identifier]
         if self.data:
             data += self.data
-        data.append(codons['stop'])
+        data.append(self.codons['stop'])
         msg = packer.pack(*data)
         return msg
 
+    def parse_message(self):
+        raise NotImplementedError()
+
+
+class HisparcMessage(BaseMessage):
+
+    container_format = '>BB%sB'
+    codons = {'start': 0x99, 'stop': 0x66}
+
 
 class OneSecondMessage(HisparcMessage):
+
+    """One-second messages from HiSPARC hardware.
+
+    Note: :attr:`count_ticks_PPS` contains a synchronization error flag in bit
+    31. If the bit is set, the counts are off by 2.5 ns.
+
+    """
 
     identifier = msg_ids['one_second']
     msg_format = '>2B2BH3BIf4H61s1B'
 
     def __init__(self, buff):
+        super(OneSecondMessage, self).__init__()
         self.parse_message(buff)
 
     def parse_message(self, buff):
@@ -171,6 +222,7 @@ class MeasuredDataMessage(HisparcMessage):
     msg_tail_format = '>%dsB'
 
     def __init__(self, buff):
+        super(MeasuredDataMessage, self).__init__()
         self.parse_message(buff)
 
     def parse_message(self, buff):
@@ -216,7 +268,6 @@ class MeasuredDataMessage(HisparcMessage):
         ph2 = self.trace_ch2.max() - bl2
 
         return 'Event message: %s %d %d' % (self.datetime, ph1, ph2)
-
 
     @lazy
     def trace_ch1(self):
@@ -297,7 +348,7 @@ class MeasuredDataMessage(HisparcMessage):
 
 class GetControlParameterList(HisparcMessage):
 
-    identifier = msg_ids['all_controls']
+    identifier = command_ids['get_all_controls']
 
     @classmethod
     def is_message_for(cls, buff):
@@ -309,38 +360,53 @@ class GetControlParameterList(HisparcMessage):
 class ControlParameterList(HisparcMessage):
 
     identifier = msg_ids['all_controls']
-    msg_format = ">2B16B4HB3HB4x2B2BH3B3df3s"
+    msg_format = ">2B16B4HB3HB4x2B2BH3B3df3sB"
 
     def __init__(self, buff):
+        super(ControlParameterList, self).__init__()
         self.parse_message(buff)
 
     def parse_message(self, buff):
         msg_length = struct.calcsize(self.msg_format)
         str_buff = str(buff[:msg_length])
 
-        (header, identifier, self.ch1_offset_positive, self.ch1_offset_negative,
-         self.ch2_offset_positive, self.ch2_offset_negative, self.ch1_gain_positive,
-         self.ch1_gain_negative, self.ch2_gain_positive, self.ch2_gain_negative,
-         self.common_offset, self.full_scale, self.ch1_integrator_time,
-         self.ch2_integrator_time, self.comparator_low, self.comparator_high,
-         self.ch1_voltage, self.ch2_voltage, self.ch1_threshold_low, self.ch1_threshold_high,
-         self.ch2_threshold_low, self.ch2_threshold_high, self.trigger_condition,
-         self.pre_coincidence_time, self.coincidence_time, self.post_coincidence_time,
-         self.status, self.ch1_current, self.ch2_current,
-         self.gps_day, self.gps_month, self.gps_year,
-         self.gps_hours, self.gps_minutes, self.gps_seconds,
-         self.gps_longitude, self.gps_latitude, self.gps_altitude,
-         self.temperature, self._version) = struct.unpack(self.msg_format, str_buff)
+        (header, identifier,
+         self.ch1_offset_positive, self.ch1_offset_negative,
+         self.ch2_offset_positive, self.ch2_offset_negative,
+         self.ch1_gain_positive, self.ch1_gain_negative,
+         self.ch2_gain_positive, self.ch2_gain_negative,
+         self.common_offset, self.full_scale,
+         self.ch1_integrator_time, self.ch2_integrator_time,
+         self.comparator_low, self.comparator_high,
+         self.ch1_voltage, self.ch2_voltage,
+         self.ch1_threshold_low, self.ch1_threshold_high,
+         self.ch2_threshold_low, self.ch2_threshold_high,
+         self.trigger_condition, self.pre_coincidence_time,
+         self.coincidence_time, self.post_coincidence_time, self.status,
+         self.ch1_current, self.ch2_current,
+         self.gps_day, self.gps_month, self.gps_year, self.gps_hours,
+         self.gps_minutes, self.gps_seconds, self.gps_longitude,
+         self.gps_latitude, self.gps_altitude,
+         self.temperature, self._version, end) \
+            = struct.unpack(self.msg_format, str_buff)
+
+        self.validate_codons_and_id(header, identifier, end)
 
         version, = struct.unpack('>L', '\00' + self._version)
         self.firmware_version = version >> 16
         self.serial_number = version & 0b1111111111
+
+        self.gps_latitude *= 360 / (2 * pi)
+        self.gps_longitude *= 360 / (2 * pi)
+
+        del buff[:msg_length]
 
 
 class SetControlParameter(HisparcMessage):
 
     def __init__(self, parameter, value, nbytes=1):
         super(SetControlParameter, self).__init__()
+        self.parameter = parameter
         self.identifier = msg_ids[parameter]
         self.data = [value]
         if nbytes == 1:
@@ -349,6 +415,9 @@ class SetControlParameter(HisparcMessage):
             self.msg_format = 'H'
         else:
             raise NotImplementedError("nbytes out of range")
+
+    def __str__(self):
+        return "Set control parameter %s." % self.parameter
 
 
 class InitializeMessage(HisparcMessage):
@@ -399,8 +468,8 @@ def HisparcMessageFactory(buff):
         try:
             HisparcMessage.validate_message_start(buff)
         except StartCodonError:
-            logger.debug("Start codon error, stripping buffer.")
-            strip_until_start_codon(buff)
+            logger.warning("Start codon error, stripping buffer.")
+            HisparcMessage.strip_until_start_codon(buff)
         except IndexError:
             return None
         else:
@@ -411,8 +480,8 @@ def HisparcMessageFactory(buff):
             try:
                 return cls(buff)
             except CorruptMessageError:
-                logger.debug("Corrupt message, stripping buffer.")
-                strip_partial_message(buff)
+                logger.warning("Corrupt message, stripping buffer.")
+                HisparcMessage.strip_partial_message(buff)
                 return HisparcMessageFactory(buff)
             except struct.error:
                 # message is too short, wait for the rest to come in.
@@ -421,45 +490,16 @@ def HisparcMessageFactory(buff):
             except ValueError:
                 # some value in a message could not be converted.
                 # Probably a corrupt message
-                logger.debug("ValueError, so probably a corrupt message; stripping buffer.")
-                strip_partial_message(buff)
+                logger.warning("ValueError, so probably a corrupt message; "
+                               "stripping buffer.")
+                HisparcMessage.strip_partial_message(buff)
                 return HisparcMessageFactory(buff)
 
     # Unknown message type.  This usually happens after a partial or
     # corrupt message is stripped away until a new start codon is found.
     # This 'start codon' is probably not an actual start codon, but
     # somewhere in the middle of a partial message.
-    logger.debug("Unknown message type (probably corrupt), stripping buffer.")
-    strip_partial_message(buff)
+    logger.warning("Unknown message type (probably corrupt), "
+                   "stripping buffer.")
+    HisparcMessage.strip_partial_message(buff)
     return HisparcMessageFactory(buff)
-
-
-def strip_until_start_codon(buff):
-    """Strip bytes from left until start codon is found.
-
-    This method assumes that the data at the start of the buffer is
-    actually somewhere in the middle of a message.
-
-    :param buff: the contents of the usb buffer
-
-    """
-    try:
-        index = buff.index(chr(codons['start']))
-    except ValueError:
-        del buff[:]
-    else:
-        del buff[:index]
-
-
-def strip_partial_message(buff):
-    """Strip partial message from left, until new start codon found.
-
-    This method assumes that there is a message in the buffer, but that
-    it is only a partial message.  Strip data until a new message appears
-    to begin.
-
-    :param buff: the contents of the usb buffer
-
-    """
-    del buff[0]
-    return strip_until_start_codon(buff)

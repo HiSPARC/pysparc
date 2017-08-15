@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import time
@@ -5,10 +6,10 @@ import ConfigParser
 
 import pkg_resources
 
-from pysparc.hardware import HiSPARCII, HiSPARCIII
+from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
 from pysparc.align_adcs import AlignADCs
-from pysparc.events import Stew
+from pysparc.events import Stew, ConfigEvent
 from pysparc import messages, storage, monitor
 
 
@@ -26,6 +27,7 @@ class Main(object):
             self.device = HiSPARCIII()
         except DeviceNotFoundError:
             self.device = HiSPARCII()
+        self.gps = TrimbleGPS()
         self.initialize_device()
 
         station_name = self.config.get('DAQ', 'station_name')
@@ -47,14 +49,24 @@ class Main(object):
         logging.info("Initializing device configuration")
         self.device.config.read_config(self.config)
 
+        if self.config.getboolean('DAQ', 'force_reset_gps'):
+            logging.info("Force reset GPS to factory defaults.")
+            self.gps.reset_defaults()
+            self.config.set('DAQ', 'force_reset_gps', False)
+
         if self.config.getboolean('DAQ', 'force_align_adcs'):
             logging.info("Force aligning ADCs.")
             align_adcs = AlignADCs(self.device)
             align_adcs.align()
             self.config.set('DAQ', 'force_align_adcs', False)
-            self.write_config()
+
+        self.write_config()
 
     def run(self):
+        # The first configuration message does not include GPS information.
+        # Flush it, and possibly other outdated messages, and request it later.
+        self.device.flush_device()
+
         stew = Stew()
 
         logging.info("Taking data.")
@@ -62,6 +74,7 @@ class Main(object):
         t_msg = time.time() + 20
         t_log = time.time() - .5
         t_status = time.time()
+        t_config = datetime.date(1970, 1, 1)
         try:
             while True:
                 t = time.time()
@@ -74,14 +87,17 @@ class Main(object):
                     elif isinstance(msg, messages.OneSecondMessage):
                         stew.add_one_second_message(msg)
                         logging.debug("One-second received: %d", msg.timestamp)
+                    elif isinstance(msg, messages.ControlParameterList):
+                        config = ConfigEvent(self.device.config)
+                        self.storage_manager.store_event(config)
+                        t_config = datetime.date.today()
+                        logging.info("Sent configuration message.")
                 else:
-                    # regretfully required on linux systems
-                    time.sleep(.016)
-                    if t - t_msg > 5:
+                    if t - t_msg > 20:
                         logging.warning("Hardware is silent, resetting.")
                         self.device.reset_hardware()
                         # Give hardware at least 20 seconds to startup
-                        t_msg = t + 20
+                        t_msg = t
 
                 if t - t_log >= 1:
                     logging.info("Event rate: %.1f Hz", stew.event_rate())
@@ -93,12 +109,16 @@ class Main(object):
                     stew.drain()
 
                 # Periodically send status messages to the monitor,
-                # currently Nagios
+                # currently Nagios, and config messages
                 if t - t_status >= 60:
                     t_status += 60
                     self.monitor.send_uptime()
                     self.monitor.send_cpu_load()
                     self.monitor.send_trigger_rate(stew.event_rate())
+                    if t_config < datetime.date.today():
+                        # update config (set t_config when sent, not here)
+                        self.device.send_message(
+                            messages.GetControlParameterList())
 
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
@@ -108,7 +128,7 @@ class Main(object):
             try:
                 self.storage_manager.store_event(event)
             except Exception as e:
-                logging.warning(str(e))
+                logging.error(str(e))
         logging.debug("Stored %d events.", len(events))
 
     def write_config(self):
@@ -125,11 +145,14 @@ class Main(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG,
+        format='%(asctime)s %(levelname)s:%(name)s:%(message)s')
     # raise requests module log level to WARNING
     requests_log = logging.getLogger("requests")
     requests_log.setLevel(logging.WARNING)
 
     app = Main()
-    app.run()
-    app.close()
+    try:
+        app.run()
+    finally:
+        app.close()

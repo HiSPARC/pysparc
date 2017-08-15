@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 MONITOR_URL = 'http://vpn.hisparc.nl/cgi-bin/cmd.cgi'
+# FIXME: the following is not DRY
 STATUS_MSG = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOWN'}
 OK = 0
 WARNING = 1
@@ -110,6 +111,8 @@ class Monitor(object):
         (UNKNOWN).
 
         """
+        # the parameters, especially the values 2 and 30, were determined by
+        # reverse-engineering the communication protocol
         payload = {'cmd_mod': '2',  'cmd_typ': '30',  'host': self.host,
                    'plugin_output': msg,  'plugin_state': status,
                    'service': service}

@@ -1,7 +1,7 @@
 import unittest
 import weakref
 
-from mock import patch, sentinel, Mock, MagicMock, mock_open, call, ANY
+from mock import patch, sentinel, Mock, MagicMock, call, ANY
 
 import pysparc.config
 
@@ -48,9 +48,19 @@ class ConfigTest(unittest.TestCase):
                 name = 'ch%d_threshold_%s' % (channel, level)
                 low, high = self.config._get_range_from(name)
                 value = getattr(self.config, name)
-                self.assertEqual(low, 0)
-                self.assertEqual(high, 2000)
-                self.assertEqual(value, 30 if level == 'low' else 70)
+                self.assertEqual(low, 0x000)
+                self.assertEqual(high, 0xfff)
+                self.assertEqual(value, (200 + 50) if level == 'low' else
+                                 (200 + 120))
+
+    def test_integration_times(self):
+        for channel in [1, 2]:
+            name = 'ch%d_integrator_time' % channel
+            low, high = self.config._get_range_from(name)
+            value = getattr(self.config, name)
+            self.assertEqual(low, 0x00)
+            self.assertEqual(high, 0xff)
+            self.assertEqual(value, 0xff)
 
     def test_individual_gains_and_offsets(self):
         for channel in [1, 2]:
@@ -119,15 +129,20 @@ class ReadWriteConfigTest(unittest.TestCase):
         mock_configparser = Mock()
         self.config.write_config(mock_configparser)
         for member in self.config.members():
-            if member != '_device':
+            if (member != '_device' and member not in
+                self.config._private_settings):
                 mock_configparser.set.assert_any_call(
                     self.section, member, getattr(self.config, member))
         device_call = call.set(self.section, '_device', ANY)
         assert device_call not in mock_configparser.mock_calls
+        for private_setting in self.config._private_settings:
+            device_call = call.set(self.section, private_setting, ANY)
+            assert device_call not in mock_configparser.mock_calls
 
     @patch.object(pysparc.config.Config, '__setattr__')
     @patch.object(pysparc.config, 'literal_eval')
-    def test_read_config_gets_all_members_except_device(self, mock_eval, mock_setattr):
+    def test_read_config_gets_all_members_except_device(self, mock_eval,
+                                                        mock_setattr):
         eval_value = mock_eval.return_value
 
         mock_configparser = Mock()
@@ -170,8 +185,8 @@ class WriteSettingTest(unittest.TestCase):
 
     def test_write_byte_setting_to_device_calls_map_setting(self):
         self.config._write_byte_setting_to_device(self.mock_setting)
-        self.mock_map_setting.assert_called_once_with(sentinel.value,
-            sentinel.low, sentinel.high, 0x00, 0xff)
+        self.mock_map_setting.assert_called_once_with(
+            sentinel.value, sentinel.low, sentinel.high, 0x00, 0xff)
 
     def test_write_byte_setting_to_device_creates_message(self):
         self.config._write_byte_setting_to_device(self.mock_setting)
@@ -182,6 +197,47 @@ class WriteSettingTest(unittest.TestCase):
         self.config._write_byte_setting_to_device(self.mock_setting)
         msg = self.mock_Message.return_value
         self.mock_device.send_message.assert_called_once_with(msg)
+
+
+class TriggerSettingsTest(unittest.TestCase):
+
+    def test_build_trigger_condition(self):
+        # shorthand notation
+        trig = pysparc.config.Config.build_trigger_condition
+        test = lambda x, y: self.assertEqual(trig(**x), y)
+        self._assert_trigger_conditions(test)
+
+    def test_unpack_trigger_condition(self):
+        # shorthand notation
+        trig = pysparc.config.Config.unpack_trigger_condition
+        # set sensible defaults
+        deflt = dict(num_low=0, num_high=0, or_not_and=False,
+                     use_external=False, calibration_mode=False)
+        # test function takes defaults and updates them with test values and
+        # compares with the unpack_trigger_condition output
+        test = lambda x, y: self.assertEqual(dict(deflt, **x),
+                                             trig(y))
+        self._assert_trigger_conditions(test)
+
+    def _assert_trigger_conditions(self, test):
+        test(dict(num_low=1, num_high=0, or_not_and=False), 0b00000001)
+        test(dict(num_low=4, num_high=0, or_not_and=False), 0b00000100)
+
+        test(dict(num_low=0, num_high=1, or_not_and=False), 0b00001000)
+        test(dict(num_low=0, num_high=4, or_not_and=False), 0b00100000)
+        test(dict(num_low=3, num_high=1, or_not_and=False), 0b00001011)
+
+        test(dict(num_low=1, num_high=1, or_not_and=True), 0b00001100)
+        test(dict(num_low=4, num_high=3, or_not_and=True), 0b00011111)
+        test(dict(num_low=4, num_high=4, or_not_and=True), 0b00100111)
+
+        test(dict(use_external=True), 0b01000000)
+        test(dict(num_low=3, num_high=1, or_not_and=False, use_external=True),
+             0b01001011)
+        test(dict(num_low=4, num_high=3, or_not_and=True, use_external=True),
+             0b01011111)
+
+        test(dict(calibration_mode=True), 0b10000000)
 
 
 if __name__ == '__main__':

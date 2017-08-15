@@ -19,12 +19,14 @@ Contents
 
 import logging
 import time
-import random
 
 import ftdi_chip
 from ftdi_chip import FtdiChip
 from messages import (HisparcMessageFactory, ResetMessage,
-                      InitializeMessage, MeasuredDataMessage)
+                      InitializeMessage, MeasuredDataMessage,
+                      ControlParameterList, GetControlParameterList)
+import gps_messages
+from gps_messages import GPSMessageFactory
 import config
 
 import pkg_resources
@@ -59,10 +61,9 @@ class HardwareError(Exception):
 
 class BaseHardware(object):
 
-    """Access HiSPARC II hardware.
+    """Hardware base class.
 
-    Instantiate this class to get access to connected HiSPARC II
-    hardware. The hardware device is opened during instantiation.
+    Subclass this class for actual hardware. See, e.g. :class:`HiSPARCII`.
 
     """
 
@@ -135,6 +136,13 @@ class BaseHardware(object):
 
 class HiSPARCII(BaseHardware):
 
+    """Access HiSPARC II hardware.
+
+    Instantiate this class to get access to connected HiSPARC II
+    hardware. The hardware device is opened during instantiation.
+
+    """
+
     description = "HiSPARC II Master"
 
     def __init__(self):
@@ -148,6 +156,8 @@ class HiSPARCII(BaseHardware):
         self.send_message(ResetMessage())
         self.send_message(InitializeMessage())
         self.config.reset_hardware()
+        # Read (some) config values from device
+        self.send_message(GetControlParameterList())
 
     def read_message(self):
         """Read a message from the hardware device.
@@ -159,7 +169,10 @@ class HiSPARCII(BaseHardware):
 
         """
         self.read_into_buffer()
-        return HisparcMessageFactory(self._buffer)
+        msg = HisparcMessageFactory(self._buffer)
+        if isinstance(msg, ControlParameterList):
+            self.config.update_from_config_message(msg)
+        return msg
 
     def flush_and_get_measured_data_message(self, timeout=15):
         """Flush output buffers and wait for measured data.
@@ -296,8 +309,41 @@ class HiSPARCIII(HiSPARCII):
         device.close()
 
 
-class TrimbleGPS:
+class TrimbleGPS(BaseHardware):
 
     """Access Trimble GPS unit inside the HiSPARC hardware."""
 
-    pass
+    description = "FT232R USB UART"
+
+    def open(self):
+        """Open the hardware device and set line settings."""
+
+        super(TrimbleGPS, self).open()
+
+        # Trimble GPS line settings are 9600,8,O,1
+        # Baud rate defaults to 9600
+        self._device.set_line_settings(ftdi_chip.BITS_8, ftdi_chip.PARITY_ODD,
+                                       ftdi_chip.STOP_BIT_1)
+
+    def read_message(self):
+        """Read a message from the hardware device.
+
+        Call this method to communicate with the device.
+
+        This method should call :meth:`read_into_buffer` and should run
+        the return value through a MessageFactory class.
+
+        """
+        self.read_into_buffer()
+        return GPSMessageFactory(self._buffer)
+
+    def reset_defaults(self):
+        """Reset GPS defaults.
+
+        First, the Trimble GPS unit is reset to factory settings. Then, the
+        survey length is set to a full day.
+
+        """
+
+        self.send_message(gps_messages.ResetMessage(reset_mode='factory'))
+        self.send_message(gps_messages.SetSurveyParameters(num_fixes=86400))

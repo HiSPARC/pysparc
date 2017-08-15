@@ -16,7 +16,8 @@ class AlignADCs(object):
         original_trigger_condition = self.config.trigger_condition
 
         self._reset_config_for_alignment()
-        self.config.trigger_condition = 0x80
+        self.config.trigger_condition = \
+            self.config.build_trigger_condition(calibration_mode=True)
         target = 2048
         self._align_full_scale(target)
         self._align_common_offset(target)

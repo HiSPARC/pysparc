@@ -1,7 +1,9 @@
 from __future__ import division
 
 import collections
+import datetime
 import logging
+import time
 import zlib
 
 import numpy as np
@@ -17,6 +19,7 @@ FRESHNESS_TIME = 10
 EVENTRATE_TIME = 60
 
 SYNCHRONIZATION_BIT = 1 << 31
+CTP_BITS = (1 << 31) - 1
 NANOSECONDS_PER_SECOND = int(1e9)
 
 INTEGRAL_THRESHOLD = 25
@@ -36,7 +39,10 @@ class Stew(object):
         self._one_second_messages = {}
         self._events = []
         self._latest_timestamp = 0
+        # Setting the defaultfactory to 0. This allows adding values to
+        # non-existing keys, like d[key] += 1 if key does not exist.
         self._event_rates = collections.defaultdict(lambda: 0)
+        self._last_update = 0
 
     def add_one_second_message(self, msg):
         """Add a one-second message to the stew.
@@ -46,6 +52,7 @@ class Stew(object):
         :param msg: one-second message
 
         """
+        self._last_update = time.time()
         timestamp = msg.timestamp
         delta_t = timestamp - self._latest_timestamp
 
@@ -80,6 +87,7 @@ class Stew(object):
         :param msg: event message
 
         """
+        self._last_update = time.time()
         if not self._one_second_messages:
             logger.debug("No one-second messages yet, ignoring event.")
         else:
@@ -121,10 +129,13 @@ class Stew(object):
         t2_msg = self._get_one_second_message(msg.timestamp + 2)
 
         CTD = msg.count_ticks_PPS
-        CTP = t1_msg.count_ticks_PPS
-        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS & SYNCHRONIZATION_BIT) else 0
-        quantization_error1 = t1_msg.quantization_error * 1e9
-        quantization_error2 = t2_msg.quantization_error * 1e9
+        # CTP is everything EXCEPT the synchronization bit
+        CTP = t1_msg.count_ticks_PPS & CTP_BITS
+        synchronization_error = 2.5 if (t0_msg.count_ticks_PPS &
+                                        SYNCHRONIZATION_BIT) else 0
+        # ERROR IN TRIMBLE/HISPARC DOCS: quantization error is in NANOseconds
+        quantization_error1 = t1_msg.quantization_error
+        quantization_error2 = t2_msg.quantization_error
 
         # This may be larger than one second due to synchronization error!
         trigger_offset = int(synchronization_error + quantization_error1
@@ -132,10 +143,15 @@ class Stew(object):
                              * (1e9 - quantization_error1 + quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
-        # Correct timestamp
+        # Synchronize with LabVIEW DAQ. There is a one-second difference
+        # between LabVIEW DAQ and PySPARC. We don't know why.
+        ext_timestamp += 1 * NANOSECONDS_PER_SECOND
+
+        # Correct timestamp (and datetime attribute)
         msg.timestamp = int(ext_timestamp / NANOSECONDS_PER_SECOND)
         msg.nanoseconds = ext_timestamp % NANOSECONDS_PER_SECOND
         msg.ext_timestamp = ext_timestamp
+        msg.datetime = datetime.datetime.utcfromtimestamp(msg.timestamp)
 
         logger.debug("Event message cooked, timestamp: %d", msg.timestamp)
         return Event(msg)
@@ -168,11 +184,13 @@ class Stew(object):
     def event_rate(self):
         """Return event rate, averaged over EVENTRATE_TIME seconds."""
 
+        # if the hardware fell silent, return 0.0
+        if time.time() - self._last_update > FRESHNESS_TIME:
+            return -999.0
+
         try:
             number_of_events = sum(self._event_rates.values())
-            timestamps = self._event_rates.keys()
-            time = EVENTRATE_TIME
-            event_rate = number_of_events / time
+            event_rate = number_of_events / EVENTRATE_TIME
             return event_rate
         except (ValueError, ZeroDivisionError):
             # probably there are no events received yet in more than one
@@ -213,7 +231,7 @@ class Event(object):
         self.datetime = msg.datetime
         self.timestamp = msg.timestamp
         self.nanoseconds = msg.nanoseconds
-        self.ext_timestamp = msg.timestamp * int(1e9) + msg.nanoseconds
+        self.ext_timestamp = msg.ext_timestamp
         self.data_reduction = False
         self.trigger_pattern = msg.trigger_pattern
         self.event_rate = event_rate
@@ -236,7 +254,7 @@ class Event(object):
         self.baselines = baselines + [-1, -1]
 
         # Standard deviation of the first 100 samples of the trace
-        std_dev = [int(round(t[:100].std())) for t in self.trace_ch1, self.trace_ch2]
+        std_dev = [int(round(1000 * t[:100].std())) for t in self.trace_ch1, self.trace_ch2]
         self.std_dev = std_dev + [-1, -1]
 
         # Maximum peak to baseline value in trace
@@ -251,3 +269,53 @@ class Event(object):
         traces -= baselines.T
         integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
         self.integrals = integrals + [-1, -1]
+
+
+class ConfigEvent(object):
+
+    def __init__(self, master_config):
+        self.pre_coincidence_time = master_config.pre_coincidence_time
+        self.coincidence_time = master_config.coincidence_time
+        self.post_coincidence_time = master_config.post_coincidence_time
+
+        self.gps_latitude = master_config.gps_latitude
+        self.gps_longitude = master_config.gps_longitude
+        self.gps_altitude = master_config.gps_altitude
+
+        self.use_filter = False
+        self.use_filter_threshold = False
+        self.reduce_data = False
+
+        self.mas_version = master_config.version
+        self.slv_version = "Hardware: 0 FPGA: 0"
+        self.mas_ch1_current = master_config.ch1_current
+        self.mas_ch2_current = master_config.ch2_current
+
+        self.mas_ch1_thres_low = master_config.ch1_threshold_low
+        self.mas_ch1_thres_high = master_config.ch1_threshold_high
+        self.mas_ch2_thres_low = master_config.ch2_threshold_low
+        self.mas_ch2_thres_high = master_config.ch2_threshold_high
+
+        condition = master_config.unpack_trigger_condition(
+            master_config.trigger_condition)
+        self.trig_low_signals = condition['num_low']
+        self.trig_high_signals = condition['num_high']
+        self.trig_or_not_and = condition['or_not_and']
+        self.trig_external = condition['use_external']
+
+        self.mas_ch1_voltage = master_config.ch1_voltage
+        self.mas_ch2_voltage = master_config.ch2_voltage
+
+        self.mas_ch1_inttime = master_config.ch1_integrator_time
+        self.mas_ch2_inttime = master_config.ch2_integrator_time
+
+        self.mas_ch1_offset_pos = master_config.ch1_offset_positive
+        self.mas_ch1_offset_neg = master_config.ch1_offset_negative
+        self.mas_ch2_offset_pos = master_config.ch2_offset_positive
+        self.mas_ch2_offset_neg = master_config.ch2_offset_negative
+        self.mas_ch1_gain_pos = master_config.ch1_gain_positive
+        self.mas_ch1_gain_neg = master_config.ch1_gain_negative
+        self.mas_ch2_gain_pos = master_config.ch2_gain_positive
+        self.mas_ch2_gain_neg = master_config.ch2_gain_negative
+        self.mas_common_offset = master_config.common_offset
+        self.mas_internal_voltage = master_config.full_scale
