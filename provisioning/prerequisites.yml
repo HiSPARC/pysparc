@@ -1,7 +1,7 @@
 ---
 - name: Install PySPARC prerequisites (system packages)
   apt: name={{ item }} state=present
-  sudo: yes
+  become: yes
   with_items:
     - python-dev
     - python-setuptools
@@ -14,7 +14,7 @@
 
 - name: Install PySPARC prerequisites (python packages)
   pip: name={{ item }} state=present
-  sudo: yes
+  become: yes
   with_items:
     - pbr==1.8.1
     - mock==1.1.0
@@ -34,9 +34,9 @@
   lineinfile: dest=/etc/sysctl.conf state=present regexp=^vm.overcommit_memory
               line=vm.overcommit_memory=0
   register: result
-  sudo: yes
+  become: yes
 
 - name: Reload kernel parameters
   service: name=procps state=restarted
   when: result|changed
-  sudo: yes
+  become: yes

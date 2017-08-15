@@ -3,22 +3,22 @@
   tasks:
     - name: Update package index
       apt: update_cache=yes
-      sudo: yes
+      become: yes
 
     - name: Install update-notifier-common
       apt: name=screen state=present
-      sudo: yes
+      become: yes
 
     - name: ensure pysparc is stopped
       supervisorctl: name=pysparc state=stopped
 
     - name: ensure redis-server is stopped
       service: name=redis-server state=stopped
-      sudo: yes
+      become: yes
 
     - name: Safe-upgrade packages
       apt: upgrade=safe
-      sudo: yes
+      become: yes
 
     - name: Check if reboot is necessary
       stat: path=/var/run/reboot-required
@@ -33,7 +33,7 @@
     - name: ensure redis-server is started
       service: name=redis-server state=started
       when: reboot.stat.isreg is not defined
-      sudo: yes
+      become: yes
 
     - name: ensure pysparc is started
       supervisorctl: name=pysparc state=started

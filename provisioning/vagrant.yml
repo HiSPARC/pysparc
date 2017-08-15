@@ -1,11 +1,11 @@
 ---
 - name: Create 'hisparc' user
   user: name=hisparc state=present
-  sudo: yes
+  become: yes
 
 - name: Add vagrant user to hisparc group
   user: name=vagrant groups=hisparc append=yes
-  sudo: yes
+  become: yes
   register: result
 
 - name: kill active ssh connection (designed to FAIL)
