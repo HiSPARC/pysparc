@@ -6,76 +6,76 @@
   lineinfile: dest=/etc/timezone state=present
               line=Europe/Amsterdam regexp=.*/.*
   register: result
-  sudo: yes
+  become: yes
 
 - name: Configure timezone
   command: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
   when: result|changed
-  sudo: yes
+  become: yes
 
 - name: Enable en_US.UTF8 locale
   lineinfile: dest=/etc/locale.gen state=present
               line='en_US.UTF-8 UTF-8' regexp='en_US.UTF-8 UTF-8'
   register: result
-  sudo: yes
+  become: yes
 
 - name: Configure locales
   command: /usr/sbin/dpkg-reconfigure -f noninteractive locales
   when: result|changed
-  sudo: yes
+  become: yes
 
 - name: Create ~hisparc/.ssh directory
   file: path=/home/hisparc/.ssh state=directory owner=hisparc
         group=hisparc
-  sudo: yes
+  become: yes
 
 - name: Copy SSH public keys (~hisparc)
   copy: src=authorized_keys dest=/home/hisparc/.ssh/authorized_keys
         owner=hisparc group=hisparc
-  sudo: yes
+  become: yes
 
 - name: Make sure hisparc user is in adm and plugdev groups
   user: name=hisparc groups=adm,sudo,plugdev append=yes
-  sudo: yes
+  become: yes
 
 - name: Update package index
   apt: update_cache=yes
-  sudo: yes
+  become: yes
 
 - name: Install screen
   apt: name=screen state=present
-  sudo: yes
+  become: yes
 
 - name: Install ipython
   apt: name=ipython state=present
-  sudo: yes
+  become: yes
 
 - name: Allow access to FTDI devices
   copy: src=99-libftdi.rules dest=/etc/udev/rules.d/99-libftdi.rules
-  sudo: yes
+  become: yes
   notify: reboot
 
 - name: Install ACL utilities
   apt: name=acl state=present
-  sudo: yes
+  become: yes
 
 - name: Install git
   apt: name=git state=present
-  sudo: yes
+  become: yes
 
 - name: Install supervisor
   apt: name=supervisor state=present
-  sudo: yes
+  become: yes
 
 - name: Fix supervisor init script
   copy: src=supervisor.init dest=/etc/init.d/supervisor
-  sudo: yes
+  become: yes
 
 - name: Configure supervisor
   copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf
-  sudo: yes
+  become: yes
   notify: restart supervisor
 
 - name: Install nmap
   apt: name=nmap state=present
-  sudo: yes
+  become: yes

@@ -6,7 +6,7 @@
   poll: 0
   ignore_errors: true
   notify: wait for server to come back
-  sudo: yes
+  become: yes
 
 - name: wait for server to come back
   local_action: wait_for host={{ ansible_ssh_host | default(inventory_hostname) }}
@@ -14,11 +14,11 @@
 
 - name: restart openvpn
   service: name=openvpn state=restarted
-  sudo: yes
+  become: yes
 
 - name: restart supervisor
   service: name=supervisor state=restarted
-  sudo: yes
+  become: yes
 
 - name: restart pysparc
   supervisorctl: name=pysparc state=restarted
