@@ -39,7 +39,7 @@
 
     # if path reboot is a regular file, trigger reboot
     - name: Flag a reboot if necessary
-      debug: msg="Reboot is necessary"
+      command: /bin/true
       when: reboot.stat.isreg is defined
       notify: reboot
 
