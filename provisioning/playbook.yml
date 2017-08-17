@@ -9,15 +9,6 @@
   handlers:
     - include: handlers.yml
 
-- hosts: jessie
-  tasks:
-    - include: apt-prerequisites.yml
-    - include: jessie.yml
-    - include: apt-upgrade.yml
-  handlers:
-    - include: handlers.yml
-  tags: jessie
-
 - hosts: all
   tasks:
     - include: common.yml
