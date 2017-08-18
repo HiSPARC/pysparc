@@ -16,6 +16,7 @@
   pip: name={{ item }} state=present
   become: yes
   with_items:
+    - pip>=6.0
     - pbr==1.8.1
     - mock==1.1.0
     - pylibftdi
