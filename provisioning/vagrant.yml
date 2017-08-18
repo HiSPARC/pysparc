@@ -8,7 +8,8 @@
   become: yes
   register: result
 
-- name: kill active ssh connection (designed to FAIL)
-  script: kill_active_sshd.sh
-  ignore_errors: true
+- name: Reset ssh connection to allow user changes to affect current user
   when: result|changed
+  shell: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
+  async: 3
+  poll: 1
