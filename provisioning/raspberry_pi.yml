@@ -8,36 +8,36 @@
   when: p.stat.isreg is defined
   notify: reboot
   register: result
-  sudo: yes
+  become: yes
 
 - name: Remove raspi-config.sh
   file: path=/etc/profile.d/raspi-config.sh state=absent
   when: result|changed
-  sudo: yes
+  become: yes
 
 - name: Restore default rc.local
   copy: src=rc.local dest=/etc/rc.local
-  sudo: yes
+  become: yes
 
 - name: Copy SSH public keys (~pi)
   copy: src=authorized_keys dest=/home/pi/.ssh/authorized_keys
 
 - name: Copy OpenVPN config
   copy: src=hisparcvpn.conf dest=/etc/openvpn/hisparcvpn.conf
-  sudo: yes
+  become: yes
   notify: restart openvpn
 
 - name: disable password login for user 'pi'
   user: name=pi state=present password=!
-  sudo: yes
+  become: yes
 
 - name: Create 'hisparc' user
   user: name=hisparc state=present
-  sudo: yes
+  become: yes
 
 - name: Add pi user to hisparc group
   user: name=pi groups=hisparc append=yes
-  sudo: yes
+  become: yes
   register: result
 
 - name: Reset ssh connection to allow user changes to affect current user

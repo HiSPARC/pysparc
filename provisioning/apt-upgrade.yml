@@ -1,0 +1,13 @@
+- name: Safe-upgrade packages
+  apt: upgrade=safe
+  become: yes
+
+- name: Check if reboot is necessary
+  stat: path=/var/run/reboot-required
+  register: p
+
+# if path p is a regular file, trigger reboot
+- name: Flag a reboot if necessary
+  command: /bin/true
+  when: p.stat.isreg is defined
+  notify: reboot
