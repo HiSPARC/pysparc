@@ -16,7 +16,6 @@
   pip: name={{ item }} state=present
   become: yes
   with_items:
-    - pip>=6.0
     - pbr==1.8.1
     - mock==1.1.0
     - pylibftdi
@@ -24,6 +23,7 @@
     - lazy
     - requests>=2.4.1
     - redis==2.10.3
+    - pip>=6.0
 
 # DF: Ok, so here I was following the Redis FAQ to be able to overcommit
 # memory. I was going to look at the reason for the large DB next, but
