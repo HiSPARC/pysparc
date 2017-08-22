@@ -1,0 +1,22 @@
+---
+- name: check whether temporary swap is already enabled
+  command: /sbin/swapon -s
+  register: swap_status
+
+- block:
+  - name: create temporary swap file
+    command: fallocate -l 512M {{ swapfile }}
+
+  - name: change file permissions
+    file: path={{ swapfile }} mode=600
+
+  - name: setup swap file
+    command: mkswap {{ swapfile }}
+
+  - name: activate swap
+    command: swapon {{ swapfile }}
+
+  when: swap_status.stdout.find(swapfile) == -1
+  become: yes
+  vars:
+    swapfile: /var/swap_tmp
