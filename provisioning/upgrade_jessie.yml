@@ -24,14 +24,17 @@
     - name: Safe-upgrade packages
       apt: upgrade=safe
       become: yes
+      async: 86400
 
     - name: Dist-upgrade packages (1st stage)
       apt: upgrade=dist
       become: yes
+      async: 86400
 
     - name: Dist-upgrade packages (2nd stage)
       apt: upgrade=dist
       become: yes
+      async: 86400
 
     - name: Check if reboot is necessary
       stat: path=/var/run/reboot-required
