@@ -21,7 +21,7 @@
     - pylibftdi
     - atom
     - lazy
-    - requests>=2.4.1
+    - requests>=2.18.4
     - redis==2.10.3
     - pip>=6.0
 
