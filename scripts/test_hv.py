@@ -147,8 +147,8 @@ class Main(object):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
         format='%(asctime)s %(levelname)s:%(name)s:%(message)s')
-    # raise requests module log level to WARNING
-    requests_log = logging.getLogger("requests")
+    # raise urllib3 module log level to WARNING
+    requests_log = logging.getLogger("urllib3")
     requests_log.setLevel(logging.WARNING)
 
     app = Main()
