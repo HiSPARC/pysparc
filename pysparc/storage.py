@@ -165,7 +165,12 @@ class StorageWorker(threading.Thread):
 
         """
         while not self._must_shutdown.is_set():
-            self.store_event_or_sleep()
+            try:
+                self.store_event_or_sleep()
+            except StorageError as e:
+                logger.error(str(e))
+                # sleep, to prevent spewing errors hundreds of times per second
+                time.sleep(SLEEP_INTERVAL)
 
     def store_event_or_sleep(self):
         """Store an event from the queue, or sleep.

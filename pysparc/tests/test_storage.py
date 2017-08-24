@@ -332,8 +332,14 @@ class StorageWorkerThreadingTest(unittest.TestCase):
 
     def setUp(self):
         patcher1 = patch.object(storage.StorageWorker, 'store_event_or_sleep')
+        patcher2 = patch.object(storage, 'logger')
+        patcher3 = patch('time.sleep')
         self.addCleanup(patcher1.stop)
+        self.addCleanup(patcher2.stop)
+        self.addCleanup(patcher3.stop)
         self.mock_store = patcher1.start()
+        self.mock_logger = patcher2.start()
+        self.mock_sleep = patcher3.start()
         self.mock_store.side_effect = [None]
         self.mock_signal = Mock()
         self.mock_signal.is_set.return_value = False
@@ -354,6 +360,21 @@ class StorageWorkerThreadingTest(unittest.TestCase):
         # check correct call, and call count
         self.mock_store.assert_called_with()
         self.assertEqual(self.mock_store.call_count, N + 1)
+
+    def test_run_catches_and_logs_StorageError(self):
+        exception = storage.StorageError("Foo")
+        self.mock_store.side_effect = [exception, StopIteration]
+        self.assertRaises(StopIteration, self.worker.run)
+        self.mock_logger.error.assert_called_with(str(exception))
+
+    def test_run_only_sleeps_after_StorageError(self):
+        self.mock_store.side_effect = []
+        self.assertRaises(StopIteration, self.worker.run)
+        self.mock_sleep.assert_not_called()
+
+        self.mock_store.side_effect = [storage.StorageError("Foo")]
+        self.assertRaises(StopIteration, self.worker.run)
+        self.mock_sleep.assert_called_once_with(storage.SLEEP_INTERVAL)
 
     def test_run_returns_if_shutdown_signal_is_set(self):
         self.mock_signal.is_set.return_value = True
