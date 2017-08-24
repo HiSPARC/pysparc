@@ -119,9 +119,9 @@ class Monitor(object):
 
         try:
             # Request form for submitting service status
-            requests.get(MONITOR_URL, params=payload, timeout=2)
+            requests.get(MONITOR_URL, params=payload, timeout=1)
             # Submit the service status
-            requests.post(MONITOR_URL, data=payload, timeout=2)
+            requests.post(MONITOR_URL, data=payload, timeout=1)
         except (ConnectionError, Timeout) as exc:
             logger.warning("Unable to upload status for service %s (%s)",
                            service, exc)
