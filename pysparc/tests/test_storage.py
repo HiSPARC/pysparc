@@ -222,20 +222,17 @@ class StorageWorkerStoreEventByKeyTest(unittest.TestCase):
         self.mock_get_event_by_key.assert_called_once_with(sentinel.key)
         self.mock_datastore.store_event.assert_called_once_with(sentinel.event)
 
-    def test_store_event_by_key_catches_and_logs_StorageError_but_not_all(self):
-        # Catch StorageError, and log
-        exception = storage.StorageError("Foo")
-        self.mock_datastore.store_event.side_effect = exception
-        self.worker.store_event_by_key(sentinel.key)
-        self.mock_logger.error.assert_called_once_with(str(exception))
-
-        # Catch all exceptions, but raise new StorageError
-        self.mock_datastore.store_event.side_effect = Exception()
-        self.assertRaises(storage.StorageError, self.worker.store_event_by_key, sentinel.key)
+    def test_store_event_by_key_raises_StorageError(self):
+        self.mock_datastore.store_event.side_effect = Exception
+        self.assertRaises(storage.StorageError, self.worker.store_event_by_key,
+                          sentinel.key)
 
     def test_store_event_by_key_calls_remove_event_only_if_no_exception(self):
         self.mock_datastore.store_event.side_effect = storage.StorageError("Foo")
-        self.worker.store_event_by_key(sentinel.key)
+        try:
+            self.worker.store_event_by_key(sentinel.key)
+        except:
+            pass
         self.assertFalse(self.mock_remove_event.called)
 
         self.mock_datastore.store_event.side_effect = None

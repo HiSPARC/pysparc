@@ -228,10 +228,6 @@ class StorageWorker(threading.Thread):
         if event:
             try:
                 self.datastore.store_event(event)
-            except StorageError as e:
-                logger.error(str(e))
-                # sleep, to prevent spewing errors hundreds of times per second
-                time.sleep(SLEEP_INTERVAL)
             except Exception as e:
                 raise StorageError(str(e))
             else:
