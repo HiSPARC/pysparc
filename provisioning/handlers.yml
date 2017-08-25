@@ -9,7 +9,7 @@
 
 - name: restart pysparc
   supervisorctl: name=pysparc state=restarted
-  when: inventory_hostname != "vagrant"
+  when: "'pysparc' in group_names"
 
 # https://support.ansible.com/hc/en-us/articles/201958037-Reboot-a-server-and-wait-for-it-to-come-back
 - name: reboot
