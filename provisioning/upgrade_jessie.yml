@@ -3,7 +3,18 @@
   tasks:
     - name: Point sources.list to Jessie
       replace: dest=/etc/apt/sources.list regexp='wheezy' replace='jessie'
-      register: result
+      become: yes
+
+    - name: Point raspi.list to Jessie
+      lineinfile:
+        path: /etc/apt/sources.list.d/raspbi.list
+        regexp: '^deb.*archive.raspberrypi.org'
+        lineinfile: 'deb http://archive.raspberrypi.org/debian/ jessie main ui'
+      when: "'raspberry_pi' in group_names"
+      become: yes
+
+    - name: Remove old collabora.list
+      file: path=/etc/apt/sources.list.d/collabora.list state=absent
       become: yes
 
     - name: Update package index
