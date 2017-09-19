@@ -7,9 +7,9 @@
 
     - name: Point raspi.list to Jessie
       lineinfile:
-        path: /etc/apt/sources.list.d/raspbi.list
+        path: /etc/apt/sources.list.d/raspi.list
         regexp: '^deb.*archive.raspberrypi.org'
-        lineinfile: 'deb http://archive.raspberrypi.org/debian/ jessie main ui'
+        line: 'deb http://archive.raspberrypi.org/debian/ jessie main ui'
       when: "'raspberry_pi' in group_names"
       become: yes
 
