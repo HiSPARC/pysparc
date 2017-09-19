@@ -32,10 +32,25 @@
       service: name=redis-server state=stopped
       become: yes
 
-    - name: Dist-upgrade packages (1st stage)
+    # Bluetooth daemon needs a new kernel, which becomes active after reboot.
+    # This taks will probably fail, reboot after that and try again.
+    - name: Dist-upgrade packages (1st stage, expected to fail)
       apt: upgrade=dist
       become: yes
       async: 86400
+      ignore_errors: yes
+
+    - name: reboot
+      command: shutdown -r now "Ansible triggered a reboot"
+      async: 0
+      poll: 0
+      ignore_errors: true
+      notify: wait for server to come back
+      become: yes
+
+    - name: wait for server to come back
+      local_action: wait_for host={{ ansible_ssh_host | default(inventory_hostname) }}
+                    port={{ ansible_ssh_port | default(22)}} delay=30 state=started
 
     - name: Dist-upgrade packages (2nd stage)
       apt: upgrade=dist
