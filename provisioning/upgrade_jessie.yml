@@ -40,17 +40,22 @@
       async: 86400
       ignore_errors: yes
 
+    # Copied from handlers.yml
     - name: reboot
-      command: shutdown -r now "Ansible triggered a reboot"
+      command: shutdown -r +1 "Ansible triggered a reboot"
       async: 0
       poll: 0
       ignore_errors: true
-      notify: wait for server to come back
       become: yes
 
+    # Copied from handlers.yml
     - name: wait for server to come back
-      local_action: wait_for host={{ ansible_ssh_host | default(inventory_hostname) }}
-                    port={{ ansible_ssh_port | default(22)}} delay=30 state=started
+      local_action:
+        module: wait_for
+        host: "{{ hostvars[inventory_hostname]['ansible_ssh_host'] | default(inventory_hostname) }}"
+        port: "{{ ansible_ssh_port | default(22)}}"
+        delay: 70
+        state: started
 
     - name: Dist-upgrade packages (2nd stage)
       apt: upgrade=dist
