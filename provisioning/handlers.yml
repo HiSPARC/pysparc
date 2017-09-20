@@ -12,14 +12,27 @@
   when: "'pysparc' in group_names"
 
 # https://support.ansible.com/hc/en-us/articles/201958037-Reboot-a-server-and-wait-for-it-to-come-back
+# Systemd (starting with Jessie) kills off sshd too quickly, before it can
+# close connections.
 - name: reboot
-  command: shutdown -r now "Ansible triggered a reboot"
+  command: shutdown -r +1 "Ansible triggered a reboot"
   async: 0
   poll: 0
   ignore_errors: true
   notify: wait for server to come back
   become: yes
 
+# local_action makes ansible_ssh_host localhost, unless you explicitly define
+# it, while inventory_hostname can be something that isn't a DNS-resolvable
+# name, like 'vagrant'. Using hostvars, you can look up the inventory variables
+# defined for you host. If ansible_ssh_host is not defined in your inventory,
+# then it is undefined and you can default to inventory_hostname. The result is
+# an IP-address for vagrant (explicitly defined) and simply inventory names for
+# the rest. A bit convoluted, but it works.
 - name: wait for server to come back
-  local_action: wait_for host={{ ansible_ssh_host | default(inventory_hostname) }}
-                port={{ ansible_ssh_port | default(22)}} delay=30 state=started
+  local_action:
+    module: wait_for
+    host: {{ hostvars[inventory_hostname]['ansible_ssh_host'] | default(inventory_hostname) }}
+    port: {{ ansible_ssh_port | default(22)}}
+    delay: 70
+    state: started
