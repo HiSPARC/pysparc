@@ -301,13 +301,13 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
     @patch('cPickle.loads')
     def test_get_event_by_key(self, mock_pickle_loads):
         pickled_event = sentinel.pickled_event
-        self.mock_kvstore.hget.return_value = pickled_event
+        self.mock_kvstore.hgetall.return_value = {'count': 1, 'event': pickled_event}
         mock_pickle_loads.return_value = sentinel.event
 
         event = self.worker.get_event_by_key(sentinel.key)
 
         # get 'event' from event key (is pickled event)
-        self.mock_kvstore.hget.assert_called_once_with(sentinel.key, 'event')
+        self.mock_kvstore.hgetall.assert_called_once_with(sentinel.key)
         # unpickle event
         mock_pickle_loads.assert_called_once_with(pickled_event)
         # check return values
@@ -317,7 +317,7 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
     def test_get_event_by_key_returns_None(self, mock_pickle_loads):
         # In case of out-of-memory errors, Redis may store the key, but not the
         # event.
-        self.mock_kvstore.hget.return_value = None
+        self.mock_kvstore.hgetall.return_value = None
 
         event = self.worker.get_event_by_key(sentinel.key)
 
