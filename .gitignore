@@ -8,3 +8,4 @@ scripts/config.ini
 pysparc.img
 vpncert.zip
 *.retry
+dump.rdb
