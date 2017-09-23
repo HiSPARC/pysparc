@@ -204,10 +204,8 @@ class StorageWorker(threading.Thread):
         :param key: key of the event to look up in the key-value store.
 
         """
-        hash_value = self.kvstore.hgetall(key)
-
-        if hash_value:
-            pickled_event = hash_value['event']
+        pickled_event = self.kvstore.hget(key, 'event')
+        if pickled_event:
             return pickle.loads(pickled_event)
         else:
             # there was a problem fetching the event
