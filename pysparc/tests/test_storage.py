@@ -5,6 +5,8 @@ import threading
 
 from mock import Mock, patch, sentinel, call
 
+import redis
+
 from pysparc import storage
 
 
@@ -17,9 +19,9 @@ class StorageManagerTest(unittest.TestCase):
         self.addCleanup(patcher1.stop)
         self.addCleanup(patcher2.stop)
         self.addCleanup(patcher3.stop)
-        mock_KVStore = patcher1.start()
-        mock_KVStore.return_value = Mock(name="kvstore")
-        self.mock_kvstore = mock_KVStore.return_value
+        self.mock_KVStore = patcher1.start()
+        self.mock_KVStore.return_value = Mock(name="kvstore")
+        self.mock_kvstore = self.mock_KVStore.return_value
         self.mock_Worker = patcher2.start()
         self.mock_worker = self.mock_Worker.return_value
         mock_Event = patcher3.start()
@@ -33,6 +35,7 @@ class StorageManagerTest(unittest.TestCase):
 
     def test_kvstore_attribute(self):
         self.assertIs(self.manager.kvstore, self.mock_kvstore)
+        self.mock_KVStore.assert_called_once_with(socket_timeout=5)
 
     def test_must_shutdown_attribute(self):
         self.assertIs(self.manager._must_shutdown, self.mock_signal)
@@ -308,6 +311,22 @@ class StorageWorkerKVStoreTest(unittest.TestCase):
 
         # get 'event' from event key (is pickled event)
         self.mock_kvstore.hget.assert_called_once_with(sentinel.key, 'event')
+        # unpickle event
+        mock_pickle_loads.assert_called_once_with(pickled_event)
+        # check return values
+        self.assertIs(event, sentinel.event)
+
+    @patch('cPickle.loads')
+    def test_get_event_by_key_on_timeout(self, mock_pickle_loads):
+        pickled_event = sentinel.pickled_event
+        self.mock_kvstore.hget.side_effect = redis.TimeoutError
+        self.mock_kvstore.hgetall.return_value = {'event': pickled_event}
+        mock_pickle_loads.return_value = sentinel.event
+
+        event = self.worker.get_event_by_key(sentinel.key)
+
+        # get 'event' from event key (is pickled event)
+        self.mock_kvstore.hgetall.assert_called_once_with(sentinel.key)
         # unpickle event
         mock_pickle_loads.assert_called_once_with(pickled_event)
         # check return values

@@ -81,7 +81,7 @@ class StorageManager(object):
 
     def __init__(self):
         self.workers = []
-        self.kvstore = redis.StrictRedis()
+        self.kvstore = redis.StrictRedis(socket_timeout=5)
         self._must_shutdown = threading.Event()
 
     def close(self):
@@ -204,7 +204,17 @@ class StorageWorker(threading.Thread):
         :param key: key of the event to look up in the key-value store.
 
         """
-        pickled_event = self.kvstore.hget(key, 'event')
+        # Unfortunately, zaanlands1 freezes when the event is exactly 65527
+        # bytes. That is, 2 ** 16 - 8. I suspect that those 8 bytes might be a
+        # header, so that the message is exactly 2 ** 16 bytes long. I can't
+        # reproduce this on other machines. But using hgetall results in a
+        # slightly longer message, including the count, bypassing the exact
+        # 2 ** 16 limit (in this case). (DF)
+        try:
+            pickled_event = self.kvstore.hget(key, 'event')
+        except redis.TimeoutError:
+            pickled_event = self.kvstore.hgetall(key)['event']
+
         if pickled_event:
             return pickle.loads(pickled_event)
         else:
