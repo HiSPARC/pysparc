@@ -1,0 +1,9 @@
+---
+- hosts: all
+  tasks:
+    - script: test-redis-version.py
+      register: output
+    - debug:
+        var: output.stdout
+
+    - script: test-redis-freeze.py
