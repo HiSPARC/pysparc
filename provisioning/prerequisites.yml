@@ -12,6 +12,12 @@
     - libftdi-dev
     - hdf5-tools
 
+- name: Make sure conflicting system packages are absent
+  apt:
+    name: python-redis
+    state: absent
+  become: yes
+
 - name: Install PySPARC prerequisites (python packages)
   pip: name={{ item }} state=present
   become: yes
