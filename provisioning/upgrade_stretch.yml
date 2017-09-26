@@ -1,0 +1,85 @@
+---
+- hosts: stretch
+  tasks:
+    - name: Point sources.list to Stretch
+      replace: dest=/etc/apt/sources.list regexp='wheezy' replace='stretch'
+      become: yes
+
+    - name: Point raspi.list to Stretch
+      lineinfile:
+        path: /etc/apt/sources.list.d/raspi.list
+        regexp: '^deb.*archive.raspberrypi.org'
+        line: 'deb http://archive.raspberrypi.org/debian/ stretch main ui'
+      when: "'raspberry_pi' in group_names"
+      become: yes
+
+    - name: Update package index
+      apt: update_cache=yes
+      become: yes
+
+    - name: Uninstall update-notifier-common
+      apt: name=update-notifier-common state=absent
+      become: yes
+
+    - name: ensure pysparc is stopped
+      supervisorctl: name=pysparc state=stopped
+
+    - name: ensure redis-server is stopped
+      service: name=redis-server state=stopped
+      become: yes
+
+    # Bluetooth daemon needs a new kernel, which becomes active after reboot.
+    # This taks will probably fail, reboot after that and try again.
+    - name: Dist-upgrade packages (1st stage, expected to fail)
+      apt: upgrade=dist
+      become: yes
+      async: 86400
+      ignore_errors: yes
+
+    # Copied from handlers.yml
+    # - name: reboot
+    #   command: shutdown -r +1 "Ansible triggered a reboot"
+    #   async: 0
+    #   poll: 0
+    #   ignore_errors: true
+    #   become: yes
+    #
+    # # Copied from handlers.yml
+    # - name: wait for server to come back
+    #   local_action:
+    #     module: wait_for
+    #     host: "{{ hostvars[inventory_hostname]['ansible_ssh_host'] | default(inventory_hostname) }}"
+    #     port: "{{ ansible_ssh_port | default(22)}}"
+    #     delay: 70
+    #     state: started
+
+    - name: Install reboot-notifier
+      apt: name=reboot-notifier state=present
+      become: yes
+
+    - name: Dist-upgrade packages (2nd stage)
+      apt: upgrade=dist
+      become: yes
+      async: 86400
+
+    - name: Check if reboot is necessary
+      stat: path=/var/run/reboot-required
+      register: reboot
+
+    # if path reboot is a regular file, trigger reboot
+    - name: Flag a reboot if necessary
+      command: /bin/true
+      when: reboot.stat.isreg is defined
+      notify: reboot
+
+    - name: ensure redis-server is started
+      service: name=redis-server state=started
+      when: reboot.stat.isreg is not defined
+      become: yes
+
+    - name: ensure pysparc is started
+      supervisorctl: name=pysparc state=started
+      when: (reboot.stat.isreg is not defined) and (inventory_hostname != "vagrant")
+
+  handlers:
+    - include: handlers.yml
