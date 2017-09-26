@@ -21,6 +21,12 @@
       apt: name=update-notifier-common state=absent
       become: yes
 
+    - name: Remove /etc/udev/rules.d/70-persistent-net.rules
+      file:
+        path: /etc/udev/rules.d/70-persistent-net.rules
+        state: absent
+      become: yes
+
     - name: ensure pysparc is stopped
       supervisorctl: name=pysparc state=stopped
 
