@@ -2,7 +2,7 @@
 - hosts: stretch
   tasks:
     - name: Point sources.list to Stretch
-      replace: dest=/etc/apt/sources.list regexp='wheezy' replace='stretch'
+      replace: dest=/etc/apt/sources.list regexp='jessie' replace='stretch'
       become: yes
 
     - name: Point raspi.list to Stretch
