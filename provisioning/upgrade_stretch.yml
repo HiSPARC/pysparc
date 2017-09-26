@@ -34,9 +34,7 @@
       service: name=redis-server state=stopped
       become: yes
 
-    # Bluetooth daemon needs a new kernel, which becomes active after reboot.
-    # This taks will probably fail, reboot after that and try again.
-    - name: Dist-upgrade packages (1st stage, expected to fail)
+    - name: Dist-upgrade packages (1st stage)
       apt: upgrade=dist
       become: yes
       async: 86400

@@ -13,10 +13,10 @@
 
 # https://support.ansible.com/hc/en-us/articles/201958037-Reboot-a-server-and-wait-for-it-to-come-back
 # Systemd (starting with Jessie) kills off sshd too quickly, before it can
-# close connections. So wait one minute.
+# close connections. So wait a few seconds.
 - name: reboot
-  command: shutdown -r +1 "Ansible triggered a reboot"
-  async: 0
+  shell: sleep 5 && shutdown -r now "Ansible triggered a reboot"
+  async: 1
   poll: 0
   ignore_errors: true
   notify: wait for server to come back
@@ -25,5 +25,5 @@
 - name: wait for server to come back
   wait_for_connection:
   args:
-    delay: 70
+    delay: 10
     timeout: 600
