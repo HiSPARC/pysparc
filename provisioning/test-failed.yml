@@ -1,0 +1,20 @@
+---
+- hosts: all
+  tasks:
+    - name: First command
+      command: /bin/true
+      register: result
+      ignore_errors: true
+
+    - name: Second command
+      command: /bin/echo yes
+      when: result|failed
+
+    - name: First command
+      command: /bin/false
+      register: result
+      ignore_errors: true
+
+    - name: Second command
+      command: /bin/echo yes
+      when: result|failed
