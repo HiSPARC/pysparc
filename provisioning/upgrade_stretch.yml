@@ -13,6 +13,11 @@
       when: "'raspberry_pi' in group_names"
       become: yes
 
+    - name: Remove old Wolfram APT sources
+      file:
+        path: /etc/apt/sources.list.d/wolfram.list
+        state: absent
+
     - name: Update package index
       apt: update_cache=yes
       become: yes
@@ -38,7 +43,6 @@
       apt: upgrade=dist
       become: yes
       async: 86400
-      ignore_errors: yes
 
     # Copied from handlers.yml
     # - name: reboot
