@@ -25,6 +25,9 @@ zaanlands1.his
 [stretch]
 vagrant
 pysparc1.his
+pysparc2.his
+kajmunk1.his
+zaanlands1.his
 
 [pysparc:vars]
 ansible_ssh_user=pi
