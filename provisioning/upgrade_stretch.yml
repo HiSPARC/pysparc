@@ -17,6 +17,7 @@
       file:
         path: /etc/apt/sources.list.d/wolfram.list
         state: absent
+      become: yes
 
     - name: Update package index
       apt: update_cache=yes
