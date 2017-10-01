@@ -12,6 +12,12 @@ class HiSPARCIIITest(unittest.TestCase):
         self.assertEqual(hardware.HiSPARCIII.description,
                          "HiSPARC III Master")
 
+    @patch.object(hardware.BaseHardware, '__init__')
+    @patch.object(hardware.HiSPARCIII, 'reset_hardware')
+    def test_slave_description(self, mock_reset, mock_basehardware):
+        slave = hardware.HiSPARCIII(slave=True)
+        self.assertEqual(slave.description, "HiSPARC III Slave")
+
     @patch.object(hardware.HiSPARCIII, '__init__')
     @patch.object(hardware.HiSPARCIII, '_burn_firmware')
     @patch('time.sleep')
