@@ -49,14 +49,14 @@ class AlignADCs(object):
     def _align_individual_offsets(self, target_value):
         logger.info("Aligning individual offsets")
         opt_values = self._align_individual_settings(
-                        self._set_individual_offsets, target_value)
+            self._set_individual_offsets, target_value)
         logger.info("Individual offsets aligned (values): %d %d %d %d" %
                     opt_values)
 
     def _align_individual_gains(self, target_value):
         logger.info("Aligning individual gains")
         opt_values = self._align_individual_settings(
-                        self._set_individual_gains, target_value)
+            self._set_individual_gains, target_value)
         logger.info("Individual gains aligned (values): %d %d %d %d" %
                     opt_values)
 
@@ -72,7 +72,7 @@ class AlignADCs(object):
         guess = optimization.first_step()
         while not is_done:
             f_guess = self._measure_opt_value_at_offset(
-                        set_offset_func, guess, target_value)
+                set_offset_func, guess, target_value)
             guess, is_done = optimization.next_step(f_guess)
         set_offset_func(guess)
         return guess
@@ -82,13 +82,13 @@ class AlignADCs(object):
 
         a, b = [0] * 4, [0xff] * 4
         fa, fb = [self._measure_opt_value_at_individual_settings(
-                        settings_func, u, target_value) for u in a, b]
+            settings_func, u, target_value) for u in a, b]
         optimization = bracket.LinearParallelInvertedIntegerRootFinder(
-                            (a, b), (fa, fb))
+            (a, b), (fa, fb))
         guesses = optimization.first_step()
         while not sum(is_all_done) == 4:
             f_guesses = self._measure_opt_value_at_individual_settings(
-                            settings_func, guesses, target_value)
+                settings_func, guesses, target_value)
             guesses, is_all_done = optimization.next_step(f_guesses)
         settings_func(guesses)
         return guesses
