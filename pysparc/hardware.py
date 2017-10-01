@@ -145,7 +145,10 @@ class HiSPARCII(BaseHardware):
 
     description = "HiSPARC II Master"
 
-    def __init__(self):
+    def __init__(self, slave=False):
+        if slave:
+            self.description = self.description.replace("Master", "Slave")
+            
         super(HiSPARCII, self).__init__()
         self.config = config.Config(self)
         self.reset_hardware()

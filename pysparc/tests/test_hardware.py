@@ -54,6 +54,12 @@ class HiSPARCIITest(unittest.TestCase):
         self.assertEqual(hardware.HiSPARCII.description,
                          "HiSPARC II Master")
 
+    @patch.object(hardware.BaseHardware, '__init__')
+    @patch.object(hardware.HiSPARCII, 'reset_hardware')
+    def test_slave_description(self, mock_reset, mock_basehardware):
+        slave = hardware.HiSPARCII(slave=True)
+        self.assertEqual(slave.description, "HiSPARC II Slave")
+
     def test_init_calls_super(self):
         # test that super *was* called during setUp()
         self.mock_super.assert_called_once_with()
