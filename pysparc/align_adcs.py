@@ -18,6 +18,26 @@ class AlignADCs(object):
         self._reset_config_for_alignment()
         self.config.trigger_condition = \
             self.config.build_trigger_condition(calibration_mode=True)
+
+        self._do_alignment()
+
+        # restore original trigger condition
+        self.config.trigger_condition = original_trigger_condition
+
+    def align_slave(self, master):
+        # store original trigger condition
+        original_trigger_condition = master.config.trigger_condition
+
+        self._reset_config_for_alignment()
+        master.config.trigger_condition = \
+            master.config.build_trigger_condition(calibration_mode=True)
+
+        self._do_alignment()
+
+        # restore original trigger condition
+        master.config.trigger_condition = original_trigger_condition
+
+    def _do_alignment(self):
         target = 2048
         self._align_full_scale(target)
         self._align_common_offset(target)
@@ -26,9 +46,6 @@ class AlignADCs(object):
         self._align_full_scale(target)
         self._align_common_offset(target)
         self._align_individual_gains(target)
-
-        # restore original trigger condition
-        self.config.trigger_condition = original_trigger_condition
 
     def _reset_config_for_alignment(self):
         self._set_full_scale(0x80)
