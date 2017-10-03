@@ -148,7 +148,7 @@ class HiSPARCII(BaseHardware):
     def __init__(self, slave=False):
         if slave:
             self.description = self.description.replace("Master", "Slave")
-            
+
         super(HiSPARCII, self).__init__()
         self.config = config.Config(self)
         self.reset_hardware()
@@ -193,6 +193,19 @@ class HiSPARCII(BaseHardware):
 
         """
         self.flush_device()
+        return self.get_measured_data_message(timeout)
+
+    def get_measured_data_message(self, timeout=15):
+        """Wait for measured data.
+
+        This method throws away all data except measured data messages. The
+        alignment procedure makes use of this method.
+
+        :param timeout: maximum time in seconds to wait for message
+        :returns: a :class:`pysparc.messages.MeasuredDataMessage`
+            instance or None if a timeout occured.
+
+        """
         t0 = time.time()
         while time.time() - t0 < timeout:
             msg = self.read_message()
