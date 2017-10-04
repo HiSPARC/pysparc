@@ -23,22 +23,15 @@ if __name__ == '__main__':
     trigger_none = Config.build_trigger_condition(use_external=True)
 
     master = HiSPARCIII()
+    slave = HiSPARCIII(slave=True)
     master.config.trigger_condition = trigger_one_second
     master.flush_device()
+    slave.flush_device()
 
-    logging.info(wait_for_message(master))
-    print 40 * '-'
-    time.sleep(7)
-
-    master.flush_device()
-
-    for i in range(5):
-        msg = wait_for_message(master)
-        logging.info('%s -- %s' % (time.ctime(), time.ctime(msg.timestamp)))
-
-    master.config.full_scale = 0
-    logging.info(wait_for_message(master).trace_ch1.mean())
-    master.config.full_scale = 0xff
-    logging.info(wait_for_message(master).trace_ch1.mean())
-    master.config.full_scale = 0
-    logging.info(wait_for_message(master).trace_ch1.mean())
+    while True:
+        msg = master.read_message()
+        if msg:
+            logging.info('MASTER %s -- %s MASTER' % (msg.datetime, msg.nanoseconds))
+        msg = slave.read_message()
+        if msg:
+            logging.info('SLAVE  %s -- %s SLAVE' % (msg.datetime, msg.nanoseconds))
