@@ -159,6 +159,9 @@ class AlignADCsMasterSlave(AlignADCs):
         self._set_common_offset(0x80, 0x80)
         self._set_individual_offsets([0x80] * 8)
 
+        self.master.flush_device()
+        self.slave.flush_device()
+
     def _align_full_scale(self, target_value):
         logger.info("Aligning full scale")
         opt_values = self._align_offset(self._set_full_scale, target_value)
