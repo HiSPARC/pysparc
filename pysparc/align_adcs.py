@@ -188,7 +188,7 @@ class AlignADCsMasterSlave(AlignADCs):
         # synchronize
         self.master.flush_device()
         self.master.flush_and_get_measured_data_message()
-        time.sleep(.3)
+        self.slave.flush_and_get_measured_data_message()
         self.master.flush_device()
         self.slave.flush_device()
 
