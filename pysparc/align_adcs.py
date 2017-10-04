@@ -1,4 +1,5 @@
 import logging
+import time
 
 import bracket
 
@@ -165,6 +166,13 @@ class AlignADCsMasterSlave(AlignADCs):
         self.slave.flush_device()
 
     def _align_full_scale(self, target_value):
+        # synchronize
+        self.master.flush_device()
+        self.master.flush_and_get_measured_data_message()
+        time.sleep(.3)
+        self.master.flush_device()
+        self.slave.flush_device()
+
         logger.info("Aligning full scale")
         opt_values = self._align_offset(self._set_full_scale, target_value)
         logger.info("Full scale aligned (value): %s" % str(opt_values))
