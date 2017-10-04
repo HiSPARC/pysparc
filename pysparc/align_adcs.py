@@ -35,6 +35,8 @@ class AlignADCs(object):
         self._set_common_offset(0x80)
         self._set_individual_offsets([0x80] * 4)
 
+        self.hardware.flush_device()
+
     def _align_full_scale(self, target_value):
         logger.info("Aligning full scale")
         opt_value = self._align_offset(self._set_full_scale, target_value)
