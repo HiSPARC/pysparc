@@ -157,6 +157,25 @@ class AlignADCsMasterSlave(AlignADCs):
         # The superclass knows of only one config.
         self.config = master.config
 
+    def align(self):
+        # store original trigger condition
+        original_trigger_condition = self.master_config.trigger_condition
+
+        self.master_config.trigger_condition = \
+            self.config.build_trigger_condition(calibration_mode=True)
+        self._reset_config_for_alignment()
+        target = 2048
+        self._align_full_scale(target)
+        self._align_common_offset(target)
+        self._align_individual_offsets(target)
+        target = 200
+        self._align_full_scale(target)
+        self._align_common_offset(target)
+        self._align_individual_gains(target)
+
+        # restore original trigger condition
+        self.config.trigger_condition = original_trigger_condition
+
     def _reset_config_for_alignment(self):
         self._set_full_scale(0x80, 0x80)
         self._set_common_offset(0x80, 0x80)
@@ -294,4 +313,6 @@ class AlignADCsMasterSlave(AlignADCs):
         self.slave.flush_device()
         master_msg = self.master.get_measured_data_message()
         slave_msg = self.slave.get_measured_data_message()
+        logging.debug("Master: %s" % time.ctime(master_msg.timestamp))
+        logging.debug("Slave: %s" % time.ctime(slave_msg.timestamp))
         return master_msg, slave_msg
