@@ -162,27 +162,26 @@ class AlignADCsMasterSlave(AlignADCs):
     def _align_full_scale(self, target_value):
         logger.info("Aligning full scale")
         opt_values = self._align_offset(self._set_full_scale, target_value)
-        logger.info("Full scale aligned (value): %d %d" % opt_values)
+        logger.info("Full scale aligned (value): %s" % str(opt_values))
 
     def _align_common_offset(self, target_value):
         logger.info("Aligning common offset")
         opt_value = self._align_offset(self._set_common_offset,
                                        target_value)
-        logger.info("Common offset aligned (value): %d" % opt_value)
+        logger.info("Common offset aligned (value): %s" % str(opt_value))
 
     def _align_individual_offsets(self, target_value):
         logger.info("Aligning individual offsets")
         opt_values = self._align_individual_settings(
             self._set_individual_offsets, target_value)
-        logger.info("Individual offsets aligned (values): %d %d %d %d" %
-                    opt_values)
+        logger.info("Individual offsets aligned (values): %s" %
+                    str(opt_values))
 
     def _align_individual_gains(self, target_value):
         logger.info("Aligning individual gains")
         opt_values = self._align_individual_settings(
             self._set_individual_gains, target_value)
-        logger.info("Individual gains aligned (values): %d %d %d %d" %
-                    opt_values)
+        logger.info("Individual gains aligned (values): %s" % str(opt_values))
 
     def _align_offset(self, set_offset_func, target_value):
         is_all_done = [False] * 2
@@ -202,15 +201,15 @@ class AlignADCsMasterSlave(AlignADCs):
         return guesses
 
     def _align_individual_settings(self, settings_func, target_value):
-        is_all_done = [False] * 4
+        is_all_done = [False] * 8
 
-        a, b = [0] * 4, [0xff] * 4
+        a, b = [0] * 8, [0xff] * 8
         fa, fb = [self._measure_opt_value_at_individual_settings(
             settings_func, u, target_value) for u in a, b]
         optimization = bracket.LinearParallelInvertedIntegerRootFinder(
             (a, b), (fa, fb))
         guesses = optimization.first_step()
-        while not sum(is_all_done) == 4:
+        while not sum(is_all_done) == 8:
             f_guesses = self._measure_opt_value_at_individual_settings(
                 settings_func, guesses, target_value)
             guesses, is_all_done = optimization.next_step(f_guesses)
@@ -221,16 +220,22 @@ class AlignADCsMasterSlave(AlignADCs):
                                      target_value):
         set_offset_func(*guesses)
         mean_adc_values = self._get_mean_adc_values()
-        logger.debug("Alignment step (guesses, means): %s, %s" %
-                     (guesses, mean_adc_values))
+        logger.debug("XY Alignment step (guesses, means):\n\t%s, %s" %
+                     (guesses, [int(round(u)) for u in mean_adc_values]))
         return [target_value - u for u in mean_adc_values]
 
     def _measure_opt_value_at_individual_settings(self, settings_func,
                                                   guesses, target_value):
         settings_func(guesses)
-        msg = self.hardware.flush_and_get_measured_data_message()
-        mean_adc_values = (msg.adc_ch1_pos.mean(), msg.adc_ch1_neg.mean(),
-                           msg.adc_ch2_pos.mean(), msg.adc_ch2_neg.mean())
+        master, slave = self._flush_and_get_measured_data_messages()
+        mean_adc_values = (master.adc_ch1_pos.mean(),
+                           master.adc_ch1_neg.mean(),
+                           master.adc_ch2_pos.mean(),
+                           master.adc_ch2_neg.mean(),
+                           slave.adc_ch1_pos.mean(),
+                           slave.adc_ch1_neg.mean(),
+                           slave.adc_ch2_pos.mean(),
+                           slave.adc_ch2_neg.mean())
         logger.debug("Alignment step (guesses, means):\n\t%s, %s" %
                      (guesses, [int(round(u)) for u in mean_adc_values]))
         return [target_value - u for u in mean_adc_values]
