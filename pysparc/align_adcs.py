@@ -16,9 +16,9 @@ class AlignADCs(object):
         # store original trigger condition
         original_trigger_condition = self.config.trigger_condition
 
-        self._reset_config_for_alignment()
         self.config.trigger_condition = \
             self.config.build_trigger_condition(calibration_mode=True)
+        self._reset_config_for_alignment()
         target = 2048
         self._align_full_scale(target)
         self._align_common_offset(target)
@@ -157,41 +157,23 @@ class AlignADCsMasterSlave(AlignADCs):
         # The superclass knows of only one config.
         self.config = master.config
 
-    def align(self):
-        # store original trigger condition
-        original_trigger_condition = self.master_config.trigger_condition
-
-        self.master_config.trigger_condition = \
-            self.config.build_trigger_condition(calibration_mode=True)
-        self._reset_config_for_alignment()
-        target = 2048
-        self._align_full_scale(target)
-        self._align_common_offset(target)
-        self._align_individual_offsets(target)
-        target = 200
-        self._align_full_scale(target)
-        self._align_common_offset(target)
-        self._align_individual_gains(target)
-
-        # restore original trigger condition
-        self.config.trigger_condition = original_trigger_condition
-
     def _reset_config_for_alignment(self):
         self._set_full_scale(0x80, 0x80)
         self._set_common_offset(0x80, 0x80)
         self._set_individual_offsets([0x80] * 8)
 
+        # Synchronize master and slave.
+        # Step 1. Flush old messages
+        self.master.flush_device()
+        self.slave.flush_device()
+        # Step 2. Make sure both master and slave are sending messages
+        self.master.flush_and_get_measured_data_message()
+        self.slave.flush_and_get_measured_data_message()
+        # Step 3. Flush both devices
         self.master.flush_device()
         self.slave.flush_device()
 
     def _align_full_scale(self, target_value):
-        # synchronize
-        self.master.flush_device()
-        self.master.flush_and_get_measured_data_message()
-        self.slave.flush_and_get_measured_data_message()
-        self.master.flush_device()
-        self.slave.flush_device()
-
         logger.info("Aligning full scale")
         opt_values = self._align_offset(self._set_full_scale, target_value)
         logger.info("Full scale aligned (value): %s" % str(opt_values))
@@ -252,7 +234,7 @@ class AlignADCsMasterSlave(AlignADCs):
                                      target_value):
         set_offset_func(*guesses)
         mean_adc_values = self._get_mean_adc_values()
-        logger.debug("XY Alignment step (guesses, means):\n\t%s, %s" %
+        logger.debug("Alignment step (guesses, means):\n\t%s, %s" %
                      (guesses, [int(round(u)) for u in mean_adc_values]))
         return [target_value - u for u in mean_adc_values]
 
