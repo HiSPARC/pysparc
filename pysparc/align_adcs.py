@@ -197,8 +197,8 @@ class AlignADCsMasterSlave(AlignADCs):
         while not sum(is_all_done) == 2:
             f_guesses = self._measure_opt_value_at_offset(
                 set_offset_func, guesses, target_value)
-            guess, is_all_done = optimization.next_step(f_guesses)
-        set_offset_func(guesses)
+            guesses, is_all_done = optimization.next_step(f_guesses)
+        set_offset_func(*guesses)
         return guesses
 
     def _align_individual_settings(self, settings_func, target_value):
