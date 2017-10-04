@@ -195,7 +195,7 @@ class FtdiChip(object):
 
         """
         self._device.flush()
-        self.read(BUFFER_SIZE)
+        self.read(10 * BUFFER_SIZE)
 
     def read(self, read_size=None):
         """Read from device and retry if necessary.
