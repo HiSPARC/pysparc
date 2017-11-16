@@ -27,11 +27,11 @@ class DataAcquisition(object):
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
         try:
-            self.device = HiSPARCIII()
+            self.master = HiSPARCIII()
         except DeviceNotFoundError:
-            self.device = HiSPARCII()
+            self.master = HiSPARCII()
         self.gps = TrimbleGPS()
-        self.initialize_device()
+        self.initialize_hardware()
 
         station_name = self.config.get('DAQ', 'station_name')
         station_number = self.config.getint('DAQ', 'station_number')
@@ -43,12 +43,12 @@ class DataAcquisition(object):
         self.storage_manager.add_datastore(self.datastore, 'queue_nikhef')
         self.monitor = monitor.Monitor(station_name)
 
-    def initialize_device(self):
+    def initialize_hardware(self):
         logging.info("Reading config from file")
         self.config.read(ALL_CONFIG_FILES)
 
         logging.info("Initializing device configuration")
-        self.device.config.read_config(self.config)
+        self.master.config.read_config(self.config)
 
         if self.config.getboolean('DAQ', 'force_reset_gps'):
             logging.info("Force reset GPS to factory defaults.")
@@ -57,7 +57,7 @@ class DataAcquisition(object):
 
         if self.config.getboolean('DAQ', 'force_align_adcs'):
             logging.info("Force aligning ADCs.")
-            align_adcs = AlignADCs(self.device)
+            align_adcs = AlignADCs(self.master)
             align_adcs.align()
             self.config.set('DAQ', 'force_align_adcs', False)
 
@@ -66,7 +66,7 @@ class DataAcquisition(object):
     def run(self):
         # The first configuration message does not include GPS information.
         # Flush it, and possibly other outdated messages, and request it later.
-        self.device.flush_device()
+        self.master.flush_device()
 
         stew = Stew()
 
@@ -79,7 +79,7 @@ class DataAcquisition(object):
         try:
             while True:
                 t = time.time()
-                msg = self.device.read_message()
+                msg = self.master.read_message()
                 if msg is not None:
                     t_msg = t
                     if isinstance(msg, messages.MeasuredDataMessage):
@@ -88,14 +88,14 @@ class DataAcquisition(object):
                         stew.add_one_second_message(msg)
                         logging.debug("One-second received: %d", msg.timestamp)
                     elif isinstance(msg, messages.ControlParameterList):
-                        config = ConfigEvent(self.device.config)
+                        config = ConfigEvent(self.master.config)
                         self.storage_manager.store_event(config)
                         t_config = datetime.date.today()
                         logging.info("Sent configuration message.")
                 else:
                     if t - t_msg > 20:
                         logging.warning("Hardware is silent, resetting.")
-                        self.device.reset_hardware()
+                        self.master.reset_hardware()
                         # Give hardware at least 20 seconds to startup
                         t_msg = t
 
@@ -117,7 +117,7 @@ class DataAcquisition(object):
                     self.monitor.send_trigger_rate(stew.event_rate())
                     if t_config < datetime.date.today():
                         # update config (set t_config when sent, not here)
-                        self.device.send_message(
+                        self.master.send_message(
                             messages.GetControlParameterList())
 
         except KeyboardInterrupt:
@@ -132,13 +132,13 @@ class DataAcquisition(object):
         logging.debug("Stored %d events.", len(events))
 
     def write_config(self):
-        self.device.config.write_config(self.config)
+        self.master.config.write_config(self.config)
         with open(CONFIGFILE, 'w') as f:
             self.config.write(f)
 
     def close(self):
         logging.info("Closing down")
-        self.device.close()
+        self.master.close()
         self.storage_manager.close()
         self.datastore.close()
 
