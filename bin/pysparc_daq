@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""HiSPARC data acquisition in Python (PySPARC)"""
+
 import datetime
 import logging
 import os
@@ -18,10 +20,9 @@ from pysparc import messages, storage, monitor
 SYSTEM_CONFIGFILE = pkg_resources.resource_filename('pysparc', 'config.ini')
 CONFIGFILE = os.path.expanduser('~/.pysparc')
 ALL_CONFIG_FILES = [SYSTEM_CONFIGFILE, CONFIGFILE]
-DATAFILE = 'hisparc.h5'
 
 
-class Main(object):
+class DataAcquisition(object):
 
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
@@ -36,12 +37,10 @@ class Main(object):
         station_number = self.config.getint('DAQ', 'station_number')
         station_password = self.config.get('DAQ', 'station_password')
 
-        # self.datastore1 = storage.TablesDataStore(DATAFILE)
-        self.datastore2 = storage.NikhefDataStore(station_number,
+        self.datastore = storage.NikhefDataStore(station_number,
                                                   station_password)
         self.storage_manager = storage.StorageManager()
-        # self.storage_manager.add_datastore(self.datastore1, 'queue_file')
-        self.storage_manager.add_datastore(self.datastore2, 'queue_nikhef')
+        self.storage_manager.add_datastore(self.datastore, 'queue_nikhef')
         self.monitor = monitor.Monitor(station_name)
 
     def initialize_device(self):
@@ -83,7 +82,6 @@ class Main(object):
                 msg = self.device.read_message()
                 if msg is not None:
                     t_msg = t
-                    # logging.debug("Data received: %s", msg)
                     if isinstance(msg, messages.MeasuredDataMessage):
                         stew.add_event_message(msg)
                     elif isinstance(msg, messages.OneSecondMessage):
@@ -142,8 +140,7 @@ class Main(object):
         logging.info("Closing down")
         self.device.close()
         self.storage_manager.close()
-        # self.datastore1.close()
-        self.datastore2.close()
+        self.datastore.close()
 
 
 if __name__ == '__main__':
@@ -153,7 +150,7 @@ if __name__ == '__main__':
     requests_log = logging.getLogger("urllib3")
     requests_log.setLevel(logging.WARNING)
 
-    app = Main()
+    app = DataAcquisition()
     try:
         app.run()
     finally:
