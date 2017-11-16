@@ -12,7 +12,7 @@ import pkg_resources
 
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
-from pysparc.align_adcs import AlignADCs
+from pysparc.align_adcs import AlignADCs, AlignADCsMasterSlave
 from pysparc.events import Stew, ConfigEvent
 from pysparc import messages, storage, monitor
 
@@ -26,10 +26,20 @@ class DataAcquisition(object):
 
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
+
         try:
             self.master = HiSPARCIII()
         except DeviceNotFoundError:
             self.master = HiSPARCII()
+
+        try:
+            self.slave = HiSPARCIII(slave=True)
+        except DeviceNotFoundError:
+            try:
+                self.slave = HiSPARCII(slave=True)
+            except:
+                self.slave = None
+
         self.gps = TrimbleGPS()
         self.initialize_hardware()
 
@@ -49,6 +59,8 @@ class DataAcquisition(object):
 
         logging.info("Initializing device configuration")
         self.master.config.read_config(self.config)
+        if self.slave is not None:
+            self.slave.config.read_config(self.config)
 
         if self.config.getboolean('DAQ', 'force_reset_gps'):
             logging.info("Force reset GPS to factory defaults.")
@@ -57,7 +69,10 @@ class DataAcquisition(object):
 
         if self.config.getboolean('DAQ', 'force_align_adcs'):
             logging.info("Force aligning ADCs.")
-            align_adcs = AlignADCs(self.master)
+            if self.slave is not None:
+                align_adcs = AlignADCsMasterSlave(self.master, self.slave)
+            else:
+                align_adcs = AlignADCs(self.master)
             align_adcs.align()
             self.config.set('DAQ', 'force_align_adcs', False)
 
