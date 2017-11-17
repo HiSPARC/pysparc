@@ -113,9 +113,8 @@ class DataAcquisition(object):
                 # currently Nagios, and config messages
                 if time.time() - t_status >= 60:
                     t_status += 60
-                    self.monitor.send_uptime()
-                    self.monitor.send_cpu_load()
-                    self.monitor.send_trigger_rate(self.stew.event_rate())
+                    self.send_monitor_messages()
+
                     if self.t_config < datetime.date.today():
                         # update config (set t_config when sent, not here)
                         self.master.send_message(
@@ -144,6 +143,12 @@ class DataAcquisition(object):
         events = self.stew.serve_events()
         self.store_events(events)
         self.stew.drain()
+
+    def send_monitor_messages(self):
+        """Send all monitor messages."""
+        self.monitor.send_uptime()
+        self.monitor.send_cpu_load()
+        self.monitor.send_trigger_rate(self.stew.event_rate())
 
     def flush_devices(self):
         """Flush devices"""
