@@ -8,6 +8,7 @@
     - python-pip
     - python-tables
     - python-flask
+    - python-schedule
     - redis-server
     - libftdi-dev
     - hdf5-tools
