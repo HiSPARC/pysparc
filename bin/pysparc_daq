@@ -81,55 +81,44 @@ class DataAcquisition(object):
     def run(self):
         # The first configuration message does not include GPS information.
         # Flush it, and possibly other outdated messages, and request it later.
-        self.master.flush_device()
+        self.flush_devices()
 
-        stew = Stew()
+        self.stew = Stew()
 
         logging.info("Taking data.")
         # Give hardware at least 20 seconds to startup
-        t_msg = time.time() + 20
+        self.t_msg = time.time() + 20
         t_log = time.time() - .5
         t_status = time.time()
         t_config = datetime.date(1970, 1, 1)
         try:
             while True:
-                t = time.time()
                 msg = self.master.read_message()
                 if msg is not None:
-                    t_msg = t
-                    if isinstance(msg, messages.MeasuredDataMessage):
-                        stew.add_event_message(msg)
-                    elif isinstance(msg, messages.OneSecondMessage):
-                        stew.add_one_second_message(msg)
-                        logging.debug("One-second received: %d", msg.timestamp)
-                    elif isinstance(msg, messages.ControlParameterList):
-                        config = ConfigEvent(self.master.config)
-                        self.storage_manager.store_event(config)
-                        t_config = datetime.date.today()
-                        logging.info("Sent configuration message.")
+                    self.process_message(msg)
                 else:
-                    if t - t_msg > 20:
+                    if time.time() - self.t_msg > 20:
                         logging.warning("Hardware is silent, resetting.")
                         self.master.reset_hardware()
                         # Give hardware at least 20 seconds to startup
-                        t_msg = t
+                        self.t_msg = time.time()
 
-                if t - t_log >= 1:
-                    logging.info("Event rate: %.1f Hz", stew.event_rate())
+                if time.time() - t_log >= 1:
+                    logging.info("Event rate: %.1f Hz", self.stew.event_rate())
                     t_log += 1
 
-                    stew.stir()
-                    events = stew.serve_events()
+                    self.stew.stir()
+                    events = self.stew.serve_events()
                     self.store_events(events)
-                    stew.drain()
+                    self.stew.drain()
 
                 # Periodically send status messages to the monitor,
                 # currently Nagios, and config messages
-                if t - t_status >= 60:
+                if time.time() - t_status >= 60:
                     t_status += 60
                     self.monitor.send_uptime()
                     self.monitor.send_cpu_load()
-                    self.monitor.send_trigger_rate(stew.event_rate())
+                    self.monitor.send_trigger_rate(self.stew.event_rate())
                     if t_config < datetime.date.today():
                         # update config (set t_config when sent, not here)
                         self.master.send_message(
@@ -137,6 +126,23 @@ class DataAcquisition(object):
 
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
+
+    def process_message(self, msg):
+        self.t_msg = time.time()
+        if isinstance(msg, messages.MeasuredDataMessage):
+            self.stew.add_event_message(msg)
+        elif isinstance(msg, messages.OneSecondMessage):
+            self.stew.add_one_second_message(msg)
+            logging.debug("One-second received: %d", msg.timestamp)
+        elif isinstance(msg, messages.ControlParameterList):
+            config = ConfigEvent(self.master.config)
+            self.storage_manager.store_event(config)
+            t_config = datetime.date.today()
+            logging.info("Sent configuration message.")
+
+    def flush_devices(self):
+        """Flush devices"""
+        self.master.flush_device()
 
     def store_events(self, events):
         for event in events:
