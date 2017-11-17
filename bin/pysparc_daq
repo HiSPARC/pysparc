@@ -90,7 +90,7 @@ class DataAcquisition(object):
         self.t_msg = time.time() + 20
         t_log = time.time() - .5
         t_status = time.time()
-        t_config = datetime.date(1970, 1, 1)
+        self.t_config = datetime.date(1970, 1, 1)
         try:
             while True:
                 msg = self.master.read_message()
@@ -107,10 +107,7 @@ class DataAcquisition(object):
                     logging.info("Event rate: %.1f Hz", self.stew.event_rate())
                     t_log += 1
 
-                    self.stew.stir()
-                    events = self.stew.serve_events()
-                    self.store_events(events)
-                    self.stew.drain()
+                    self.process_and_store_events()
 
                 # Periodically send status messages to the monitor,
                 # currently Nagios, and config messages
@@ -119,7 +116,7 @@ class DataAcquisition(object):
                     self.monitor.send_uptime()
                     self.monitor.send_cpu_load()
                     self.monitor.send_trigger_rate(self.stew.event_rate())
-                    if t_config < datetime.date.today():
+                    if self.t_config < datetime.date.today():
                         # update config (set t_config when sent, not here)
                         self.master.send_message(
                             messages.GetControlParameterList())
@@ -128,6 +125,7 @@ class DataAcquisition(object):
             logging.info("Interrupted by user.")
 
     def process_message(self, msg):
+        """Process a hardware message and throw it in the stew."""
         self.t_msg = time.time()
         if isinstance(msg, messages.MeasuredDataMessage):
             self.stew.add_event_message(msg)
@@ -137,8 +135,15 @@ class DataAcquisition(object):
         elif isinstance(msg, messages.ControlParameterList):
             config = ConfigEvent(self.master.config)
             self.storage_manager.store_event(config)
-            t_config = datetime.date.today()
+            self.t_config = datetime.date.today()
             logging.info("Sent configuration message.")
+
+    def process_and_store_events(self):
+        """Process events from the stew and store them in the datastore."""
+        self.stew.stir()
+        events = self.stew.serve_events()
+        self.store_events(events)
+        self.stew.drain()
 
     def flush_devices(self):
         """Flush devices"""
