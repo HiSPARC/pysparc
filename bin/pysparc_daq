@@ -93,6 +93,7 @@ class DataAcquisition(object):
         t_status = time.time()
         self.t_config = datetime.date(1970, 1, 1)
 
+        schedule.every(1).seconds.do(self.process_and_store_events)
         schedule.every(60).seconds.do(self.send_monitor_messages)
 
         try:
@@ -110,8 +111,6 @@ class DataAcquisition(object):
                 if time.time() - t_log >= 1:
                     logging.info("Event rate: %.1f Hz", self.stew.event_rate())
                     t_log += 1
-
-                    self.process_and_store_events()
 
                 # Periodically send status messages to the monitor,
                 # currently Nagios, and config messages
