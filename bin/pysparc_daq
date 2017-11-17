@@ -9,6 +9,7 @@ import time
 import ConfigParser
 
 import pkg_resources
+import schedule
 
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
@@ -91,6 +92,9 @@ class DataAcquisition(object):
         t_log = time.time() - .5
         t_status = time.time()
         self.t_config = datetime.date(1970, 1, 1)
+
+        schedule.every(60).seconds.do(self.send_monitor_messages)
+
         try:
             while True:
                 msg = self.master.read_message()
@@ -113,12 +117,13 @@ class DataAcquisition(object):
                 # currently Nagios, and config messages
                 if time.time() - t_status >= 60:
                     t_status += 60
-                    self.send_monitor_messages()
 
                     if self.t_config < datetime.date.today():
                         # update config (set t_config when sent, not here)
                         self.master.send_message(
                             messages.GetControlParameterList())
+
+                schedule.run_pending()
 
         except KeyboardInterrupt:
             logging.info("Interrupted by user.")
