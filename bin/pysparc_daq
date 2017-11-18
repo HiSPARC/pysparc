@@ -93,12 +93,9 @@ class DataAcquisition(object):
 
         self.stew = Stew()
 
-        logging.info("Taking data.")
-        # Give hardware at least 20 seconds to startup
-        self.t_msg = time.time() + 20
-
         schedule.every(1).seconds.do(self.process_and_store_events)
         schedule.every(30).seconds.do(self.request_config_from_device)
+        schedule.every(30).seconds.do(self.check_silent_devices)
         schedule.every().minute.do(self.send_monitor_messages)
         schedule.every().minute.do(self.log_status)
         schedule.every().day.at('2:00').do(self.store_config_event)
@@ -106,17 +103,14 @@ class DataAcquisition(object):
         # After 1 minute, store the configuration *once*
         schedule.every().minute.do(run_once, self.store_config_event)
 
+        logging.info("Taking data.")
+
         try:
             while True:
                 msg = self.master.read_message()
                 if msg is not None:
+                    self.t_last_msg = time.time()
                     self.process_message(msg)
-                else:
-                    if time.time() - self.t_msg > 20:
-                        logging.warning("Hardware is silent, resetting.")
-                        self.master.reset_hardware()
-                        # Give hardware at least 20 seconds to startup
-                        self.t_msg = time.time()
 
                 schedule.run_pending()
 
@@ -163,9 +157,18 @@ class DataAcquisition(object):
         """
         self.master.send_message(messages.GetControlParameterList())
 
+    def check_silent_devices(self):
+        if time.time() - self.t_last_msg > 20:
+            logging.error("Hardware is silent, resetting.")
+            self.reset_devices()
+
     def flush_devices(self):
         """Flush devices"""
         self.master.flush_device()
+
+    def reset_devices(self):
+        """Reset hardware devices"""
+        self.master.reset_hardware()
 
     def store_events(self, events):
         for event in events:
