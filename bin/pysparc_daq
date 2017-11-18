@@ -96,13 +96,11 @@ class DataAcquisition(object):
         logging.info("Taking data.")
         # Give hardware at least 20 seconds to startup
         self.t_msg = time.time() + 20
-        t_log = time.time() - .5
-        t_status = time.time()
-        self.t_config = datetime.date(1970, 1, 1)
 
         schedule.every(1).seconds.do(self.process_and_store_events)
         schedule.every(30).seconds.do(self.request_config_from_device)
         schedule.every().minute.do(self.send_monitor_messages)
+        schedule.every().minute.do(self.log_status)
         schedule.every().day.at('2:00').do(self.store_config_event)
 
         # After 1 minute, store the configuration *once*
@@ -119,10 +117,6 @@ class DataAcquisition(object):
                         self.master.reset_hardware()
                         # Give hardware at least 20 seconds to startup
                         self.t_msg = time.time()
-
-                if time.time() - t_log >= 1:
-                    logging.info("Event rate: %.1f Hz", self.stew.event_rate())
-                    t_log += 1
 
                 schedule.run_pending()
 
@@ -154,6 +148,9 @@ class DataAcquisition(object):
         self.monitor.send_uptime()
         self.monitor.send_cpu_load()
         self.monitor.send_trigger_rate(self.stew.event_rate())
+
+    def log_status(self):
+        logging.info("Event rate: %.1f Hz", self.stew.event_rate())
 
     def request_config_from_device(self):
         """Request configuration from device.
