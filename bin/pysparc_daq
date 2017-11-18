@@ -266,7 +266,8 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         raise NotImplementedError
 
     def write_config(self):
-        raise NotImplementedError
+        self.slave.config.write_config(self.config)
+        super(MasterSlaveDataAcquisition, self).write_config()
 
     def close(self):
         super(MasterSlaveDataAcquisition, self).close()
