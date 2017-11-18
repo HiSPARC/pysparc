@@ -125,7 +125,6 @@ class DataAcquisition(object):
 
     def process_message(self, msg):
         """Process a hardware message and throw it in the stew."""
-        self.t_msg = time.time()
         if isinstance(msg, messages.MeasuredDataMessage):
             self.stew.add_event_message(msg)
         elif isinstance(msg, messages.OneSecondMessage):
@@ -201,6 +200,78 @@ class DataAcquisition(object):
         self.datastore.close()
 
 
+class MasterSlaveDataAcquisition(DataAcquisition):
+
+    """HiSPARC data acquisition using a master/slave setup"""
+
+    def open_hisparc_hardware(self):
+        super(MasterSlaveDataAcquisition, self).open_hisparc_hardware()
+        try:
+            self.slave = HiSPARCIII(slave=True)
+        except DeviceNotFoundError:
+            self.slave = HiSPARCII(slave=True)
+
+    def configure_devices(self):
+        """Read configuration into device"""
+        super(MasterSlaveDataAcquisition, self).configure_devices()
+        self.slave.config.read_config(self.config)
+
+    def align_adcs(self):
+        """Align ADCs"""
+        align_adcs = AlignADCsMasterSlave(self.master, self.slave)
+        align_adcs.align()
+
+    def read_and_process_messages(self):
+        """Read messages from the hardware and process them"""
+
+        super(MasterSlaveDataAcquisition, self).read_and_process_messages()
+
+        msg = self.slave.read_message()
+        if msg is not None:
+            self.t_last_slave_msg = time.time()
+            self.process_slave_message(msg)
+
+    def process_slave_message(self, msg):
+        pass
+
+    def request_config_from_device(self):
+        """Request configuration from device.
+
+        This includes gps positions and PMT currents. When the hardware
+        responds, the config objects are automatically updated by the hardware
+        classes when the message is read, and are available a short time after
+        calling this method.
+
+        """
+        super(MasterSlaveDataAcquisition, self).request_config_from_device()
+        self.slave.send_message(messages.GetControlParameterList())
+
+    def check_silent_devices(self):
+        now = time.time()
+        if (now - self.t_last_msg > 20) or (now - self.t_last_slave_msg > 20):
+            logging.error("Hardware is silent, resetting.")
+            self.reset_devices()
+
+    def flush_devices(self):
+        """Flush devices"""
+        super(MasterSlaveDataAcquisition, self).flush_devices()
+        self.slave.flush_device()
+
+    def reset_devices(self):
+        """Reset hardware devices"""
+        super(MasterSlaveDataAcquisition, self).reset_devices()
+        self.slave.reset_hardware()
+
+    def store_config_event(self):
+        raise NotImplementedError
+
+    def write_config(self):
+        raise NotImplementedError
+
+    def close(self):
+        super(MasterSlaveDataAcquisition, self).close()
+        self.slave.close()
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
         format='%(asctime)s %(levelname)s:%(name)s:%(message)s')
@@ -211,7 +282,7 @@ if __name__ == '__main__':
     requests_log = logging.getLogger("schedule")
     requests_log.setLevel(logging.WARNING)
 
-    app = DataAcquisition()
+    app = MasterSlaveDataAcquisition()
     try:
         app.run()
     finally:
