@@ -35,19 +35,7 @@ class DataAcquisition(object):
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
 
-        try:
-            self.master = HiSPARCIII()
-        except DeviceNotFoundError:
-            self.master = HiSPARCII()
-
-        try:
-            self.slave = HiSPARCIII(slave=True)
-        except DeviceNotFoundError:
-            try:
-                self.slave = HiSPARCII(slave=True)
-            except:
-                self.slave = None
-
+        self.open_hisparc_hardware()
         self.gps = TrimbleGPS()
         self.initialize_hardware()
 
@@ -55,20 +43,25 @@ class DataAcquisition(object):
         station_number = self.config.getint('DAQ', 'station_number')
         station_password = self.config.get('DAQ', 'station_password')
 
+        self.stew = Stew()
         self.datastore = storage.NikhefDataStore(station_number,
-                                                  station_password)
+                                                 station_password)
         self.storage_manager = storage.StorageManager()
         self.storage_manager.add_datastore(self.datastore, 'queue_nikhef')
         self.monitor = monitor.Monitor(station_name)
+
+    def open_hisparc_hardware(self):
+        try:
+            self.master = HiSPARCIII()
+        except DeviceNotFoundError:
+            self.master = HiSPARCII()
 
     def initialize_hardware(self):
         logging.info("Reading config from file")
         self.config.read(ALL_CONFIG_FILES)
 
         logging.info("Initializing device configuration")
-        self.master.config.read_config(self.config)
-        if self.slave is not None:
-            self.slave.config.read_config(self.config)
+        self.configure_devices()
 
         if self.config.getboolean('DAQ', 'force_reset_gps'):
             logging.info("Force reset GPS to factory defaults.")
@@ -77,14 +70,19 @@ class DataAcquisition(object):
 
         if self.config.getboolean('DAQ', 'force_align_adcs'):
             logging.info("Force aligning ADCs.")
-            if self.slave is not None:
-                align_adcs = AlignADCsMasterSlave(self.master, self.slave)
-            else:
-                align_adcs = AlignADCs(self.master)
-            align_adcs.align()
+            self.align_adcs()
             self.config.set('DAQ', 'force_align_adcs', False)
 
         self.write_config()
+
+    def configure_devices(self):
+        """Read configuration into device"""
+        self.master.config.read_config(self.config)
+
+    def align_adcs(self):
+        """Align ADCs"""
+        align_adcs = AlignADCs(self.master)
+        align_adcs.align()
 
     def run(self):
         """Take data, process and store events"""
@@ -92,7 +90,6 @@ class DataAcquisition(object):
         # The first configuration message does not include GPS information.
         # Flush it, and possibly other outdated messages, and request it later.
         self.flush_devices()
-        self.stew = Stew()
         self.schedule_jobs()
 
         logging.info("Taking data.")
