@@ -273,7 +273,7 @@ class Event(object):
 
 class ConfigEvent(object):
 
-    def __init__(self, master_config):
+    def __init__(self, master_config, slave_config=None):
         self.pre_coincidence_time = master_config.pre_coincidence_time
         self.coincidence_time = master_config.coincidence_time
         self.post_coincidence_time = master_config.post_coincidence_time
@@ -286,8 +286,14 @@ class ConfigEvent(object):
         self.use_filter_threshold = False
         self.reduce_data = False
 
+        condition = master_config.unpack_trigger_condition(
+            master_config.trigger_condition)
+        self.trig_low_signals = condition['num_low']
+        self.trig_high_signals = condition['num_high']
+        self.trig_or_not_and = condition['or_not_and']
+        self.trig_external = condition['use_external']
+
         self.mas_version = master_config.version
-        self.slv_version = "Hardware: 0 FPGA: 0"
         self.mas_ch1_current = master_config.ch1_current
         self.mas_ch2_current = master_config.ch2_current
 
@@ -295,13 +301,6 @@ class ConfigEvent(object):
         self.mas_ch1_thres_high = master_config.ch1_threshold_high
         self.mas_ch2_thres_low = master_config.ch2_threshold_low
         self.mas_ch2_thres_high = master_config.ch2_threshold_high
-
-        condition = master_config.unpack_trigger_condition(
-            master_config.trigger_condition)
-        self.trig_low_signals = condition['num_low']
-        self.trig_high_signals = condition['num_high']
-        self.trig_or_not_and = condition['or_not_and']
-        self.trig_external = condition['use_external']
 
         self.mas_ch1_voltage = master_config.ch1_voltage
         self.mas_ch2_voltage = master_config.ch2_voltage
@@ -319,3 +318,32 @@ class ConfigEvent(object):
         self.mas_ch2_gain_neg = master_config.ch2_gain_negative
         self.mas_common_offset = master_config.common_offset
         self.mas_internal_voltage = master_config.full_scale
+
+        if slave_config is None:
+            self.slv_version = "Hardware: 0 FPGA: 0"
+        else:
+            self.slv_version = slave_config.version
+            self.slv_ch1_current = slave_config.ch1_current
+            self.slv_ch2_current = slave_config.ch2_current
+
+            self.slv_ch1_thres_low = slave_config.ch1_threshold_low
+            self.slv_ch1_thres_high = slave_config.ch1_threshold_high
+            self.slv_ch2_thres_low = slave_config.ch2_threshold_low
+            self.slv_ch2_thres_high = slave_config.ch2_threshold_high
+
+            self.slv_ch1_voltage = slave_config.ch1_voltage
+            self.slv_ch2_voltage = slave_config.ch2_voltage
+
+            self.slv_ch1_inttime = slave_config.ch1_integrator_time
+            self.slv_ch2_inttime = slave_config.ch2_integrator_time
+
+            self.slv_ch1_offset_pos = slave_config.ch1_offset_positive
+            self.slv_ch1_offset_neg = slave_config.ch1_offset_negative
+            self.slv_ch2_offset_pos = slave_config.ch2_offset_positive
+            self.slv_ch2_offset_neg = slave_config.ch2_offset_negative
+            self.slv_ch1_gain_pos = slave_config.ch1_gain_positive
+            self.slv_ch1_gain_neg = slave_config.ch1_gain_negative
+            self.slv_ch2_gain_pos = slave_config.ch2_gain_positive
+            self.slv_ch2_gain_neg = slave_config.ch2_gain_negative
+            self.slv_common_offset = slave_config.common_offset
+            self.slv_internal_voltage = slave_config.full_scale

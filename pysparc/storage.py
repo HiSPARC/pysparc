@@ -565,6 +565,55 @@ class NikhefDataStore(object):
         self._add_value_to_datalist(datalist, 'CFG_MAS_INTVOLTAGE',
                                     config.mas_internal_voltage)
 
+        try:
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1THRLOW',
+                                        config.slv_ch1_thres_low)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1THRHIGH',
+                                        config.slv_ch1_thres_high)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2THRLOW',
+                                        config.slv_ch2_thres_low)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2THRHIGH',
+                                        config.slv_ch2_thres_high)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1INTTIME',
+                                        config.slv_ch1_inttime)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2INTTIME',
+                                        config.slv_ch2_inttime)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1VOLT',
+                                        config.slv_ch1_voltage)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2VOLT',
+                                        config.slv_ch2_voltage)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1CURR',
+                                        config.slv_ch1_current)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2CURR',
+                                        config.slv_ch2_current)
+
+            # 'CFG_SLV_COMPTHRLOW': 'slv_comp_thres_low',
+            # 'CFG_SLV_COMPTHRHIGH': 'slv_comp_thres_high',
+
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1GAINPOS',
+                                        config.slv_ch1_gain_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1GAINNEG',
+                                        config.slv_ch1_gain_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2GAINPOS',
+                                        config.slv_ch2_gain_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2GAINNEG',
+                                        config.slv_ch2_gain_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1OFFPOS',
+                                        config.slv_ch1_offset_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1OFFNEG',
+                                        config.slv_ch1_offset_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2OFFPOS',
+                                        config.slv_ch2_offset_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2OFFNEG',
+                                        config.slv_ch2_offset_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_COMMOFF',
+                                        config.slv_common_offset)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_INTVOLTAGE',
+                                        config.slv_internal_voltage)
+        except AttributeError:
+            # slave device not present
+            pass
+
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list
 

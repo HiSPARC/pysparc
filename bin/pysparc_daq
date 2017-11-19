@@ -263,7 +263,9 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         self.slave.reset_hardware()
 
     def store_config_event(self):
-        raise NotImplementedError
+        config = ConfigEvent(self.master.config, self.slave.config)
+        self.storage_manager.store_event(config)
+        logging.info("Sent configuration message.")
 
     def write_config(self):
         self.slave.config.write_config(self.config)
