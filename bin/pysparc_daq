@@ -126,6 +126,7 @@ class DataAcquisition(object):
     def process_message(self, msg):
         """Process a hardware message and throw it in the stew."""
         if isinstance(msg, messages.MeasuredDataMessage):
+            print 'Master', msg
             self.stew.add_event_message(msg)
         elif isinstance(msg, messages.OneSecondMessage):
             self.stew.add_one_second_message(msg)
@@ -232,7 +233,7 @@ class MasterSlaveDataAcquisition(DataAcquisition):
             self.process_slave_message(msg)
 
     def process_slave_message(self, msg):
-        pass
+        print 'Slave', msg
 
     def request_config_from_device(self):
         """Request configuration from device.

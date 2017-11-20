@@ -267,7 +267,8 @@ class MeasuredDataMessage(HisparcMessage):
         bl2 = self.trace_ch2[:100].mean()
         ph2 = self.trace_ch2.max() - bl2
 
-        return 'Event message: %s %d %d' % (self.datetime, ph1, ph2)
+        return 'Event message: %s %d pulseheights ch1: %d ch2: %d' % (
+            self.datetime, self.nanoseconds, ph1, ph2)
 
     @lazy
     def trace_ch1(self):
