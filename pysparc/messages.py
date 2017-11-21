@@ -208,11 +208,10 @@ class OneSecondMessage(HisparcMessage):
         del buff[:msg_length]
 
     def __str__(self):
-        return 'One second message: %s %d %d %d %d' % (self.datetime,
-                                                       self.count_ch1_low,
-                                                       self.count_ch1_high,
-                                                       self.count_ch2_low,
-                                                       self.count_ch2_high)
+        return 'One second message: %s %d %f %d %d %d %d' % (
+            self.datetime, self.count_ticks_PPS & ((1 << 31) - 1),
+            self.quantization_error, self.count_ch1_low, self.count_ch1_high,
+            self.count_ch2_low, self.count_ch2_high)
 
 
 class MeasuredDataMessage(HisparcMessage):

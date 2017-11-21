@@ -125,8 +125,8 @@ class DataAcquisition(object):
 
     def process_message(self, msg):
         """Process a hardware message and throw it in the stew."""
+        print 'Master', msg
         if isinstance(msg, messages.MeasuredDataMessage):
-            print 'Master', msg
             self.stew.add_event_message(msg)
         elif isinstance(msg, messages.OneSecondMessage):
             self.stew.add_one_second_message(msg)
