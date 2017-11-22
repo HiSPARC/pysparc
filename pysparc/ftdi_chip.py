@@ -37,7 +37,9 @@ logger = logging.getLogger(__name__)
 READ_SIZE = 62
 
 # Default buffer size is 4K (64 * 64 bytes), but mind the overhead
-BUFFER_SIZE = 64 * 62
+# But this was not enough to clear all buffers. To be safe, for now, increase
+# it ten-fold.
+BUFFER_SIZE = 10 * 64 * 62
 
 # Sleep between read/write error retries in seconds
 RW_ERROR_WAIT = .5
@@ -195,7 +197,7 @@ class FtdiChip(object):
 
         """
         self._device.flush()
-        self.read(10 * BUFFER_SIZE)
+        self.read(BUFFER_SIZE)
 
     def read(self, read_size=None):
         """Read from device and retry if necessary.
