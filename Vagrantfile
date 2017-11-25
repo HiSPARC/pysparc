@@ -6,7 +6,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "vagrant" do |machine|
-    machine.vm.box = "bento/debian-7.8"
+    machine.vm.box = "debian/stretch64"
   end
 
   # Create a forwarded port mapping which allows access to a specific port
