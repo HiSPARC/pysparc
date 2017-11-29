@@ -22,13 +22,13 @@
   pip: name={{ item }} state=present
   become: yes
   with_items:
-    - pbr==1.8.1
-    - mock==1.1.0
+    - pbr
+    - mock
     - pylibftdi
     - atom
     - lazy
     - requests>=2.18.4
-    - redis==2.10.3
+    - redis>=2.10.3
     - pip>=6.0
 
 # DF: Ok, so here I was following the Redis FAQ to be able to overcommit
