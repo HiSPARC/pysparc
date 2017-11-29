@@ -9,7 +9,7 @@
     - python-tables
     - python-flask
     - redis-server
-    - libftdi-dev
+    - libftdi1-dev
     - hdf5-tools
 
 - name: Make sure conflicting system packages are absent
