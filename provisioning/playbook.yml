@@ -1,18 +1,18 @@
 ---
 - hosts: vagrant
   tasks:
-    - include: vagrant.yml
+    - import_tasks: vagrant.yml
 
 - hosts: raspberry_pi
   tasks:
-    - include: raspberry_pi.yml
+    - import_tasks: raspberry_pi.yml
   handlers:
-    - include: handlers.yml
+    - import_tasks: handlers.yml
 
 - hosts: all
   tasks:
-    - include: common.yml
-    - include: prerequisites.yml
-    - include: pysparc.yml
+    - import_tasks: common.yml
+    - import_tasks: prerequisites.yml
+    - import_tasks: pysparc.yml
   handlers:
-    - include: handlers.yml
+    - import_tasks: handlers.yml
