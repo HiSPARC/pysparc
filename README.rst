@@ -36,15 +36,16 @@ Alpha, but getting there.
 Outlook
 -------
 
-At the time of this writing (mid-2014), there is renewed activity.  We're
-testing this code on a Raspberry Pi with the goal of replacing our old
-Windows PC's.  They are a pain to maintain.
+At the time of this writing (late 2017), there is renewed activity.  We're
+testing this code on a few Raspberry Pi's with the goal of maybe replacing our
+old Windows PC's.  They are a pain to maintain.  The new effort focuses on
+adding support for master/slave combinations.
 
-I (DF) am also planning on using this code to work out an event display
+I (DF) was also planning on using this code to work out an event display
 and teaching materials for high school students.  This will focus on the
 muon lifetime experiment. However, there already exists a LabVIEW
 interface and a new LabVIEW interface is in development for driving the
-Muonlab III hardware.
+Muonlab III hardware.  This is not a priority anymore.
 
 
 Updating the Raspberry Pi's

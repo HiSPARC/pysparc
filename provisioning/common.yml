@@ -1,6 +1,6 @@
 ---
-- include: apt-prerequisites.yml
-- include: apt-upgrade.yml
+- import_tasks: apt-prerequisites.yml
+- import_tasks: apt-upgrade.yml
 
 - name: Set timezone to Europe/Amsterdam
   lineinfile: dest=/etc/timezone state=present

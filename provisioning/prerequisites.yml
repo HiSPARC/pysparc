@@ -10,7 +10,7 @@
     - python-flask
     - python-schedule
     - redis-server
-    - libftdi-dev
+    - libftdi1-dev
     - hdf5-tools
 
 - name: Make sure conflicting system packages are absent
@@ -23,14 +23,16 @@
   pip: name={{ item }} state=present
   become: yes
   with_items:
-    - pbr==1.8.1
-    - mock==1.1.0
+    - pbr
+    - mock
     - pylibftdi
     - atom
     - lazy
     - requests>=2.18.4
-    - redis==2.10.3
+    - redis>=2.10.3
     - pip>=6.0
+    # try newer versions of setuptools to decrease startup time
+    - setuptools>33.1.1
 
 # DF: Ok, so here I was following the Redis FAQ to be able to overcommit
 # memory. I was going to look at the reason for the large DB next, but

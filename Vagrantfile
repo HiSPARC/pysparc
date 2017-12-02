@@ -6,7 +6,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "vagrant" do |machine|
-    machine.vm.box = "bento/debian-7.8"
+    machine.vm.box = "debian/stretch64"
   end
 
   # Create a forwarded port mapping which allows access to a specific port
@@ -14,6 +14,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # config.vm.network "forwarded_port", guest: 80, host: 8080
   config.vm.network "private_network", ip: "192.168.99.20"
+
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
 
   config.vm.provision "ansible" do |ansible|
     ansible.inventory_path = "provisioning/ansible_inventory"
