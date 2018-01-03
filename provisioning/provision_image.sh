@@ -13,7 +13,24 @@ sudo modprobe -r loop
 sudo modprobe loop max_part=63
 sudo losetup /dev/loop0 $IMG
 
-# If successful, mount the disk
+# If successful, mount the boot disk
+if [ -b /dev/loop0p1 ]
+then
+  sudo mount /dev/loop0p1 $MOUNT_POINT
+else
+  echo "Unfortunately, there was a problem creating the loop device."
+  echo "Please re-run this script."
+  sudo losetup -d /dev/loop0
+  exit 1
+fi
+
+# Enable the SSH server
+sudo touch $MOUNT_POINT/ssh
+
+# Unmount the boot disk
+sudo umount $MOUNT_POINT
+
+# If successful, mount the system disk
 if [ -b /dev/loop0p2 ]
 then
   sudo mount /dev/loop0p2 $MOUNT_POINT
