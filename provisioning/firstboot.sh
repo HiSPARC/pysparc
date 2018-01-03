@@ -12,12 +12,14 @@
 # By default this script does nothing.
 
 # Systemd executes this script after the network is up. However, it still needs
-# a bit more time, requiring this very ugly hack.
-sleep 10
-
+# a bit more time, so make sure apt-get is retried
 # Install OpenVPN
-apt-get update
-yes | apt-get install unzip openvpn
+until apt-get update && yes | apt-get install unzip openvpn;
+do
+  echo 'Retrying...'
+  sleep 5
+done
+
 yes | unzip /etc/openvpn/vpncert.zip -d /etc/openvpn
 service openvpn restart
 
