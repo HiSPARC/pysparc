@@ -5,6 +5,7 @@ pysparc1.his
 pysparc2.his
 zaanlands1.his
 kajmunk1.his
+vu2.his
 
 [pysparc]
 pysparc1.his
@@ -14,6 +15,7 @@ kajmunk1.his
 [dev]
 pysparc1.his
 pysparc2.his
+vu2.his
 
 [pysparc:vars]
 ansible_ssh_user=pi
