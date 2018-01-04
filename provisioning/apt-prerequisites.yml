@@ -2,15 +2,8 @@
   apt: update_cache=yes
   become: yes
 
-- name: Install update-notifier-common (older OSes)
-  apt: name=update-notifier-common state=present
-  register: result
-  ignore_errors: true
-  become: yes
-
-- name: Install reboot-notifier (newer OSes)
+- name: Install reboot-notifier
   apt:
     name: reboot-notifier
     state: present
-  when: result|failed
   become: yes

@@ -132,7 +132,7 @@ restart OpenVPN::
    $ cd /etc/openvpn
    $ sudo unzip <path_to_certificate>
    <choose overwrite all>
-   $ sudo service openvpn restart
+   $ sudo systemctl restart openvpn
 
 The connection will be immediately dropped, but can be restored by
 connecting using the new hostname.  Add the new host to the Ansible
