@@ -332,7 +332,7 @@ class TablesDataStore(BaseDataStore):
             numbered.
 
         """
-        self.data = tables.openFile(path, 'a')
+        self.data = tables.open_file(path, 'a')
         if not group:
             group = self._get_new_sequential_group()
         self._create_group_and_tables(group)
@@ -345,14 +345,16 @@ class TablesDataStore(BaseDataStore):
 
         self.data.close()
 
-    def store_event(self, event):
+    def store_event(self, event, table='events'):
         """Store an event in the datastore.
 
         :param event: a HiSPARC event.
+        :param table: the name of the event table.
 
         """
-        row = self.events.row
-        row['event_id'] = len(self.events)
+        events = self.data.get_node(self.group, table)
+        row = events.row
+        row['event_id'] = len(events)
         row['timestamp'] = event.timestamp
         row['nanoseconds'] = event.nanoseconds
         row['ext_timestamp'] = event.ext_timestamp
@@ -369,7 +371,7 @@ class TablesDataStore(BaseDataStore):
         row['event_rate'] = event.event_rate
 
         row.append()
-        self.events.flush()
+        events.flush()
 
     def _get_new_sequential_group(self):
         """Create a new group name, sequentially numbered.
@@ -398,9 +400,9 @@ class TablesDataStore(BaseDataStore):
         :param group: name of the group in which to create the tables.
 
         """
-        self.group = self.data.createGroup('/', group)
-        self.data.createTable(self.group, 'events', HisparcEvent)
-        self.data.createVLArray(self.group, 'blobs', tables.VLStringAtom())
+        self.group = self.data.create_group('/', group)
+        self.data.create_table(self.group, 'events', HisparcEvent)
+        self.data.create_vlarray(self.group, 'blobs', tables.VLStringAtom())
 
 
 class NikhefDataStore(object):
