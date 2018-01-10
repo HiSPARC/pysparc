@@ -277,14 +277,15 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         self.slave.close()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(
+        level=logging.INFO,
         format='%(asctime)s %(levelname)s:%(name)s:%(message)s')
     # raise urllib3 module log level to WARNING
-    requests_log = logging.getLogger("urllib3")
-    requests_log.setLevel(logging.WARNING)
+    urllib_log = logging.getLogger("urllib3")
+    urllib_log.setLevel(logging.WARNING)
     # raise schedule module log level to WARNING
-    requests_log = logging.getLogger("schedule")
-    requests_log.setLevel(logging.WARNING)
+    schedule_log = logging.getLogger("schedule")
+    schedule_log.setLevel(logging.WARNING)
 
     app = MasterSlaveDataAcquisition()
     try:
