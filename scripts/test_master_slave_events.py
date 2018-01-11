@@ -48,6 +48,10 @@ if __name__ == '__main__':
     master.config.ch2_threshold_low = 250
     master.config.ch2_threshold_high = 320
 
+    master.config.pre_coincidence_time = 2.0
+    master.config.coincidence_time = 3.0
+    master.config.post_coincidence_time = 4.0
+
     master.config.trigger_condition = master.config.build_trigger_condition(
         num_high=1)
 
