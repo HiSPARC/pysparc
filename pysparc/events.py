@@ -260,6 +260,9 @@ class Mixer(object):
                 mixed_event = FourChannelEvent(master_event, slave_event)
                 self._mixed_events.append(mixed_event)
 
+                del self._slave_events[timestamp]
+                del self._master_events[nearest_timestamp]
+
 
 class Event(object):
 
