@@ -433,7 +433,8 @@ class NikhefDataStore(object):
         accordingly.
 
         """
-        if type(event) == pysparc.events.Event:
+        if type(event) in (pysparc.events.Event,
+                           pysparc.events.FourChannelEvent):
             data = self._create_event_container(event)
         elif type(event) == pysparc.events.ConfigEvent:
             data = self._create_config_container(event)
@@ -457,17 +458,23 @@ class NikhefDataStore(object):
         datalist = []
         self._add_value_to_datalist(datalist, 'RED', event.data_reduction)
         self._add_value_to_datalist(datalist, 'EVENTRATE', event.event_rate)
-        self._add_value_to_datalist(datalist, 'TRIGPATTERN', event.trigger_pattern)
+        self._add_value_to_datalist(datalist, 'TRIGPATTERN',
+                                    event.trigger_pattern)
         self._add_values_to_datalist(datalist, 'BL', event.baselines)
         self._add_values_to_datalist(datalist, 'STDDEV', event.std_dev)
         self._add_values_to_datalist(datalist, 'NP', event.n_peaks)
         self._add_values_to_datalist(datalist, 'PH', event.pulseheights)
         self._add_values_to_datalist(datalist, 'IN', event.integrals)
 
-        # FIXME: no slave support
         trace_ch1 = base64.b64encode(event.zlib_trace_ch1)
         trace_ch2 = base64.b64encode(event.zlib_trace_ch2)
-        self._add_values_to_datalist(datalist, 'TR', [trace_ch1, trace_ch2])
+        if type(event) == pysparc.events.FourChannelEvent:
+            trace_ch3 = base64.b64encode(event.zlib_trace_ch3)
+            trace_ch4 = base64.b64encode(event.zlib_trace_ch4)
+            traces = [trace_ch1, trace_ch2, trace_ch3, trace_ch4]
+        else:
+            traces = [trace_ch1, trace_ch2]
+        self._add_values_to_datalist(datalist, 'TR', traces)
 
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list

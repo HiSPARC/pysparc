@@ -14,7 +14,7 @@ import schedule
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
 from pysparc.align_adcs import AlignADCs, AlignADCsMasterSlave
-from pysparc.events import Stew, ConfigEvent
+from pysparc.events import Stew, ConfigEvent, Mixer
 from pysparc import messages, storage, monitor
 
 
@@ -208,6 +208,7 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         super(MasterSlaveDataAcquisition, self).__init__()
 
         self.slave_stew = Stew()
+        self.mixer = Mixer()
 
     def open_hisparc_hardware(self):
         super(MasterSlaveDataAcquisition, self).open_hisparc_hardware()
@@ -235,6 +236,24 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         if msg is not None:
             self.t_last_slave_msg = time.time()
             self.process_message(msg, self.slave_stew)
+
+    def process_and_store_events(self):
+        """Process events from the stew and store them in the datastore."""
+        self.master_stew.stir()
+        self.slave_stew.stir()
+
+        master_events = self.master_stew.serve_events()
+        self.mixer.add_master_events(master_events)
+        slave_events = self.slave_stew.serve_events()
+        self.mixer.add_slave_events(slave_events)
+
+        self.mixer.mix()
+        events = self.mixer.serve_events()
+
+        self.store_events(events)
+
+        self.master_stew.drain()
+        self.slave_stew.drain()
 
     def request_config_from_device(self):
         """Request configuration from device.
