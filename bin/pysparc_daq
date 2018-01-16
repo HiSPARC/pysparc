@@ -43,7 +43,7 @@ class DataAcquisition(object):
         station_number = self.config.getint('DAQ', 'station_number')
         station_password = self.config.get('DAQ', 'station_password')
 
-        self.stew = Stew()
+        self.master_stew = Stew()
         self.datastore = storage.NikhefDataStore(station_number,
                                                  station_password)
         self.storage_manager = storage.StorageManager()
@@ -121,15 +121,14 @@ class DataAcquisition(object):
         msg = self.master.read_message()
         if msg is not None:
             self.t_last_msg = time.time()
-            self.process_message(msg)
+            self.process_message(msg, self.master_stew)
 
-    def process_message(self, msg):
+    def process_message(self, msg, stew):
         """Process a hardware message and throw it in the stew."""
-        print 'Master', msg
         if isinstance(msg, messages.MeasuredDataMessage):
-            self.stew.add_event_message(msg)
+            stew.add_event_message(msg)
         elif isinstance(msg, messages.OneSecondMessage):
-            self.stew.add_one_second_message(msg)
+            stew.add_one_second_message(msg)
             logging.debug("One-second received: %d", msg.timestamp)
         elif isinstance(msg, messages.ControlParameterList):
             # No need to process this message. This is already done in the
@@ -138,19 +137,19 @@ class DataAcquisition(object):
 
     def process_and_store_events(self):
         """Process events from the stew and store them in the datastore."""
-        self.stew.stir()
-        events = self.stew.serve_events()
+        self.master_stew.stir()
+        events = self.master_stew.serve_events()
         self.store_events(events)
-        self.stew.drain()
+        self.master_stew.drain()
 
     def send_monitor_messages(self):
         """Send all monitor messages."""
         self.monitor.send_uptime()
         self.monitor.send_cpu_load()
-        self.monitor.send_trigger_rate(self.stew.event_rate())
+        self.monitor.send_trigger_rate(self.master_stew.event_rate())
 
     def log_status(self):
-        logging.info("Event rate: %.1f Hz", self.stew.event_rate())
+        logging.info("Event rate: %.1f Hz", self.master_stew.event_rate())
 
     def request_config_from_device(self):
         """Request configuration from device.
@@ -205,6 +204,11 @@ class MasterSlaveDataAcquisition(DataAcquisition):
 
     """HiSPARC data acquisition using a master/slave setup"""
 
+    def __init__(self):
+        super(MasterSlaveDataAcquisition, self).__init__()
+
+        self.slave_stew = Stew()
+
     def open_hisparc_hardware(self):
         super(MasterSlaveDataAcquisition, self).open_hisparc_hardware()
         try:
@@ -230,10 +234,7 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         msg = self.slave.read_message()
         if msg is not None:
             self.t_last_slave_msg = time.time()
-            self.process_slave_message(msg)
-
-    def process_slave_message(self, msg):
-        print 'Slave', msg
+            self.process_message(msg, self.slave_stew)
 
     def request_config_from_device(self):
         """Request configuration from device.
