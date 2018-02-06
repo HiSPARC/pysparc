@@ -227,12 +227,8 @@ class StorageWorker(threading.Thread):
         """
         event = self.get_event_by_key(key)
         if event:
-            try:
-                self.datastore.store_event(event)
-            except Exception as e:
-                raise StorageError(str(e))
-            else:
-                self.remove_event_from_queue(key)
+            self.datastore.store_event(event)
+            self.remove_event_from_queue(key)
         else:
             # event was empty, drop it from the queue
             logger.warning("Dropping empty event from queue")
