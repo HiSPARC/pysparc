@@ -218,7 +218,7 @@ class StorageWorker(threading.Thread):
 
         :param key: key of the event to look up in the key-value store.
 
-        If the event is succesfully stored, remove it from the queue.
+        If the event is successfully stored, remove it from the queue.
 
         Catch StorageErrors and log them as errors.  Catch all other
         exceptions, but reraise them as StorageErrors, with the original
@@ -605,7 +605,17 @@ class NikhefDataStore(object):
         try:
             r = requests.post(self.url, data=payload, timeout=10)
             r.raise_for_status()
-        except (HTTPError, ConnectionError, Timeout) as exc:
+        except HTTPError as exc:
+            if r.status_code == 403:  # Forbidden
+                logger.error("Upload forbidden, possibly from firewall: %s" %
+                             r.content)
+                if "WatchGuard" in r.content and "IPS detected" in r.content:
+                    logger.warning("Firewall thinks this is an exploit, "
+                                   "destroying event.")
+                    # return as if upload was successful
+                    return
+            raise UploadError(str(exc))
+        except (ConnectionError, Timeout) as exc:
             raise UploadError(str(exc))
         else:
             logger.debug("Response from server: %s", r.text)
