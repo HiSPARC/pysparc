@@ -36,7 +36,7 @@ import time
 
 import tables
 import requests
-from requests.exceptions import ConnectionError, Timeout
+from requests.exceptions import HTTPError, ConnectionError, Timeout
 import redis
 
 import pysparc.events
@@ -218,7 +218,7 @@ class StorageWorker(threading.Thread):
 
         :param key: key of the event to look up in the key-value store.
 
-        If the event is succesfully stored, remove it from the queue.
+        If the event is successfully stored, remove it from the queue.
 
         Catch StorageErrors and log them as errors.  Catch all other
         exceptions, but reraise them as StorageErrors, with the original
@@ -227,12 +227,8 @@ class StorageWorker(threading.Thread):
         """
         event = self.get_event_by_key(key)
         if event:
-            try:
-                self.datastore.store_event(event)
-            except Exception as e:
-                raise StorageError(str(e))
-            else:
-                self.remove_event_from_queue(key)
+            self.datastore.store_event(event)
+            self.remove_event_from_queue(key)
         else:
             # event was empty, drop it from the queue
             logger.warning("Dropping empty event from queue")
@@ -667,12 +663,23 @@ class NikhefDataStore(object):
         try:
             r = requests.post(self.url, data=payload, timeout=10)
             r.raise_for_status()
+        except HTTPError as exc:
+            if r.status_code == 403:  # Forbidden
+                logger.error("Upload forbidden, possibly from firewall: %s" %
+                             r.content)
+                if "WatchGuard" in r.content and "IPS detected" in r.content:
+                    logger.warning("Firewall thinks this is an exploit, "
+                                   "destroying event.")
+                    # return as if upload was successful
+                    return
+            raise UploadError(str(exc))
         except (ConnectionError, Timeout) as exc:
             raise UploadError(str(exc))
         else:
             logger.debug("Response from server: %s", r.text)
             if r.text != '100':
-                raise UploadError("Server responded with error code %s" % r.text)
+                raise UploadError("Server responded with error code %s" %
+                                  r.text)
 
     def close(self):
         """Close the datastore."""
