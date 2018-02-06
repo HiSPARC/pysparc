@@ -211,11 +211,11 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         self.mixer = Mixer()
 
     def open_hisparc_hardware(self):
-        super(MasterSlaveDataAcquisition, self).open_hisparc_hardware()
         try:
             self.slave = HiSPARCIII(slave=True)
         except DeviceNotFoundError:
             self.slave = HiSPARCII(slave=True)
+        super(MasterSlaveDataAcquisition, self).open_hisparc_hardware()
 
     def configure_devices(self):
         """Read configuration into device"""
@@ -307,7 +307,13 @@ if __name__ == '__main__':
     schedule_log = logging.getLogger("schedule")
     schedule_log.setLevel(logging.WARNING)
 
-    app = MasterSlaveDataAcquisition()
+    try:
+        # try master/slave
+        app = MasterSlaveDataAcquisition()
+    except DeviceNotFoundError:
+        # try master-only
+        app = DataAcquisition()
+
     try:
         app.run()
     finally:
