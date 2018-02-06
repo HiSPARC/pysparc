@@ -36,7 +36,7 @@ import time
 
 import tables
 import requests
-from requests.exceptions import ConnectionError, Timeout
+from requests.exceptions import HTTPError, ConnectionError, Timeout
 import redis
 
 import pysparc.events
@@ -605,12 +605,13 @@ class NikhefDataStore(object):
         try:
             r = requests.post(self.url, data=payload, timeout=10)
             r.raise_for_status()
-        except (ConnectionError, Timeout) as exc:
+        except (HTTPError, ConnectionError, Timeout) as exc:
             raise UploadError(str(exc))
         else:
             logger.debug("Response from server: %s", r.text)
             if r.text != '100':
-                raise UploadError("Server responded with error code %s" % r.text)
+                raise UploadError("Server responded with error code %s" %
+                                  r.text)
 
     def close(self):
         """Close the datastore."""
