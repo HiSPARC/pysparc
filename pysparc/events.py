@@ -248,20 +248,21 @@ class Mixer(object):
 
     def mix(self):
         master_timestamps = self._master_events.keys()
-        for timestamp, slave_event in self._slave_events.items():
-            delta_t = [abs(u - timestamp) for u in master_timestamps]
-            min_delta_t = min(delta_t)
+        if master_timestamps:
+            for timestamp, slave_event in self._slave_events.items():
+                delta_t = [abs(u - timestamp) for u in master_timestamps]
+                min_delta_t = min(delta_t)
 
-            if min_delta_t < MAX_FOUR_CHANNEL_DELAY:
-                master_idx = delta_t.index(min_delta_t)
-                nearest_timestamp = master_timestamps[master_idx]
-                master_event = self._master_events[nearest_timestamp]
+                if min_delta_t < MAX_FOUR_CHANNEL_DELAY:
+                    master_idx = delta_t.index(min_delta_t)
+                    nearest_timestamp = master_timestamps[master_idx]
+                    master_event = self._master_events[nearest_timestamp]
 
-                mixed_event = FourChannelEvent(master_event, slave_event)
-                self._mixed_events.append(mixed_event)
+                    mixed_event = FourChannelEvent(master_event, slave_event)
+                    self._mixed_events.append(mixed_event)
 
-                del self._slave_events[timestamp]
-                del self._master_events[nearest_timestamp]
+                    del self._slave_events[timestamp]
+                    del self._master_events[nearest_timestamp]
 
 
 class Event(object):
