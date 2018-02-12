@@ -3,13 +3,11 @@ vagrant ansible_ssh_user=vagrant ansible_ssh_host=192.168.99.20 ansible_ssh_port
 [raspberry_pi]
 pysparc1.his
 pysparc2.his
-zaanlands1.his
 kajmunk1.his
 vu2.his
 
 [pysparc]
 pysparc1.his
-zaanlands1.his
 kajmunk1.his
 
 [dev]
