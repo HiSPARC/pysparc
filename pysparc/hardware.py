@@ -82,6 +82,7 @@ class BaseHardware(object):
         """Open the hardware device."""
 
         self._device = FtdiChip(self.description)
+        logger.info("Opened %s" % self.description)
 
     def close(self):
         """Close the hardware device."""
@@ -234,6 +235,7 @@ class HiSPARCIII(HiSPARCII):
 
         # open device's second interface (DAQ)
         self._device = FtdiChip(self.description, interface_select=2)
+        logger.info("Opened %s" % self.description)
 
     def _burn_firmware(self):
         """Burn the firmware to the device's FPGA.
