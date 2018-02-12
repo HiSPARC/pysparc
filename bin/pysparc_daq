@@ -56,6 +56,9 @@ class DataAcquisition(object):
         except DeviceNotFoundError:
             self.master = HiSPARCII()
 
+        # Give hardware 20 seconds to start up
+        self.t_last_msg = time.time() + 20
+
     def initialize_hardware(self):
         logging.info("Reading config from file")
         self.config.read(ALL_CONFIG_FILES)
@@ -216,6 +219,9 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         except DeviceNotFoundError:
             self.slave = HiSPARCII(slave=True)
         super(MasterSlaveDataAcquisition, self).open_hisparc_hardware()
+
+        # Give hardware 20 seconds to start up
+        self.t_last_slave_msg = time.time() + 20
 
     def configure_devices(self):
         """Read configuration into device"""
