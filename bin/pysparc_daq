@@ -2,7 +2,6 @@
 
 """HiSPARC data acquisition in Python (PySPARC)"""
 
-import datetime
 import logging
 import os
 import time
@@ -20,6 +19,7 @@ from pysparc import messages, storage, monitor
 
 SYSTEM_CONFIGFILE = pkg_resources.resource_filename('pysparc', 'config.ini')
 CONFIGFILE = os.path.expanduser('~/.pysparc')
+DATAFILE = os.path.expanduser('~/hisparc.h5')
 ALL_CONFIG_FILES = [SYSTEM_CONFIGFILE, CONFIGFILE]
 
 
@@ -44,10 +44,14 @@ class DataAcquisition(object):
         station_password = self.config.get('DAQ', 'station_password')
 
         self.master_stew = Stew()
+
+        self.storage_manager = storage.StorageManager()
         self.datastore = storage.NikhefDataStore(station_number,
                                                  station_password)
-        self.storage_manager = storage.StorageManager()
         self.storage_manager.add_datastore(self.datastore, 'queue_nikhef')
+        self.filestore = storage.TablesDataStore(DATAFILE)
+        self.storage_manager.add_datastore(self.filestore, 'queue_file')
+
         self.monitor = monitor.Monitor(station_name)
 
     def open_hisparc_hardware(self):

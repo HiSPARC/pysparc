@@ -348,26 +348,35 @@ class TablesDataStore(BaseDataStore):
         :param table: the name of the event table.
 
         """
-        events = self.data.get_node(self.group, table)
-        row = events.row
-        row['event_id'] = len(events)
-        row['timestamp'] = event.timestamp
-        row['nanoseconds'] = event.nanoseconds
-        row['ext_timestamp'] = event.ext_timestamp
-        row['data_reduction'] = event.data_reduction
-        row['trigger_pattern'] = event.trigger_pattern
-        row['baseline'] = event.baselines
-        row['std_dev'] = event.std_dev
-        row['n_peaks'] = event.n_peaks
-        row['pulseheights'] = event.pulseheights
-        row['integrals'] = event.integrals
-        row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        self.blobs.append(event.zlib_trace_ch1)
-        self.blobs.append(event.zlib_trace_ch2)
-        row['event_rate'] = event.event_rate
+        if isinstance(event, pysparc.events.Event):
+            events = self.data.get_node(self.group, table)
+            row = events.row
+            row['event_id'] = len(events)
+            row['timestamp'] = event.timestamp
+            row['nanoseconds'] = event.nanoseconds
+            row['ext_timestamp'] = event.ext_timestamp
+            row['data_reduction'] = event.data_reduction
+            row['trigger_pattern'] = event.trigger_pattern
+            row['baseline'] = event.baselines
+            row['std_dev'] = event.std_dev
+            row['n_peaks'] = event.n_peaks
+            row['pulseheights'] = event.pulseheights
+            row['integrals'] = event.integrals
+            row['event_rate'] = event.event_rate
 
-        row.append()
-        events.flush()
+            trace_idxs = []
+            for channel in range(1, 5):
+                try:
+                    trace = getattr(event, 'zlib_trace_ch%d' % channel)
+                except AttributeError:
+                    trace_idxs.append(-1)
+                else:
+                    trace_idxs.append(len(self.blobs))
+                    self.blobs.append(trace)
+            row['traces'] = trace_idxs
+
+            row.append()
+            events.flush()
 
     def _get_new_sequential_group(self):
         """Create a new group name, sequentially numbered.
