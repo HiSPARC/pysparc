@@ -34,6 +34,8 @@ class DataAcquisition(object):
 
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
+        logging.info("Reading config from file")
+        self.config.read(ALL_CONFIG_FILES)
 
         self.open_hisparc_hardware()
         self.gps = TrimbleGPS()
@@ -49,8 +51,12 @@ class DataAcquisition(object):
         self.datastore = storage.NikhefDataStore(station_number,
                                                  station_password)
         self.storage_manager.add_datastore(self.datastore, 'queue_nikhef')
-        self.filestore = storage.TablesDataStore(DATAFILE)
-        self.storage_manager.add_datastore(self.filestore, 'queue_file')
+
+        store_data_in_file = self.config.getboolean('DAQ',
+                                                    'store_data_in_file')
+        if store_data_in_file:
+            self.filestore = storage.TablesDataStore(DATAFILE)
+            self.storage_manager.add_datastore(self.filestore, 'queue_file')
 
         self.monitor = monitor.Monitor(station_name)
 
@@ -64,9 +70,6 @@ class DataAcquisition(object):
         self.t_last_msg = time.time() + 20
 
     def initialize_hardware(self):
-        logging.info("Reading config from file")
-        self.config.read(ALL_CONFIG_FILES)
-
         logging.info("Initializing device configuration")
         self.configure_devices()
 
