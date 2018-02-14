@@ -132,7 +132,9 @@ class DataAcquisition(object):
             stew.add_event_message(msg)
         elif isinstance(msg, messages.OneSecondMessage):
             stew.add_one_second_message(msg)
-            logging.debug("One-second received: %d", msg.timestamp)
+            logging.debug("One-second received: %d (%d %d %d %d)",
+                          msg.timestamp, msg.count_ch1_low, msg.count_ch1_high,
+                          msg.count_ch2_low, msg.count_ch2_high)
         elif isinstance(msg, messages.ControlParameterList):
             # No need to process this message. This is already done in the
             # hardware class
