@@ -208,11 +208,10 @@ class OneSecondMessage(HisparcMessage):
         del buff[:msg_length]
 
     def __str__(self):
-        return 'One second message: %s %d %d %d %d' % (self.datetime,
-                                                       self.count_ch1_low,
-                                                       self.count_ch1_high,
-                                                       self.count_ch2_low,
-                                                       self.count_ch2_high)
+        return 'One second message: %s %d %f %d %d %d %d' % (
+            self.datetime, self.count_ticks_PPS & ((1 << 31) - 1),
+            self.quantization_error, self.count_ch1_low, self.count_ch1_high,
+            self.count_ch2_low, self.count_ch2_high)
 
 
 class MeasuredDataMessage(HisparcMessage):
@@ -267,7 +266,8 @@ class MeasuredDataMessage(HisparcMessage):
         bl2 = self.trace_ch2[:100].mean()
         ph2 = self.trace_ch2.max() - bl2
 
-        return 'Event message: %s %d %d' % (self.datetime, ph1, ph2)
+        return 'Event message: %s %d pulseheights ch1: %d ch2: %d' % (
+            self.datetime, self.nanoseconds, ph1, ph2)
 
     @lazy
     def trace_ch1(self):

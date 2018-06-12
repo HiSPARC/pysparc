@@ -328,7 +328,7 @@ class TablesDataStore(BaseDataStore):
             numbered.
 
         """
-        self.data = tables.openFile(path, 'a')
+        self.data = tables.open_file(path, 'a')
         if not group:
             group = self._get_new_sequential_group()
         self._create_group_and_tables(group)
@@ -341,31 +341,42 @@ class TablesDataStore(BaseDataStore):
 
         self.data.close()
 
-    def store_event(self, event):
+    def store_event(self, event, table='events'):
         """Store an event in the datastore.
 
         :param event: a HiSPARC event.
+        :param table: the name of the event table.
 
         """
-        row = self.events.row
-        row['event_id'] = len(self.events)
-        row['timestamp'] = event.timestamp
-        row['nanoseconds'] = event.nanoseconds
-        row['ext_timestamp'] = event.ext_timestamp
-        row['data_reduction'] = event.data_reduction
-        row['trigger_pattern'] = event.trigger_pattern
-        row['baseline'] = event.baselines
-        row['std_dev'] = event.std_dev
-        row['n_peaks'] = event.n_peaks
-        row['pulseheights'] = event.pulseheights
-        row['integrals'] = event.integrals
-        row['traces'] = [len(self.blobs), len(self.blobs) + 1, -1, -1]
-        self.blobs.append(event.zlib_trace_ch1)
-        self.blobs.append(event.zlib_trace_ch2)
-        row['event_rate'] = event.event_rate
+        if isinstance(event, pysparc.events.Event):
+            events = self.data.get_node(self.group, table)
+            row = events.row
+            row['event_id'] = len(events)
+            row['timestamp'] = event.timestamp
+            row['nanoseconds'] = event.nanoseconds
+            row['ext_timestamp'] = event.ext_timestamp
+            row['data_reduction'] = event.data_reduction
+            row['trigger_pattern'] = event.trigger_pattern
+            row['baseline'] = event.baselines
+            row['std_dev'] = event.std_dev
+            row['n_peaks'] = event.n_peaks
+            row['pulseheights'] = event.pulseheights
+            row['integrals'] = event.integrals
+            row['event_rate'] = event.event_rate
 
-        row.append()
-        self.events.flush()
+            trace_idxs = []
+            for channel in range(1, 5):
+                try:
+                    trace = getattr(event, 'zlib_trace_ch%d' % channel)
+                except AttributeError:
+                    trace_idxs.append(-1)
+                else:
+                    trace_idxs.append(len(self.blobs))
+                    self.blobs.append(trace)
+            row['traces'] = trace_idxs
+
+            row.append()
+            events.flush()
 
     def _get_new_sequential_group(self):
         """Create a new group name, sequentially numbered.
@@ -394,9 +405,9 @@ class TablesDataStore(BaseDataStore):
         :param group: name of the group in which to create the tables.
 
         """
-        self.group = self.data.createGroup('/', group)
-        self.data.createTable(self.group, 'events', HisparcEvent)
-        self.data.createVLArray(self.group, 'blobs', tables.VLStringAtom())
+        self.group = self.data.create_group('/', group)
+        self.data.create_table(self.group, 'events', HisparcEvent)
+        self.data.create_vlarray(self.group, 'blobs', tables.VLStringAtom())
 
 
 class NikhefDataStore(object):
@@ -427,7 +438,8 @@ class NikhefDataStore(object):
         accordingly.
 
         """
-        if type(event) == pysparc.events.Event:
+        if type(event) in (pysparc.events.Event,
+                           pysparc.events.FourChannelEvent):
             data = self._create_event_container(event)
         elif type(event) == pysparc.events.ConfigEvent:
             data = self._create_config_container(event)
@@ -451,17 +463,23 @@ class NikhefDataStore(object):
         datalist = []
         self._add_value_to_datalist(datalist, 'RED', event.data_reduction)
         self._add_value_to_datalist(datalist, 'EVENTRATE', event.event_rate)
-        self._add_value_to_datalist(datalist, 'TRIGPATTERN', event.trigger_pattern)
+        self._add_value_to_datalist(datalist, 'TRIGPATTERN',
+                                    event.trigger_pattern)
         self._add_values_to_datalist(datalist, 'BL', event.baselines)
         self._add_values_to_datalist(datalist, 'STDDEV', event.std_dev)
         self._add_values_to_datalist(datalist, 'NP', event.n_peaks)
         self._add_values_to_datalist(datalist, 'PH', event.pulseheights)
         self._add_values_to_datalist(datalist, 'IN', event.integrals)
 
-        # FIXME: no slave support
         trace_ch1 = base64.b64encode(event.zlib_trace_ch1)
         trace_ch2 = base64.b64encode(event.zlib_trace_ch2)
-        self._add_values_to_datalist(datalist, 'TR', [trace_ch1, trace_ch2])
+        if type(event) == pysparc.events.FourChannelEvent:
+            trace_ch3 = base64.b64encode(event.zlib_trace_ch3)
+            trace_ch4 = base64.b64encode(event.zlib_trace_ch4)
+            traces = [trace_ch1, trace_ch2, trace_ch3, trace_ch4]
+        else:
+            traces = [trace_ch1, trace_ch2]
+        self._add_values_to_datalist(datalist, 'TR', traces)
 
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list
@@ -560,6 +578,55 @@ class NikhefDataStore(object):
                                     config.mas_common_offset)
         self._add_value_to_datalist(datalist, 'CFG_MAS_INTVOLTAGE',
                                     config.mas_internal_voltage)
+
+        try:
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1THRLOW',
+                                        config.slv_ch1_thres_low)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1THRHIGH',
+                                        config.slv_ch1_thres_high)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2THRLOW',
+                                        config.slv_ch2_thres_low)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2THRHIGH',
+                                        config.slv_ch2_thres_high)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1INTTIME',
+                                        config.slv_ch1_inttime)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2INTTIME',
+                                        config.slv_ch2_inttime)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1VOLT',
+                                        config.slv_ch1_voltage)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2VOLT',
+                                        config.slv_ch2_voltage)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1CURR',
+                                        config.slv_ch1_current)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2CURR',
+                                        config.slv_ch2_current)
+
+            # 'CFG_SLV_COMPTHRLOW': 'slv_comp_thres_low',
+            # 'CFG_SLV_COMPTHRHIGH': 'slv_comp_thres_high',
+
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1GAINPOS',
+                                        config.slv_ch1_gain_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1GAINNEG',
+                                        config.slv_ch1_gain_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2GAINPOS',
+                                        config.slv_ch2_gain_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2GAINNEG',
+                                        config.slv_ch2_gain_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1OFFPOS',
+                                        config.slv_ch1_offset_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH1OFFNEG',
+                                        config.slv_ch1_offset_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2OFFPOS',
+                                        config.slv_ch2_offset_pos)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_CH2OFFNEG',
+                                        config.slv_ch2_offset_neg)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_COMMOFF',
+                                        config.slv_common_offset)
+            self._add_value_to_datalist(datalist, 'CFG_SLV_INTVOLTAGE',
+                                        config.slv_internal_voltage)
+        except AttributeError:
+            # slave device not present
+            pass
 
         event_list = [{'header': header, 'datalist': datalist}]
         return event_list

@@ -216,6 +216,8 @@ class Config(Atom):
         self.ch1_current = msg.ch1_current * (25. / 0xff)
         self.ch2_current = msg.ch2_current * (25. / 0xff)
 
+        logger.info('Updated config from hardware message')
+
     def write_config(self, config):
         """Write config settings to existing config object.
 
