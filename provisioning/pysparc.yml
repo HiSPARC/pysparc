@@ -23,6 +23,7 @@
 
 - name: Configure supervisor to start PySPARC
   copy: src=supervisord-pysparc.conf dest=/etc/supervisor/conf.d/pysparc.conf
+  when: "'pysparc' in group_names"
   become: yes
   notify: restart supervisor
   tags: pysparc
