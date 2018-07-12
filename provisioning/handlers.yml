@@ -16,7 +16,7 @@
 # close connections. So wait a few seconds.
 - name: reboot
   shell: sleep 5 && shutdown -r now "Ansible triggered a reboot"
-  async: 1
+  async: 10
   poll: 0
   ignore_errors: true
   notify: wait for server to come back
