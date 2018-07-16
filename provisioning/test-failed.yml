@@ -8,7 +8,7 @@
 
     - name: Second command
       command: /bin/echo yes
-      when: result|failed
+      when: result is failed
 
     - name: First command
       command: /bin/false
@@ -17,4 +17,4 @@
 
     - name: Second command
       command: /bin/echo yes
-      when: result|failed
+      when: result is failed

@@ -18,7 +18,7 @@
 - name: install pysparc package
   command: /usr/bin/python setup.py develop chdir=/opt/pysparc
   become: yes
-  when: result|changed
+  when: result is changed
   tags: pysparc
 
 - name: Configure supervisor to start PySPARC

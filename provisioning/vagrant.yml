@@ -9,7 +9,7 @@
   register: result
 
 - name: Reset ssh connection to allow user changes to affect current user
-  when: result|changed
+  when: result is changed
   shell: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
   async: 3
   poll: 1

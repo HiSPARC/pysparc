@@ -10,7 +10,7 @@
 
 - name: Configure timezone
   command: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
-  when: result|changed
+  when: result is changed
   become: yes
 
 - name: Enable en_US.UTF8 locale
@@ -21,7 +21,7 @@
 
 - name: Configure locales
   command: /usr/sbin/dpkg-reconfigure -f noninteractive locales
-  when: result|changed
+  when: result is changed
   become: yes
 
 - name: Create ~hisparc/.ssh directory
