@@ -30,12 +30,17 @@ def test_response_times():
     response_times = []
     for _ in range(10):
         t0 = time.time()
-        response = requests.post("http://localhost:5000", data={'foo': 'bar'})
+        fire_and_forget_post("http://localhost:5000", data={'foo': 'bar'})
         t1 = time.time()
         response_times.append(t1 - t0)
 
     print "Response times (mean, max): %.2f, %.2f" % (
         mean(response_times), max(response_times))
+
+
+def fire_and_forget_post(url, data):
+    thread = threading.Thread(target=requests.post, args=(url,), kwargs={'data': data})
+    thread.start()
 
 
 if __name__ == '__main__':
@@ -46,4 +51,10 @@ if __name__ == '__main__':
     # give server some time to start up
     time.sleep(.2)
 
+    print "Number of threads:", len(threading.enumerate())
+
     test_response_times()
+
+    print "Number of threads:", len(threading.enumerate())
+    time.sleep(1)
+    print "Number of threads:", len(threading.enumerate())
