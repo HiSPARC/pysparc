@@ -43,4 +43,7 @@ if __name__ == '__main__':
     thread.daemon = True
     thread.start()
 
+    # give server some time to start up
+    time.sleep(.2)
+
     test_response_times()
