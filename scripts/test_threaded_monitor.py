@@ -1,13 +1,20 @@
-import threading
+from __future__ import division
 
-from flask import Flask
-app = Flask(__name__)
+import threading
+import time
+
+from flask import Flask, request
 
 import requests
 
 
-@app.route('/')
+app = Flask(__name__)
+
+
+@app.route('/', methods=["POST"])
 def hello_world():
+    assert request.form['foo'] == 'bar'
+    time.sleep(.2)
     return 'Hello, World!'
 
 
@@ -15,10 +22,25 @@ def run_flask_server():
     app.run()
 
 
+def mean(values):
+    return sum(values) / len(values)
+
+
+def test_response_times():
+    response_times = []
+    for _ in range(10):
+        t0 = time.time()
+        response = requests.post("http://localhost:5000", data={'foo': 'bar'})
+        t1 = time.time()
+        response_times.append(t1 - t0)
+
+    print "Response times (mean, max): %.2f, %.2f" % (
+        mean(response_times), max(response_times))
+
+
 if __name__ == '__main__':
     thread = threading.Thread(target=run_flask_server)
     thread.daemon = True
     thread.start()
 
-    response = requests.get("http://localhost:5000")
-    print response.text
+    test_response_times()
