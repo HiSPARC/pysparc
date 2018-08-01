@@ -11,6 +11,7 @@ Contents
 import logging
 import subprocess
 import re
+import threading
 
 import requests
 from requests.exceptions import ConnectionError, Timeout
@@ -103,6 +104,25 @@ class Monitor(object):
     def _send_status_for_service(self, service, status, msg=''):
         """Send status to monitor server.
 
+        Spin up a thread to send monitor data.
+
+        :param service: name of the service
+        :param status: numerical status code
+        :param msg: optional informational message
+
+        The status code can be 0 (OK), 1 (WARNING), 2 (CRITICAL) or 3
+        (UNKNOWN).
+
+        """
+        thread = threading.Thread(target=self._do_send_status_for_service,
+                                  args=(self.host, service, status, msg))
+        thread.start()
+
+    @staticmethod
+    def _do_send_status_for_service(host, service, status, msg=''):
+        """Send status to monitor server.
+
+        :param host: name of the host
         :param service: name of the service
         :param status: numerical status code
         :param msg: optional informational message
@@ -113,7 +133,7 @@ class Monitor(object):
         """
         # the parameters, especially the values 2 and 30, were determined by
         # reverse-engineering the communication protocol
-        payload = {'cmd_mod': '2',  'cmd_typ': '30',  'host': self.host,
+        payload = {'cmd_mod': '2',  'cmd_typ': '30',  'host': host,
                    'plugin_output': msg,  'plugin_state': status,
                    'service': service}
 
