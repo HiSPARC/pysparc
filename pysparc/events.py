@@ -306,13 +306,19 @@ class Event(object):
                              self.trace_ch2.max() - self.baselines[1],
                              -1, -1]
 
-        # Integral of trace for all values over threshold
-        # The threshold is defined by INTEGRAL_THRESHOLD
+        self.integrals = self._calculate_integral_of_traces() + [-1, -1]
+
+    def _calculate_integral_of_traces(self):
+        """Calculate integral of trace for all values over threshold.
+
+        The threshold is defined by INTEGRAL_THRESHOLD.
+
+        """
         traces = np.vstack([self.trace_ch1, self.trace_ch2])
         baselines = np.array([self.baselines[:2]])
         traces -= baselines.T
         integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
-        self.integrals = integrals + [-1, -1]
+        return integrals
 
 
 class FourChannelEvent(Event):
