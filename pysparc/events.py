@@ -25,6 +25,8 @@ CTP_BITS = (1 << 31) - 1
 NANOSECONDS_PER_SECOND = int(1e9)
 
 INTEGRAL_THRESHOLD = 25
+# default threshold for signals (approx. 70 mV above baseline)
+PEAK_THRESHOLD = 123
 
 
 class MissingOneSecondMessage(Exception):
@@ -280,9 +282,6 @@ class Event(object):
         self.trigger_pattern = msg.trigger_pattern
         self.event_rate = event_rate
 
-        # Not yet implemented
-        self.n_peaks = 4 * [-999]
-
         ## Formerly lazy attributes
 
         # Traces
@@ -308,6 +307,8 @@ class Event(object):
 
         self.integrals = self._calculate_integral_of_traces() + [-1, -1]
 
+        self.n_peaks = self._calculate_n_peaks() + [-1, -1]
+
     def _calculate_integral_of_traces(self):
         """Calculate integral of trace for all values over threshold.
 
@@ -319,6 +320,36 @@ class Event(object):
         traces -= baselines.T
         integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
         return integrals
+
+    def _calculate_n_peaks(self):
+        """Calculate number of peaks in traces."""
+
+        peak_threshold = PEAK_THRESHOLD
+
+        n_peaks = []
+        for trace in [self.trace_ch1, self.trace_ch2]:
+            n_peak = 0
+            in_peak = False
+            local_minimum = 0
+            for value in trace:
+                if not in_peak:
+                    if value < local_minimum:
+                        local_minimum = value if value > 0 else 0
+                    elif value - local_minimum > peak_threshold:
+                        # enough signal over local minimum to be in a peak
+                        in_peak = True
+                        local_maximum = value
+                        n_peak += 1
+                else:
+                    if value > local_maximum:
+                        local_maximum = value
+                    elif local_maximum - value > peak_threshold:
+                        # enough signal decrease to be out of peak
+                        in_peak = False
+                        local_minimum = value if value > 0 else 0
+            n_peaks.append(n_peak)
+
+        return n_peaks
 
 
 class FourChannelEvent(Event):
