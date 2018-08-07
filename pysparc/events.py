@@ -324,13 +324,13 @@ class Event(object):
     def _calculate_n_peaks(self):
         """Calculate number of peaks in traces."""
 
-        peak_threshold = PEAK_THRESHOLD
-
         n_peaks = []
-        for trace in [self.trace_ch1, self.trace_ch2]:
+        for trace, baseline in zip([self.trace_ch1, self.trace_ch2],
+                                   self.baselines):
             n_peak = 0
             in_peak = False
             local_minimum = 0
+            peak_threshold = PEAK_THRESHOLD + baseline
             for value in trace:
                 if not in_peak:
                     if value < local_minimum:
