@@ -25,8 +25,8 @@ CTP_BITS = (1 << 31) - 1
 NANOSECONDS_PER_SECOND = int(1e9)
 
 INTEGRAL_THRESHOLD = 25
-# default threshold for signals (approx. 70 mV above baseline)
-PEAK_THRESHOLD = 123
+# default low threshold for signals (approx. 30 mV above baseline)
+PEAK_THRESHOLD = 50
 
 
 class MissingOneSecondMessage(Exception):
