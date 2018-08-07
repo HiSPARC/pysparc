@@ -308,7 +308,6 @@ class Event(object):
         self.integrals = self._calculate_integral_of_traces() + [-1, -1]
 
         self.n_peaks = self._calculate_n_peaks() + [-1, -1]
-        logger.debug("Number of peaks: %s" % self.n_peaks)
 
     def _calculate_integral_of_traces(self):
         """Calculate integral of trace for all values over threshold.
@@ -364,9 +363,6 @@ class FourChannelEvent(Event):
         self.trigger_pattern = master_event.trigger_pattern
         self.event_rate = master_event.event_rate
 
-        # Not yet implemented
-        self.n_peaks = 4 * [-999]
-
         # Traces
         self.trace_ch1 = master_event.trace_ch1
         self.trace_ch2 = master_event.trace_ch2
@@ -385,6 +381,10 @@ class FourChannelEvent(Event):
         self.pulseheights = master_event.pulseheights[:2] + \
             slave_event.pulseheights[:2]
         self.integrals = master_event.integrals[:2] + slave_event.integrals[:2]
+        self.n_peaks = master_event.n_peaks[:2] + slave_event.n_peaks[:2]
+
+        logger.debug("pulseheights: %s" % self.pulseheights)
+        logger.debug("Number of peaks: %s" % self.n_peaks)
 
 
 class ConfigEvent(object):
