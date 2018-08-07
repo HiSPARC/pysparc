@@ -308,6 +308,7 @@ class Event(object):
         self.integrals = self._calculate_integral_of_traces() + [-1, -1]
 
         self.n_peaks = self._calculate_n_peaks() + [-1, -1]
+        logger.debug("Number of peaks: %s" % self.n_peaks)
 
     def _calculate_integral_of_traces(self):
         """Calculate integral of trace for all values over threshold.
