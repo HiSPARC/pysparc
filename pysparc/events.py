@@ -7,7 +7,6 @@ import time
 import zlib
 
 import numpy as np
-from lazy import lazy
 
 
 logger = logging.getLogger(__name__)
@@ -144,7 +143,8 @@ class Stew(object):
         # This may be larger than one second due to synchronization error!
         trigger_offset = int(synchronization_error + quantization_error1
                              + (CTD / CTP)
-                             * (1e9 - quantization_error1 + quantization_error2))
+                             * (1e9 - quantization_error1 +
+                                quantization_error2))
         ext_timestamp = msg.timestamp * NANOSECONDS_PER_SECOND + trigger_offset
 
         # Synchronize with LabVIEW DAQ. There is a one-second difference
@@ -216,7 +216,8 @@ class Stew(object):
         for key, msg in self._event_messages.items():
             timestamp = msg.timestamp
             if self._latest_timestamp - timestamp > FRESHNESS_TIME:
-                logger.warning("Perished; draining event message: %d", timestamp)
+                logger.warning("Perished; draining event message: %d",
+                               timestamp)
                 del self._event_messages[key]
 
         for timestamp in self._event_rates.keys():
