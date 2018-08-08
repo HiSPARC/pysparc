@@ -25,6 +25,8 @@ CTP_BITS = (1 << 31) - 1
 NANOSECONDS_PER_SECOND = int(1e9)
 
 INTEGRAL_THRESHOLD = 25
+# default low threshold for signals (approx. 30 mV above baseline)
+PEAK_THRESHOLD = 50
 
 
 class MissingOneSecondMessage(Exception):
@@ -280,9 +282,6 @@ class Event(object):
         self.trigger_pattern = msg.trigger_pattern
         self.event_rate = event_rate
 
-        # Not yet implemented
-        self.n_peaks = 4 * [-999]
-
         ## Formerly lazy attributes
 
         # Traces
@@ -306,13 +305,51 @@ class Event(object):
                              self.trace_ch2.max() - self.baselines[1],
                              -1, -1]
 
-        # Integral of trace for all values over threshold
-        # The threshold is defined by INTEGRAL_THRESHOLD
+        self.integrals = self._calculate_integral_of_traces() + [-1, -1]
+
+        self.n_peaks = self._calculate_n_peaks() + [-1, -1]
+
+    def _calculate_integral_of_traces(self):
+        """Calculate integral of trace for all values over threshold.
+
+        The threshold is defined by INTEGRAL_THRESHOLD.
+
+        """
         traces = np.vstack([self.trace_ch1, self.trace_ch2])
         baselines = np.array([self.baselines[:2]])
         traces -= baselines.T
         integrals = [t.compress(t > INTEGRAL_THRESHOLD).sum() for t in traces]
-        self.integrals = integrals + [-1, -1]
+        return integrals
+
+    def _calculate_n_peaks(self):
+        """Calculate number of peaks in traces."""
+
+        n_peaks = []
+        for trace, baseline in zip([self.trace_ch1, self.trace_ch2],
+                                   self.baselines):
+            n_peak = 0
+            in_peak = False
+            local_minimum = 0
+            peak_threshold = PEAK_THRESHOLD + baseline
+            for value in trace:
+                if not in_peak:
+                    if value < local_minimum:
+                        local_minimum = value if value > 0 else 0
+                    elif value - local_minimum > peak_threshold:
+                        # enough signal over local minimum to be in a peak
+                        in_peak = True
+                        local_maximum = value
+                        n_peak += 1
+                else:
+                    if value > local_maximum:
+                        local_maximum = value
+                    elif local_maximum - value > peak_threshold:
+                        # enough signal decrease to be out of peak
+                        in_peak = False
+                        local_minimum = value if value > 0 else 0
+            n_peaks.append(n_peak)
+
+        return n_peaks
 
 
 class FourChannelEvent(Event):
@@ -325,9 +362,6 @@ class FourChannelEvent(Event):
         self.data_reduction = False
         self.trigger_pattern = master_event.trigger_pattern
         self.event_rate = master_event.event_rate
-
-        # Not yet implemented
-        self.n_peaks = 4 * [-999]
 
         # Traces
         self.trace_ch1 = master_event.trace_ch1
@@ -347,6 +381,7 @@ class FourChannelEvent(Event):
         self.pulseheights = master_event.pulseheights[:2] + \
             slave_event.pulseheights[:2]
         self.integrals = master_event.integrals[:2] + slave_event.integrals[:2]
+        self.n_peaks = master_event.n_peaks[:2] + slave_event.n_peaks[:2]
 
 
 class ConfigEvent(object):
