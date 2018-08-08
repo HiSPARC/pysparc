@@ -383,9 +383,6 @@ class FourChannelEvent(Event):
         self.integrals = master_event.integrals[:2] + slave_event.integrals[:2]
         self.n_peaks = master_event.n_peaks[:2] + slave_event.n_peaks[:2]
 
-        logger.debug("pulseheights: %s" % self.pulseheights)
-        logger.debug("Number of peaks: %s" % self.n_peaks)
-
 
 class ConfigEvent(object):
 
