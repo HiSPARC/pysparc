@@ -282,22 +282,24 @@ class Event(object):
         self.trigger_pattern = msg.trigger_pattern
         self.event_rate = event_rate
 
-        ## Formerly lazy attributes
-
         # Traces
         self.trace_ch1 = self._msg.trace_ch1
         self.trace_ch2 = self._msg.trace_ch2
 
         # Compressed traces
-        self.zlib_trace_ch1 = zlib.compress(','.join([str(int(u)) for u in self.trace_ch1]))
-        self.zlib_trace_ch2 = zlib.compress(','.join([str(int(u)) for u in self.trace_ch2]))
+        self.zlib_trace_ch1 = zlib.compress(','.join([str(int(u)) for u in
+                                                      self.trace_ch1]))
+        self.zlib_trace_ch2 = zlib.compress(','.join([str(int(u)) for u in
+                                                      self.trace_ch2]))
 
         # Mean value of the first 100 samples of the trace
-        baselines = [int(round(t[:100].mean())) for t in self.trace_ch1, self.trace_ch2]
+        baselines = [int(round(t[:100].mean())) for t in (self.trace_ch1,
+                                                          self.trace_ch2)]
         self.baselines = baselines + [-1, -1]
 
         # Standard deviation of the first 100 samples of the trace
-        std_dev = [int(round(1000 * t[:100].std())) for t in self.trace_ch1, self.trace_ch2]
+        std_dev = [int(round(1000 * t[:100].std())) for t in (self.trace_ch1,
+                                                              self.trace_ch2)]
         self.std_dev = std_dev + [-1, -1]
 
         # Maximum peak to baseline value in trace
