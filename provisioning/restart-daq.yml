@@ -1,0 +1,9 @@
+---
+- hosts: pysparc
+  tasks:
+    - name: restart redis-server
+      service: name=redis-server state=restarted
+      become: yes
+
+    - name: restart pysparc
+      supervisorctl: name=pysparc state=restarted
