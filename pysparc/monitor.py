@@ -12,6 +12,7 @@ import logging
 import subprocess
 import re
 import threading
+import json
 
 import requests
 from requests.exceptions import ConnectionError, Timeout
@@ -20,13 +21,15 @@ from requests.exceptions import ConnectionError, Timeout
 logger = logging.getLogger(__name__)
 
 
-MONITOR_URL = 'http://vpn.hisparc.nl/cgi-bin/cmd.cgi'
-# FIXME: the following is not DRY
-STATUS_MSG = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOWN'}
+NRDP_TOKEN = 'nrdp4hisp'  # not a secret: used inside VPN
+NRDP_URL = 'http://194.171.82.1/nrdp'
+
 OK = 0
 WARNING = 1
 CRITICAL = 2
 UNKNOWN = 3
+STATUS_MSG = {OK: 'OK', WARNING: 'WARNING', CRITICAL: 'CRITICAL',
+              UNKNOWN: 'UNKNOWN'}
 
 CPU_THRESHOLD = 2.0
 
@@ -131,17 +134,34 @@ class Monitor(object):
         (UNKNOWN).
 
         """
-        # the parameters, especially the values 2 and 30, were determined by
-        # reverse-engineering the communication protocol
-        payload = {'cmd_mod': '2',  'cmd_typ': '30',  'host': host,
-                   'plugin_output': msg,  'plugin_state': status,
-                   'service': service}
+
+        nrdp_json = {
+            "checkresults": [
+                {
+                    "checkresult": {
+                        "type": "service",
+                        "checktype": "passive"
+                    },
+                    "hostname": host,
+                    "servicename": service,
+                    "state": status,
+                    "output": msg
+                }
+            ]
+        }
+
+        params = {
+           'token': NRDP_TOKEN,
+           'cmd': 'submitcheck',
+           'JSONDATA': json.dumps(nrdp_json),
+        }
+
+        headers = {
+            'Content-Type': 'application/json'
+        }
 
         try:
-            # Request form for submitting service status
-            requests.get(MONITOR_URL, params=payload, timeout=1)
-            # Submit the service status
-            requests.post(MONITOR_URL, data=payload, timeout=1)
+            requests.post(NRDP_URL, params=params, headers=headers, timeout=1)
         except (ConnectionError, Timeout) as exc:
             logger.warning("Unable to upload status for service %s (%s)",
                            service, exc)
