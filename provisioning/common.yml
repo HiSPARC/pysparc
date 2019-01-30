@@ -28,11 +28,13 @@
   file: path=/home/hisparc/.ssh state=directory owner=hisparc
         group=hisparc
   become: yes
+  tags: ssh_keys
 
 - name: Copy SSH public keys (~hisparc)
   copy: src=authorized_keys dest=/home/hisparc/.ssh/authorized_keys
         owner=hisparc group=hisparc
   become: yes
+  tags: ssh_keys
 
 - name: Make sure hisparc user is in adm and plugdev groups
   user: name=hisparc groups=adm,sudo,plugdev append=yes
