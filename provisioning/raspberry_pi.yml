@@ -21,6 +21,7 @@
 
 - name: Copy SSH public keys (~pi)
   copy: src=authorized_keys dest=/home/pi/.ssh/authorized_keys
+  tags: ssh_keys
 
 - name: Copy OpenVPN config
   copy: src=hisparcvpn.conf dest=/etc/openvpn/hisparcvpn.conf
