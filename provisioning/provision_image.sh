@@ -5,13 +5,17 @@ USER_UID=1000
 USER_GID=1000
 MOUNT_POINT=/mnt
 IMG=/vagrant/pysparc.img
+LOCAL_IMG=/tmp/pysparc.img
 HOME_DIR=$MOUNT_POINT/home/$USER_NAME
 OPENVPN_DIR=$MOUNT_POINT/etc/openvpn
+
+# Make local copy of image since newer vboxsf can't hold a loopback device file
+cp $IMG $LOCAL_IMG
 
 # Setup loopback interface for the image file
 sudo modprobe -r loop
 sudo modprobe loop max_part=63
-sudo losetup /dev/loop0 $IMG
+sudo losetup /dev/loop0 $LOCAL_IMG
 
 # If successful, mount the boot disk
 if [ -b /dev/loop0p1 ]
@@ -62,3 +66,6 @@ sudo cp --preserve=mode /vagrant/provisioning/firstboot.sh $MOUNT_POINT/etc/rc.l
 # Unmount the disk
 sudo umount $MOUNT_POINT
 sudo losetup -d /dev/loop0
+
+# Move local image back to shared folder
+mv $LOCAL_IMG $IMG
