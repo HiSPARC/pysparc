@@ -1,17 +1,18 @@
 ---
 - name: Install PySPARC prerequisites (system packages)
-  apt: name={{ item }} state=present
+  apt:
+    name:
+      - python-dev
+      - python-setuptools
+      - python-pip
+      - python-tables
+      - python-flask
+      - python-schedule
+      - redis-server
+      - libftdi1-dev
+      - hdf5-tools
+    state: present
   become: yes
-  with_items:
-    - python-dev
-    - python-setuptools
-    - python-pip
-    - python-tables
-    - python-flask
-    - python-schedule
-    - redis-server
-    - libftdi1-dev
-    - hdf5-tools
 
 - name: Make sure conflicting system packages are absent
   apt:
@@ -20,19 +21,20 @@
   become: yes
 
 - name: Install PySPARC prerequisites (python packages)
-  pip: name={{ item }} state=present
+  pip:
+    name:
+      - pbr
+      - mock
+      - pylibftdi
+      - atom
+      - lazy
+      - requests>=2.18.4
+      - redis>=2.10.3
+      - pip>=6.0
+      # try newer versions of setuptools to decrease startup time
+      - setuptools>33.1.1
+    state: present
   become: yes
-  with_items:
-    - pbr
-    - mock
-    - pylibftdi
-    - atom
-    - lazy
-    - requests>=2.18.4
-    - redis>=2.10.3
-    - pip>=6.0
-    # try newer versions of setuptools to decrease startup time
-    - setuptools>33.1.1
 
 # DF: Ok, so here I was following the Redis FAQ to be able to overcommit
 # memory. I was going to look at the reason for the large DB next, but
