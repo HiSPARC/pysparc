@@ -1,6 +1,7 @@
 - name: Update package index
   apt: update_cache=yes
   become: yes
+  tags: upgrade
 
 - name: Install reboot-notifier
   apt:
