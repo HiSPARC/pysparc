@@ -1,4 +1,10 @@
 ---
+- name: restart cron daemon
+  service:
+    name: cron
+    state: restarted
+  become: yes
+
 - name: restart openvpn
   service: name=openvpn state=restarted
   become: yes

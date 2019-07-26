@@ -3,14 +3,9 @@
 - import_tasks: apt-upgrade.yml
 
 - name: Set timezone to Europe/Amsterdam
-  lineinfile: dest=/etc/timezone state=present
-              line=Europe/Amsterdam regexp=.*/.*
-  register: result
-  become: yes
-
-- name: Configure timezone
-  command: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
-  when: result is changed
+  timezone:
+    name: Europe/Amsterdam
+  notify: restart cron daemon
   become: yes
 
 - name: Enable en_US.UTF8 locale
