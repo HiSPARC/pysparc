@@ -76,6 +76,25 @@ The ``\*`` selects *all* machines. To limit the command to ``dev`` boxes, run::
     $ ansible dev -a "supervisorctl status"
 
 
+Vagrant development box
+-----------------------
+
+We have created a vagrant development box for testing. To use it, first install
+vagrant (https://www.vagrantup.com). For MacOS::
+
+    $ brew cask install vagrant
+
+After installing vagrant, install the *Virtualbox Guest plugin*::
+
+    $ vagrant plugin install vagrant-vbguest
+
+To start up the vagrant box::
+
+    $ vagrant up
+
+The ansible playbooks and inventory include the vagrant box.
+
+
 Creating the disk image for provisioning a Raspberry Pi
 -------------------------------------------------------
 
