@@ -146,8 +146,8 @@ class HiSPARCII(BaseHardware):
 
     description = "HiSPARC II Master"
 
-    def __init__(self, slave=False):
-        if slave:
+    def __init__(self, secondary=False):
+        if secondary:
             self.description = self.description.replace("Master", "Slave")
 
         super(HiSPARCII, self).__init__()

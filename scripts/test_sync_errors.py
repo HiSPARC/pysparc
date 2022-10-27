@@ -22,16 +22,16 @@ if __name__ == '__main__':
     trigger_one_second = Config.build_trigger_condition(calibration_mode=True)
     trigger_none = Config.build_trigger_condition(use_external=True)
 
-    master = HiSPARCIII()
-    slave = HiSPARCIII(slave=True)
-    master.config.trigger_condition = trigger_one_second
-    master.flush_device()
-    slave.flush_device()
+    primary = HiSPARCIII()
+    secondary = HiSPARCIII(secondary=True)
+    primary.config.trigger_condition = trigger_one_second
+    primary.flush_device()
+    secondary.flush_device()
 
     while True:
-        msg = master.read_message()
+        msg = primary.read_message()
         if msg:
-            logging.info('MASTER %s -- %s MASTER' % (msg.datetime, msg.nanoseconds))
-        msg = slave.read_message()
+            logging.info('PRIMARY   %s -- %s PRIMARY' % (msg.datetime, msg.nanoseconds))
+        msg = secondary.read_message()
         if msg:
-            logging.info('SLAVE  %s -- %s SLAVE' % (msg.datetime, msg.nanoseconds))
+            logging.info('SECONDARY %s -- %s SECONDARY' % (msg.datetime, msg.nanoseconds))

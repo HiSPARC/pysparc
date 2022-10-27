@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 FRESHNESS_TIME = 10
 # Number of seconds over which to average event rate
 EVENTRATE_TIME = 60
-# Maximum allowed time difference between master and slave events
+# Maximum allowed time difference between primary and secondary events
 MAX_FOUR_CHANNEL_DELAY = 5000
 
 SYNCHRONIZATION_BIT = 1 << 31
@@ -229,17 +229,17 @@ class Stew(object):
 class Mixer(object):
 
     def __init__(self):
-        self._master_events = {}
-        self._slave_events = {}
+        self._primary_events = {}
+        self._secondary_events = {}
         self._mixed_events = []
 
-    def add_master_events(self, events):
+    def add_primary_events(self, events):
         for event in events:
-            self._master_events[event.ext_timestamp] = event
+            self._primary_events[event.ext_timestamp] = event
 
-    def add_slave_events(self, events):
+    def add_secondary_events(self, events):
         for event in events:
-            self._slave_events[event.ext_timestamp] = event
+            self._secondary_events[event.ext_timestamp] = event
 
     def serve_events(self):
         events = self._mixed_events
@@ -250,22 +250,22 @@ class Mixer(object):
         pass
 
     def mix(self):
-        master_timestamps = self._master_events.keys()
-        if master_timestamps:
-            for timestamp, slave_event in self._slave_events.items():
-                delta_t = [abs(u - timestamp) for u in master_timestamps]
+        primary_timestamps = self._primary_events.keys()
+        if primary_timestamps:
+            for timestamp, secondary_event in self._secondary_events.items():
+                delta_t = [abs(u - timestamp) for u in primary_timestamps]
                 min_delta_t = min(delta_t)
 
                 if min_delta_t < MAX_FOUR_CHANNEL_DELAY:
-                    master_idx = delta_t.index(min_delta_t)
-                    nearest_timestamp = master_timestamps[master_idx]
-                    master_event = self._master_events[nearest_timestamp]
+                    primary_idx = delta_t.index(min_delta_t)
+                    nearest_timestamp = primary_timestamps[primary_idx]
+                    primary_event = self._primary_events[nearest_timestamp]
 
-                    mixed_event = FourChannelEvent(master_event, slave_event)
+                    mixed_event = FourChannelEvent(primary_event, secondary_event)
                     self._mixed_events.append(mixed_event)
 
-                    del self._slave_events[timestamp]
-                    del self._master_events[nearest_timestamp]
+                    del self._secondary_events[timestamp]
+                    del self._primary_events[nearest_timestamp]
 
 
 class Event(object):
@@ -357,109 +357,109 @@ class Event(object):
 
 class FourChannelEvent(Event):
 
-    def __init__(self, master_event, slave_event):
-        self.datetime = master_event.datetime
-        self.timestamp = master_event.timestamp
-        self.nanoseconds = master_event.nanoseconds
-        self.ext_timestamp = master_event.ext_timestamp
+    def __init__(self, primary_event, secondary_event):
+        self.datetime = primary_event.datetime
+        self.timestamp = primary_event.timestamp
+        self.nanoseconds = primary_event.nanoseconds
+        self.ext_timestamp = primary_event.ext_timestamp
         self.data_reduction = False
-        self.trigger_pattern = master_event.trigger_pattern
-        self.event_rate = master_event.event_rate
+        self.trigger_pattern = primary_event.trigger_pattern
+        self.event_rate = primary_event.event_rate
 
         # Traces
-        self.trace_ch1 = master_event.trace_ch1
-        self.trace_ch2 = master_event.trace_ch2
-        self.trace_ch3 = slave_event.trace_ch1
-        self.trace_ch4 = slave_event.trace_ch2
+        self.trace_ch1 = primary_event.trace_ch1
+        self.trace_ch2 = primary_event.trace_ch2
+        self.trace_ch3 = secondary_event.trace_ch1
+        self.trace_ch4 = secondary_event.trace_ch2
 
         # Compressed traces
-        self.zlib_trace_ch1 = master_event.zlib_trace_ch1
-        self.zlib_trace_ch2 = master_event.zlib_trace_ch2
-        self.zlib_trace_ch3 = slave_event.zlib_trace_ch1
-        self.zlib_trace_ch4 = slave_event.zlib_trace_ch2
+        self.zlib_trace_ch1 = primary_event.zlib_trace_ch1
+        self.zlib_trace_ch2 = primary_event.zlib_trace_ch2
+        self.zlib_trace_ch3 = secondary_event.zlib_trace_ch1
+        self.zlib_trace_ch4 = secondary_event.zlib_trace_ch2
 
         # Calculated statistics
-        self.baselines = master_event.baselines[:2] + slave_event.baselines[:2]
-        self.std_dev = master_event.std_dev[:2] + slave_event.std_dev[:2]
-        self.pulseheights = master_event.pulseheights[:2] + \
-            slave_event.pulseheights[:2]
-        self.integrals = master_event.integrals[:2] + slave_event.integrals[:2]
-        self.n_peaks = master_event.n_peaks[:2] + slave_event.n_peaks[:2]
+        self.baselines = primary_event.baselines[:2] + secondary_event.baselines[:2]
+        self.std_dev = primary_event.std_dev[:2] + secondary_event.std_dev[:2]
+        self.pulseheights = primary_event.pulseheights[:2] + \
+            secondary_event.pulseheights[:2]
+        self.integrals = primary_event.integrals[:2] + secondary_event.integrals[:2]
+        self.n_peaks = primary_event.n_peaks[:2] + secondary_event.n_peaks[:2]
 
 
 class ConfigEvent(object):
 
-    def __init__(self, master_config, slave_config=None):
-        self.pre_coincidence_time = master_config.pre_coincidence_time
-        self.coincidence_time = master_config.coincidence_time
-        self.post_coincidence_time = master_config.post_coincidence_time
+    def __init__(self, primary_config, secondary_config=None):
+        self.pre_coincidence_time = primary_config.pre_coincidence_time
+        self.coincidence_time = primary_config.coincidence_time
+        self.post_coincidence_time = primary_config.post_coincidence_time
 
-        self.gps_latitude = master_config.gps_latitude
-        self.gps_longitude = master_config.gps_longitude
-        self.gps_altitude = master_config.gps_altitude
+        self.gps_latitude = primary_config.gps_latitude
+        self.gps_longitude = primary_config.gps_longitude
+        self.gps_altitude = primary_config.gps_altitude
 
         self.use_filter = False
         self.use_filter_threshold = False
         self.reduce_data = False
 
-        condition = master_config.unpack_trigger_condition(
-            master_config.trigger_condition)
+        condition = primary_config.unpack_trigger_condition(
+            primary_config.trigger_condition)
         self.trig_low_signals = condition['num_low']
         self.trig_high_signals = condition['num_high']
         self.trig_or_not_and = condition['or_not_and']
         self.trig_external = condition['use_external']
 
-        self.mas_version = master_config.version
-        self.mas_ch1_current = master_config.ch1_current
-        self.mas_ch2_current = master_config.ch2_current
+        self.mas_version = primary_config.version
+        self.mas_ch1_current = primary_config.ch1_current
+        self.mas_ch2_current = primary_config.ch2_current
 
-        self.mas_ch1_thres_low = master_config.ch1_threshold_low
-        self.mas_ch1_thres_high = master_config.ch1_threshold_high
-        self.mas_ch2_thres_low = master_config.ch2_threshold_low
-        self.mas_ch2_thres_high = master_config.ch2_threshold_high
+        self.mas_ch1_thres_low = primary_config.ch1_threshold_low
+        self.mas_ch1_thres_high = primary_config.ch1_threshold_high
+        self.mas_ch2_thres_low = primary_config.ch2_threshold_low
+        self.mas_ch2_thres_high = primary_config.ch2_threshold_high
 
-        self.mas_ch1_voltage = master_config.ch1_voltage
-        self.mas_ch2_voltage = master_config.ch2_voltage
+        self.mas_ch1_voltage = primary_config.ch1_voltage
+        self.mas_ch2_voltage = primary_config.ch2_voltage
 
-        self.mas_ch1_inttime = master_config.ch1_integrator_time
-        self.mas_ch2_inttime = master_config.ch2_integrator_time
+        self.mas_ch1_inttime = primary_config.ch1_integrator_time
+        self.mas_ch2_inttime = primary_config.ch2_integrator_time
 
-        self.mas_ch1_offset_pos = master_config.ch1_offset_positive
-        self.mas_ch1_offset_neg = master_config.ch1_offset_negative
-        self.mas_ch2_offset_pos = master_config.ch2_offset_positive
-        self.mas_ch2_offset_neg = master_config.ch2_offset_negative
-        self.mas_ch1_gain_pos = master_config.ch1_gain_positive
-        self.mas_ch1_gain_neg = master_config.ch1_gain_negative
-        self.mas_ch2_gain_pos = master_config.ch2_gain_positive
-        self.mas_ch2_gain_neg = master_config.ch2_gain_negative
-        self.mas_common_offset = master_config.common_offset
-        self.mas_internal_voltage = master_config.full_scale
+        self.mas_ch1_offset_pos = primary_config.ch1_offset_positive
+        self.mas_ch1_offset_neg = primary_config.ch1_offset_negative
+        self.mas_ch2_offset_pos = primary_config.ch2_offset_positive
+        self.mas_ch2_offset_neg = primary_config.ch2_offset_negative
+        self.mas_ch1_gain_pos = primary_config.ch1_gain_positive
+        self.mas_ch1_gain_neg = primary_config.ch1_gain_negative
+        self.mas_ch2_gain_pos = primary_config.ch2_gain_positive
+        self.mas_ch2_gain_neg = primary_config.ch2_gain_negative
+        self.mas_common_offset = primary_config.common_offset
+        self.mas_internal_voltage = primary_config.full_scale
 
-        if slave_config is None:
+        if secondary_config is None:
             self.slv_version = "Hardware: 0 FPGA: 0"
         else:
-            self.slv_version = slave_config.version
-            self.slv_ch1_current = slave_config.ch1_current
-            self.slv_ch2_current = slave_config.ch2_current
+            self.slv_version = secondary_config.version
+            self.slv_ch1_current = secondary_config.ch1_current
+            self.slv_ch2_current = secondary_config.ch2_current
 
-            self.slv_ch1_thres_low = slave_config.ch1_threshold_low
-            self.slv_ch1_thres_high = slave_config.ch1_threshold_high
-            self.slv_ch2_thres_low = slave_config.ch2_threshold_low
-            self.slv_ch2_thres_high = slave_config.ch2_threshold_high
+            self.slv_ch1_thres_low = secondary_config.ch1_threshold_low
+            self.slv_ch1_thres_high = secondary_config.ch1_threshold_high
+            self.slv_ch2_thres_low = secondary_config.ch2_threshold_low
+            self.slv_ch2_thres_high = secondary_config.ch2_threshold_high
 
-            self.slv_ch1_voltage = slave_config.ch1_voltage
-            self.slv_ch2_voltage = slave_config.ch2_voltage
+            self.slv_ch1_voltage = secondary_config.ch1_voltage
+            self.slv_ch2_voltage = secondary_config.ch2_voltage
 
-            self.slv_ch1_inttime = slave_config.ch1_integrator_time
-            self.slv_ch2_inttime = slave_config.ch2_integrator_time
+            self.slv_ch1_inttime = secondary_config.ch1_integrator_time
+            self.slv_ch2_inttime = secondary_config.ch2_integrator_time
 
-            self.slv_ch1_offset_pos = slave_config.ch1_offset_positive
-            self.slv_ch1_offset_neg = slave_config.ch1_offset_negative
-            self.slv_ch2_offset_pos = slave_config.ch2_offset_positive
-            self.slv_ch2_offset_neg = slave_config.ch2_offset_negative
-            self.slv_ch1_gain_pos = slave_config.ch1_gain_positive
-            self.slv_ch1_gain_neg = slave_config.ch1_gain_negative
-            self.slv_ch2_gain_pos = slave_config.ch2_gain_positive
-            self.slv_ch2_gain_neg = slave_config.ch2_gain_negative
-            self.slv_common_offset = slave_config.common_offset
-            self.slv_internal_voltage = slave_config.full_scale
+            self.slv_ch1_offset_pos = secondary_config.ch1_offset_positive
+            self.slv_ch1_offset_neg = secondary_config.ch1_offset_negative
+            self.slv_ch2_offset_pos = secondary_config.ch2_offset_positive
+            self.slv_ch2_offset_neg = secondary_config.ch2_offset_negative
+            self.slv_ch1_gain_pos = secondary_config.ch1_gain_positive
+            self.slv_ch1_gain_neg = secondary_config.ch1_gain_negative
+            self.slv_ch2_gain_pos = secondary_config.ch2_gain_positive
+            self.slv_ch2_gain_neg = secondary_config.ch2_gain_negative
+            self.slv_common_offset = secondary_config.common_offset
+            self.slv_internal_voltage = secondary_config.full_scale
