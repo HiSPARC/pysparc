@@ -138,40 +138,40 @@ class AlignADCs(object):
         return mean_value
 
 
-class AlignADCsMasterSlave(AlignADCs):
+class AlignADCsPrimarySecondary(AlignADCs):
 
-    """Align a master and slave a the same time.
+    """Align a primary and secondary a the same time.
 
-    Much of this class is implemented specifically for the master/slave
+    Much of this class is implemented specifically for the primary/secondary
     combination. The overview of the alignment procedure, defined in the
     `:meth:align` method, is unchanged and only implemented in the parent
     class.
 
     """
 
-    def __init__(self, master, slave):
-        self.master = master
-        self.master_config = master.config
-        self.slave = slave
-        self.slave_config = slave.config
+    def __init__(self, primary, secondary):
+        self.primary = primary
+        self.primary_config = primary.config
+        self.secondary = secondary
+        self.secondary_config = secondary.config
         # The superclass knows of only one config.
-        self.config = master.config
+        self.config = primary.config
 
     def _reset_config_for_alignment(self):
         self._set_full_scale(0x80, 0x80)
         self._set_common_offset(0x80, 0x80)
         self._set_individual_offsets([0x80] * 8)
 
-        # Synchronize master and slave.
+        # Synchronize primary and secondary.
         # Step 1. Flush old messages
-        self.master.flush_device()
-        self.slave.flush_device()
-        # Step 2. Make sure both master and slave are sending messages
-        self.master.flush_and_get_measured_data_message()
-        self.slave.flush_and_get_measured_data_message()
+        self.primary.flush_device()
+        self.secondary.flush_device()
+        # Step 2. Make sure both primary and secondary are sending messages
+        self.primary.flush_and_get_measured_data_message()
+        self.secondary.flush_and_get_measured_data_message()
         # Step 3. Flush both devices
-        self.master.flush_device()
-        self.slave.flush_device()
+        self.primary.flush_device()
+        self.secondary.flush_device()
 
     def _align_full_scale(self, target_value):
         logger.info("Aligning full scale")
@@ -241,60 +241,60 @@ class AlignADCsMasterSlave(AlignADCs):
     def _measure_opt_value_at_individual_settings(self, settings_func,
                                                   guesses, target_value):
         settings_func(guesses)
-        master, slave = self._flush_and_get_measured_data_messages()
-        mean_adc_values = (master.adc_ch1_pos.mean(),
-                           master.adc_ch1_neg.mean(),
-                           master.adc_ch2_pos.mean(),
-                           master.adc_ch2_neg.mean(),
-                           slave.adc_ch1_pos.mean(),
-                           slave.adc_ch1_neg.mean(),
-                           slave.adc_ch2_pos.mean(),
-                           slave.adc_ch2_neg.mean())
+        primary, secondary = self._flush_and_get_measured_data_messages()
+        mean_adc_values = (primary.adc_ch1_pos.mean(),
+                           primary.adc_ch1_neg.mean(),
+                           primary.adc_ch2_pos.mean(),
+                           primary.adc_ch2_neg.mean(),
+                           secondary.adc_ch1_pos.mean(),
+                           secondary.adc_ch1_neg.mean(),
+                           secondary.adc_ch2_pos.mean(),
+                           secondary.adc_ch2_neg.mean())
         logger.debug("Alignment step (guesses, means):\n\t%s, %s" %
                      (guesses, [int(round(u)) for u in mean_adc_values]))
         return [target_value - u for u in mean_adc_values]
 
-    def _set_full_scale(self, master_value, slave_value):
-        self.master_config.full_scale = master_value
-        self.slave_config.full_scale = slave_value
+    def _set_full_scale(self, primary_value, secondary_value):
+        self.primary_config.full_scale = primary_value
+        self.secondary_config.full_scale = secondary_value
 
-    def _set_common_offset(self, master_value, slave_value):
-        self.master_config.common_offset = master_value
-        self.slave_config.common_offset = slave_value
+    def _set_common_offset(self, primary_value, secondary_value):
+        self.primary_config.common_offset = primary_value
+        self.secondary_config.common_offset = secondary_value
 
     def _set_individual_offsets(self, values):
-        (self.master_config.ch1_offset_positive,
-         self.master_config.ch1_offset_negative,
-         self.master_config.ch2_offset_positive,
-         self.master_config.ch2_offset_negative,
-         self.slave_config.ch1_offset_positive,
-         self.slave_config.ch1_offset_negative,
-         self.slave_config.ch2_offset_positive,
-         self.slave_config.ch2_offset_negative) = values
+        (self.primary_config.ch1_offset_positive,
+         self.primary_config.ch1_offset_negative,
+         self.primary_config.ch2_offset_positive,
+         self.primary_config.ch2_offset_negative,
+         self.secondary_config.ch1_offset_positive,
+         self.secondary_config.ch1_offset_negative,
+         self.secondary_config.ch2_offset_positive,
+         self.secondary_config.ch2_offset_negative) = values
 
     def _set_individual_gains(self, values):
-        (self.master_config.ch1_gain_positive,
-         self.master_config.ch1_gain_negative,
-         self.master_config.ch2_gain_positive,
-         self.master_config.ch2_gain_negative,
-         self.slave_config.ch1_gain_positive,
-         self.slave_config.ch1_gain_negative,
-         self.slave_config.ch2_gain_positive,
-         self.slave_config.ch2_gain_negative) = values
+        (self.primary_config.ch1_gain_positive,
+         self.primary_config.ch1_gain_negative,
+         self.primary_config.ch2_gain_positive,
+         self.primary_config.ch2_gain_negative,
+         self.secondary_config.ch1_gain_positive,
+         self.secondary_config.ch1_gain_negative,
+         self.secondary_config.ch2_gain_positive,
+         self.secondary_config.ch2_gain_negative) = values
 
     def _get_mean_adc_values(self):
-        master, slave = self._flush_and_get_measured_data_messages()
-        master_mean_value = (master.trace_ch1.mean() +
-                             master.trace_ch2.mean()) / 2
-        slave_mean_value = (slave.trace_ch1.mean() +
-                            slave.trace_ch2.mean()) / 2
-        return master_mean_value, slave_mean_value
+        primary, secondary = self._flush_and_get_measured_data_messages()
+        primary_mean_value = (primary.trace_ch1.mean() +
+                             primary.trace_ch2.mean()) / 2
+        secondary_mean_value = (secondary.trace_ch1.mean() +
+                            secondary.trace_ch2.mean()) / 2
+        return primary_mean_value, secondary_mean_value
 
     def _flush_and_get_measured_data_messages(self):
-        self.master.flush_device()
-        self.slave.flush_device()
-        master_msg = self.master.get_measured_data_message()
-        slave_msg = self.slave.get_measured_data_message()
-        logging.debug("Master: %s" % time.ctime(master_msg.timestamp))
-        logging.debug("Slave: %s" % time.ctime(slave_msg.timestamp))
-        return master_msg, slave_msg
+        self.primary.flush_device()
+        self.secondary.flush_device()
+        primary_msg = self.primary.get_measured_data_message()
+        secondary_msg = self.secondary.get_measured_data_message()
+        logging.debug("Primary: %s" % time.ctime(primary_msg.timestamp))
+        logging.debug("Secondary: %s" % time.ctime(secondary_msg.timestamp))
+        return primary_msg, secondary_msg

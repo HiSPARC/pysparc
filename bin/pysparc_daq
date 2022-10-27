@@ -12,7 +12,7 @@ import schedule
 
 from pysparc.hardware import HiSPARCII, HiSPARCIII, TrimbleGPS
 from pysparc.ftdi_chip import DeviceNotFoundError
-from pysparc.align_adcs import AlignADCs, AlignADCsMasterSlave
+from pysparc.align_adcs import AlignADCs, AlignADCsPrimarySecondary
 from pysparc.events import Stew, ConfigEvent, Mixer
 from pysparc import messages, storage, monitor
 
@@ -45,7 +45,7 @@ class DataAcquisition(object):
         station_number = self.config.getint('DAQ', 'station_number')
         station_password = self.config.get('DAQ', 'station_password')
 
-        self.master_stew = Stew()
+        self.primary_stew = Stew()
 
         self.storage_manager = storage.StorageManager()
         self.datastore = storage.NikhefDataStore(station_number,
@@ -62,9 +62,9 @@ class DataAcquisition(object):
 
     def open_hisparc_hardware(self):
         try:
-            self.master = HiSPARCIII()
+            self.primary = HiSPARCIII()
         except DeviceNotFoundError:
-            self.master = HiSPARCII()
+            self.primary = HiSPARCII()
 
         # Give hardware 20 seconds to start up
         self.t_last_msg = time.time() + 20
@@ -87,11 +87,11 @@ class DataAcquisition(object):
 
     def configure_devices(self):
         """Read configuration into device"""
-        self.master.config.read_config(self.config)
+        self.primary.config.read_config(self.config)
 
     def align_adcs(self):
         """Align ADCs"""
-        align_adcs = AlignADCs(self.master)
+        align_adcs = AlignADCs(self.primary)
         align_adcs.align()
 
     def run(self):
@@ -128,10 +128,10 @@ class DataAcquisition(object):
     def read_and_process_messages(self):
         """Read messages from the hardware and process them"""
 
-        msg = self.master.read_message()
+        msg = self.primary.read_message()
         if msg is not None:
             self.t_last_msg = time.time()
-            self.process_message(msg, self.master_stew)
+            self.process_message(msg, self.primary_stew)
 
     def process_message(self, msg, stew):
         """Process a hardware message and throw it in the stew."""
@@ -149,19 +149,19 @@ class DataAcquisition(object):
 
     def process_and_store_events(self):
         """Process events from the stew and store them in the datastore."""
-        self.master_stew.stir()
-        events = self.master_stew.serve_events()
+        self.primary_stew.stir()
+        events = self.primary_stew.serve_events()
         self.store_events(events)
-        self.master_stew.drain()
+        self.primary_stew.drain()
 
     def send_monitor_messages(self):
         """Send all monitor messages."""
         self.monitor.send_uptime()
         self.monitor.send_cpu_load()
-        self.monitor.send_trigger_rate(self.master_stew.event_rate())
+        self.monitor.send_trigger_rate(self.primary_stew.event_rate())
 
     def log_status(self):
-        logging.info("Event rate: %.1f Hz", self.master_stew.event_rate())
+        logging.info("Event rate: %.1f Hz", self.primary_stew.event_rate())
 
     def request_config_from_device(self):
         """Request configuration from device.
@@ -172,7 +172,7 @@ class DataAcquisition(object):
         calling this method.
 
         """
-        self.master.send_message(messages.GetControlParameterList())
+        self.primary.send_message(messages.GetControlParameterList())
 
     def check_silent_devices(self):
         if time.time() - self.t_last_msg > 20:
@@ -181,11 +181,11 @@ class DataAcquisition(object):
 
     def flush_devices(self):
         """Flush devices"""
-        self.master.flush_device()
+        self.primary.flush_device()
 
     def reset_devices(self):
         """Reset hardware devices"""
-        self.master.reset_hardware()
+        self.primary.reset_hardware()
 
     def store_events(self, events):
         for event in events:
@@ -196,79 +196,79 @@ class DataAcquisition(object):
         logging.debug("Stored %d events.", len(events))
 
     def store_config_event(self):
-        config = ConfigEvent(self.master.config)
+        config = ConfigEvent(self.primary.config)
         self.storage_manager.store_event(config)
         logging.info("Sent configuration message.")
 
     def write_config(self):
-        self.master.config.write_config(self.config)
+        self.primary.config.write_config(self.config)
         with open(CONFIGFILE, 'w') as f:
             self.config.write(f)
 
     def close(self):
         logging.info("Closing down")
-        self.master.close()
+        self.primary.close()
         self.storage_manager.close()
         self.datastore.close()
 
 
-class MasterSlaveDataAcquisition(DataAcquisition):
+class PrimarySecondaryDataAcquisition(DataAcquisition):
 
-    """HiSPARC data acquisition using a master/slave setup"""
+    """HiSPARC data acquisition using a primary/secondary setup"""
 
     def __init__(self):
-        super(MasterSlaveDataAcquisition, self).__init__()
+        super(PrimarySecondaryDataAcquisition, self).__init__()
 
-        self.slave_stew = Stew()
+        self.secondary_stew = Stew()
         self.mixer = Mixer()
 
     def open_hisparc_hardware(self):
         try:
-            self.slave = HiSPARCIII(slave=True)
+            self.secondary = HiSPARCIII(secondary=True)
         except DeviceNotFoundError:
-            self.slave = HiSPARCII(slave=True)
-        super(MasterSlaveDataAcquisition, self).open_hisparc_hardware()
+            self.secondary = HiSPARCII(secondary=True)
+        super(PrimarySecondaryDataAcquisition, self).open_hisparc_hardware()
 
         # Give hardware 20 seconds to start up
-        self.t_last_slave_msg = time.time() + 20
+        self.t_last_secondary_msg = time.time() + 20
 
     def configure_devices(self):
         """Read configuration into device"""
-        super(MasterSlaveDataAcquisition, self).configure_devices()
-        self.slave.config.read_config(self.config)
+        super(PrimarySecondaryDataAcquisition, self).configure_devices()
+        self.secondary.config.read_config(self.config)
 
     def align_adcs(self):
         """Align ADCs"""
-        align_adcs = AlignADCsMasterSlave(self.master, self.slave)
+        align_adcs = AlignADCsPrimarySecondary(self.primary, self.secondary)
         align_adcs.align()
 
     def read_and_process_messages(self):
         """Read messages from the hardware and process them"""
 
-        super(MasterSlaveDataAcquisition, self).read_and_process_messages()
+        super(PrimarySecondaryDataAcquisition, self).read_and_process_messages()
 
-        msg = self.slave.read_message()
+        msg = self.secondary.read_message()
         if msg is not None:
-            self.t_last_slave_msg = time.time()
-            self.process_message(msg, self.slave_stew)
+            self.t_last_secondary_msg = time.time()
+            self.process_message(msg, self.secondary_stew)
 
     def process_and_store_events(self):
         """Process events from the stew and store them in the datastore."""
-        self.master_stew.stir()
-        self.slave_stew.stir()
+        self.primary_stew.stir()
+        self.secondary_stew.stir()
 
-        master_events = self.master_stew.serve_events()
-        self.mixer.add_master_events(master_events)
-        slave_events = self.slave_stew.serve_events()
-        self.mixer.add_slave_events(slave_events)
+        primary_events = self.primary_stew.serve_events()
+        self.mixer.add_primary_events(primary_events)
+        secondary_events = self.secondary_stew.serve_events()
+        self.mixer.add_secondary_events(secondary_events)
 
         self.mixer.mix()
         events = self.mixer.serve_events()
 
         self.store_events(events)
 
-        self.master_stew.drain()
-        self.slave_stew.drain()
+        self.primary_stew.drain()
+        self.secondary_stew.drain()
 
     def request_config_from_device(self):
         """Request configuration from device.
@@ -279,37 +279,37 @@ class MasterSlaveDataAcquisition(DataAcquisition):
         calling this method.
 
         """
-        super(MasterSlaveDataAcquisition, self).request_config_from_device()
-        self.slave.send_message(messages.GetControlParameterList())
+        super(PrimarySecondaryDataAcquisition, self).request_config_from_device()
+        self.secondary.send_message(messages.GetControlParameterList())
 
     def check_silent_devices(self):
         now = time.time()
-        if (now - self.t_last_msg > 20) or (now - self.t_last_slave_msg > 20):
+        if (now - self.t_last_msg > 20) or (now - self.t_last_secondary_msg > 20):
             logging.error("Hardware is silent, resetting.")
             self.reset_devices()
 
     def flush_devices(self):
         """Flush devices"""
-        super(MasterSlaveDataAcquisition, self).flush_devices()
-        self.slave.flush_device()
+        super(PrimarySecondaryDataAcquisition, self).flush_devices()
+        self.secondary.flush_device()
 
     def reset_devices(self):
         """Reset hardware devices"""
-        super(MasterSlaveDataAcquisition, self).reset_devices()
-        self.slave.reset_hardware()
+        super(PrimarySecondaryDataAcquisition, self).reset_devices()
+        self.secondary.reset_hardware()
 
     def store_config_event(self):
-        config = ConfigEvent(self.master.config, self.slave.config)
+        config = ConfigEvent(self.primary.config, self.secondary.config)
         self.storage_manager.store_event(config)
         logging.info("Sent configuration message.")
 
     def write_config(self):
-        self.slave.config.write_config(self.config)
-        super(MasterSlaveDataAcquisition, self).write_config()
+        self.secondary.config.write_config(self.config)
+        super(PrimarySecondaryDataAcquisition, self).write_config()
 
     def close(self):
-        super(MasterSlaveDataAcquisition, self).close()
-        self.slave.close()
+        super(PrimarySecondaryDataAcquisition, self).close()
+        self.secondary.close()
 
 if __name__ == '__main__':
     logging.basicConfig(
@@ -323,10 +323,10 @@ if __name__ == '__main__':
     schedule_log.setLevel(logging.WARNING)
 
     try:
-        # try master/slave
-        app = MasterSlaveDataAcquisition()
+        # try primary/secondary
+        app = PrimarySecondaryDataAcquisition()
     except DeviceNotFoundError:
-        # try master-only
+        # try primary-only
         app = DataAcquisition()
 
     try:

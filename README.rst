@@ -39,7 +39,7 @@ Outlook
 At the time of this writing (late 2017), there is renewed activity.  We're
 testing this code on a few Raspberry Pi's with the goal of maybe replacing our
 old Windows PC's.  They are a pain to maintain.  The new effort focuses on
-adding support for master/slave combinations.
+adding support for primary/secondary combinations.
 
 I (DF) was also planning on using this code to work out an event display
 and teaching materials for high school students.  This will focus on the

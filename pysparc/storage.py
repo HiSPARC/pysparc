@@ -625,7 +625,7 @@ class NikhefDataStore(object):
             self._add_value_to_datalist(datalist, 'CFG_SLV_INTVOLTAGE',
                                         config.slv_internal_voltage)
         except AttributeError:
-            # slave device not present
+            # secondary device not present
             pass
 
         event_list = [{'header': header, 'datalist': datalist}]
