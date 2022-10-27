@@ -31,7 +31,7 @@ if __name__ == '__main__':
     while True:
         msg = primary.read_message()
         if msg:
-            logging.info('MASTER %s -- %s MASTER' % (msg.datetime, msg.nanoseconds))
+            logging.info('PRIMARY   %s -- %s PRIMARY' % (msg.datetime, msg.nanoseconds))
         msg = secondary.read_message()
         if msg:
-            logging.info('SLAVE  %s -- %s SLAVE' % (msg.datetime, msg.nanoseconds))
+            logging.info('SECONDARY %s -- %s SECONDARY' % (msg.datetime, msg.nanoseconds))
