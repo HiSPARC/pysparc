@@ -45,7 +45,7 @@ import pysparc.events
 logger = logging.getLogger(__name__)
 
 
-DATASTORE_URL = "http://frome.nikhef.nl/hisparc/upload"
+DATASTORE_URL = "http://hisparc-raw.chpc.utah.edu/hisparc/upload"
 SLEEP_INTERVAL = .4
 
 
